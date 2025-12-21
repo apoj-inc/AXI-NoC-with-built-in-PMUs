@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: configure
-      run: ./configure --prefix=QUESTA
+      run: echo $pwd; ./configure --prefix=QUESTA
 
     - name: Install dependencies
       run: make
