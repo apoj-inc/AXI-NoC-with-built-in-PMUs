@@ -6,55 +6,44 @@ TOPLEVEL ?= axi_unwrap
 
 MODULE ?= tb_axi
 
+LIST_DIR ?= $(CURDIR)/rtl/lists
+LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
+
 SIM ?= questa
 SIM_ARGS := -suppress 12110 -autofindloop -voptargs="\""-access=rw+/. -debug,cell"\"" -suppress 12130
-SIM_BUILD ?= $(MODULE)
+CCTB_DIR ?= .cache/cctb
+SIM_BUILD ?= $(CCTB_DIR)/$(MODULE)
+
+VERILOG_SOURCES ?= 
+VERILOG_SOURCES += $$(cat $(LIST_RTL))
+
+COCOTB_MAKEFILES := $$(cocotb-config --makefiles)
 
 WAVES ?= 1
 
 .PHONY: run clean_run clean_all_runs clean_all clean_venv
 
-run: cctb/build/venv/bin/activate
-	source cctb/build/venv/bin/activate; \
-	mkdir -p cctb/$(SIM_BUILD); \
-	cd cctb/$(SIM_BUILD); \
-	python3 ../build/move_files.py; \
-	export VERILOG_SOURCES=$$(cat files_rtl.lst); \
-	export COCOTB_MAKEFILES=$$(cocotb-config --makefiles); \
-	make -f $${COCOTB_MAKEFILES}/Makefile.sim TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
+run: $(CURDIR)/.venv/bin/activate
+	@source $(CURDIR)/.venv/bin/activate
+	@mkdir -p $(SIM_BUILD)
+	@make -f $(COCOTB_MAKEFILES)/Makefile.sim TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
 	TOPLEVEL=$(TOPLEVEL) MODULE=$(MODULE) SIM=$(SIM) SIM_BUILD=$(SIM_BUILD) \
 	SIM_ARGS='$(SIM_ARGS)' WAVES=$(WAVES) \
-	VERILOG_SOURCES="$${VERILOG_SOURCES}"; \
-	rm -rf $(MODULE).py
+	VERILOG_SOURCES="$(VERILOG_SOURCES)"
 
 wave:
-	cd cctb/$(SIM_BUILD); \
-	vsim -view vsim.wlf
+	vsim -view $(SIM_BUILD)/vsim.wlf
 
-cctb/build/venv/bin/activate: cctb/build/user_requirements.txt cctb/build/requirements.txt
-	python3 -m venv cctb/build/venv; \
+$(CURDIR)/.venv/bin/activate: cctb/build/user_requirements.txt cctb/build/requirements.txt
+	@python3 -m venv cctb/build/venv; \
 	source cctb/build/venv/bin/activate; \
 	pip install -r cctb/build/requirements.txt; \
-	pip install -r cctb/build/user_requirements.txt; \
+	pip install -r cctb/build/user_requirements.txt
 
 clean_run:
-	cd cctb; \
-	rm -rf $(SIM_BUILD)
-
-clean_all_runs:
-	cd cctb; \
-	for dir in ./*; do \
-		if [[ "$$dir" != "./build" ]]; then \
-			rm -rf $$dir; \
-		fi \
-	done
+	@rm -rf $(SIM_BUILD)
 
 clean_venv:
-	cd cctb/build; \
-	rm -rf venv
+	@rm -rf $(CURDIR)/.venv
 
-clean_all: clean_all_runs clean_venv
-
-
-# include cocotb's make rules to take care of the simulator setup
-# include $(shell cocotb-config --makefiles)/Makefile.sim
+clean_all: clean_runs clean_venv

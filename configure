@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Selecting prefix
+PREFIX=QUESTA
+
+for argument in ${@}; do
+    case $argument in
+        --prefix=* )
+            PREFIX=${argument##*=}
+            ;;
+    esac
+done
+
+echo "Running tests for $PREFIX prefix"
+
+# Checking dependencies
+# Array of required commands
+REQUIRED_COMMANDS=()
+
+case $PREFIX in
+    QUESTA )
+    REQUIRED_COMMANDS+="vsim"
+    ;;
+esac
+
+echo "Checking required dependencies..."
+
+for cmd in "${REQUIRED_COMMANDS[@]}"; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "❌ $cmd is not installed"
+        MISSING=true
+    else
+        echo "✅ $cmd is installed"
+    fi
+done
+
+if [ "$MISSING" = true ]; then
+    echo "Please install missing dependencies before running this script."
+    exit 1
+fi
+
+echo "All dependencies are satisfied!"

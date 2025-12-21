@@ -1,25 +1,23 @@
-FILES_RTL_PATH := $(CURDIR)/rtl/lists/files_rtl.lst
-FILES_HEX_PATH := $(CURDIR)/rtl/lists/files_hex.lst
+LIST_RTL := $(CURDIR)/rtl/lists/files_rtl.lst
+LIST_HEX := $(CURDIR)/rtl/lists/files_hex.lst
 
-QUESTA_PATH := $(CURDIR)/build_system/questa
+QUESTA_PATH ?= $(CURDIR)/build_system/questa
+QUESTA_BUILD_PATH ?= $(CURDIR)/.cache/build_system/questa
 TOPLEVEL ?= tb
 
-SIM_PATH ?= $(TOPLEVEL)
-SIM_PATH := $(QUESTA_PATH)/$(SIM_PATH)
+SIM_PATH ?= $(QUESTA_BUILD_PATH)/$(SIM_PATH)
 
 VARS_TCL_PATH := $(SIM_PATH)/vars.tcl
 
 run:
-	mkdir -p $(SIM_PATH); \
+	mkdir -p $(SIM_PATH)
 	
-	@echo set FILES_RTL_PATH $(FILES_RTL_PATH) > $(VARS_TCL_PATH)
-	@echo set FILES_HEX_PATH $(FILES_HEX_PATH) >> $(VARS_TCL_PATH)
+	@echo set LIST_RTL $(LIST_RTL) > $(VARS_TCL_PATH)
+	@echo set LIST_HEX $(LIST_HEX) >> $(VARS_TCL_PATH)
 	@echo set TOPLEVEL $(TOPLEVEL) >> $(VARS_TCL_PATH)
 	@echo set SIM_PATH $(SIM_PATH) >> $(VARS_TCL_PATH)
 
-	cd $(SIM_PATH); \
-	vsim -c -do ../questa_script.tcl
+	vsim -c -do $(QUESTA_PATH)/questa_script.tcl
 
 wave:
-	cd $(SIM_PATH); \
-	vsim -view vsim.wlf
+	vsim -view $(SIM_PATH)/vsim.wlf
