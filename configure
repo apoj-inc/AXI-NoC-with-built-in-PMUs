@@ -19,6 +19,9 @@ REQUIRED_COMMANDS=()
 
 case $PREFIX in
     QUESTA )
+    REQUIRED_COMMANDS+="qrun"
+    REQUIRED_COMMANDS+="vlib"
+    REQUIRED_COMMANDS+="vmap"
     REQUIRED_COMMANDS+="vsim"
     ;;
 esac
