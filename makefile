@@ -1,5 +1,8 @@
 CCTB_MAKEFILE := $(CURDIR)/cctb/build/makefile
 
-.PHONY: all
+.PHONY: all clean
 all:
-	make -f $(CCTB_MAKEFILE)
+	make -f $(CCTB_MAKEFILE) run
+
+clean:
+	@rm -rf .cache

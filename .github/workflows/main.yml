@@ -25,7 +25,7 @@ jobs:
     - name: Ensure wrappers are executable
       run: chmod +x .utils/vsim
 
-    - name: Configure Makefile
+    - name: Configure makefile
       run: chmod +x configure; ./configure --prefix=QUESTA
 
     - name: Install dependencies
