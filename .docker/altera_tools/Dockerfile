@@ -11,6 +11,8 @@ RUN chmod +x ./QuestaSetup-24.1std.0.1077-linux.run
 RUN ./QuestaSetup-24.1std.0.1077-linux.run --accept_eula 1 --mode unattended --installdir /home/altera/24.1std
 RUN rm QuestaSetup-24.1std.0.1077-linux.run
 
+COPY .qsim_license .qsim_license
+
 RUN apt install vish libxext-dev libx11-dev libxft2 vis -y
 
 ENV LM_LICENSE_FILE=/home/main/.qsim_license/LR-253982_License.dat
