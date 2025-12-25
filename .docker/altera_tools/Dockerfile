@@ -21,6 +21,7 @@ ENV MODELSIM_BIN_DIR=/home/altera/24.1std/questa_fse/bin
 ENV PATH=${PATH}:${MODELSIM_BIN_DIR}
 RUN echo "LM_LICENSE_FILE=\"${LM_LICENSE_FILE}\"" >> /etc/environment
 RUN echo "SALT_LICENSE_SERVER=\"${LM_LICENSE_FILE}\"" >> /etc/environment
+RUN echo "MODELSIM_BIN_DIR=\"${MODELSIM_BIN_DIR}\"" >> /etc/environment
 
 ENTRYPOINT ["/bin/bash", "-c"]
 CMD ["echo Tools are ready!"]
