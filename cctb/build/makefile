@@ -33,6 +33,7 @@ VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)), $(CURDIR)/$(file))
 
 run: $(VENV_DIR) $(VERILOG_SOURCES)
 	@mkdir -p $(SIM_BUILD) $(WORK_DIR)
+	@vlib $(WORK_DIR)
 	@vmap work $(WORK_DIR)
 
 	@cp -r $(TB_DIR)/$(TB_MODULE) $(SIM_BUILD)/..
