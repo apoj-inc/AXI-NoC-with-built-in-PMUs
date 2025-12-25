@@ -23,7 +23,7 @@ jobs:
       run: echo "$GITHUB_WORKSPACE/.utils" >> "$GITHUB_PATH"
 
     - name: Ensure wrappers are executable
-      run: chmod +x .utils
+      run: chmod +x -R .utils
 
     - name: Configure makefile
       run: chmod +x configure; ./configure --prefix=QUESTA
