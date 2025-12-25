@@ -6,7 +6,7 @@ ENV MAIN=/home/main
 WORKDIR ${MAIN}
 
 RUN apt install wget -y
-RUN wget https://downloads.intel.com/akdlm/software/acdsinst/24.1std/1077/ib_installers/QuestaSetup-24.1std.0.1077-linux.run
+RUN wget –q https://downloads.intel.com/akdlm/software/acdsinst/24.1std/1077/ib_installers/QuestaSetup-24.1std.0.1077-linux.run
 RUN chmod +x ./QuestaSetup-24.1std.0.1077-linux.run
 RUN ./QuestaSetup-24.1std.0.1077-linux.run --accept_eula 1 --mode unattended --installdir /home/altera/24.1std
 RUN rm QuestaSetup-24.1std.0.1077-linux.run
