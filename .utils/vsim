@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker run --mount type=bind,src=.,dst=. altera_tools:latest vsim "$@"
+docker run --mount type=bind,src=$PWD,dst=/home/main altera_tools:latest vsim "$@"
