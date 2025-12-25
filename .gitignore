@@ -34,3 +34,4 @@ transcript
 
 .cache
 .venv
+qrun.log
