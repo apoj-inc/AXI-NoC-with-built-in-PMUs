@@ -25,6 +25,6 @@ jobs:
         chmod +x configure
         ${{env.ALTERA_TOOLS_CALL}} "${{env.WORKDIR}}/configure --prefix=QUESTA"
       
-    - name: Run make
+    - name: Run test
       shell: bash
       run: ${{env.ALTERA_TOOLS_CALL}} "cd ${{env.WORKDIR}} && make"
