@@ -23,6 +23,7 @@ case $PREFIX in
     REQUIRED_COMMANDS=( "${REQUIRED_COMMANDS[@]}" "vlib" )
     REQUIRED_COMMANDS=( "${REQUIRED_COMMANDS[@]}" "vmap" )
     REQUIRED_COMMANDS=( "${REQUIRED_COMMANDS[@]}" "vsim" )
+    REQUIRED_COMMANDS=( "${REQUIRED_COMMANDS[@]}" "vis" )
     ;;
 esac
 
