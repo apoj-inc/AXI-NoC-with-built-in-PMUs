@@ -8,7 +8,7 @@ on:
 
 env:
   WORKDIR: /mnt/work
-  ALTERA_TOOLS_CALL: "docker run --mount type=bind,src=$PWD,dst=${{env.WORKDIR}} altera_tools:latest"
+  ALTERA_TOOLS_CALL: "docker run --mount type=bind,src=$PWD,dst=/mnt/work altera_tools:latest"
 
 jobs:
   build:
