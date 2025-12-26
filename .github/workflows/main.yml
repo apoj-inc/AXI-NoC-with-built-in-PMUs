@@ -23,6 +23,7 @@ jobs:
       run: echo "$GITHUB_WORKSPACE/.utils" >> "$GITHUB_PATH"
 
     - name: Create aliasses
+      shell: bash
       run: |
         alias qrun="${{env.ALTERA_TOOLS_CALL}} qrun"
         alias vlib="${{env.ALTERA_TOOLS_CALL}} vlib"
