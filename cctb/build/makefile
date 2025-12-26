@@ -5,7 +5,8 @@ TOPLEVEL_LANG ?= verilog
 CACHE_DIR ?= $(CURDIR)/.cache
 WORK_DIR ?= $(CACHE_DIR)/questa/work_dir
 
-TB_MODULE ?= tb_bridge
+COCOTB_TOPLEVEL ?= uart_loop
+COCOTB_TEST_MODULES ?= tb_example
 TB_DIR ?= $(CURDIR)/tb
 TB_EXT ?= sv
 
@@ -13,15 +14,15 @@ LIST_DIR ?= $(CURDIR)/rtl/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
 
 INCLUDE_DIRS ?=
-INCLUDE_DIRS += $(CURDID)/rtl/axi
-INCLUDE_DIRS += $(CURDID)/rtl/cores/src
+INCLUDE_DIRS += $(CURDIR)/rtl/axi
+INCLUDE_DIRS += $(CURDIR)/rtl/cores/src
 
-TB_FILES =  $(foreach file,$(shell find tb/ -type f -name '*.sv'), $(CURDID)/$(file))
+TB_FILES =  $(foreach file,$(shell find tb/ -type f -name '*.sv'), $(CURDIR)/$(file))
 
 SIM ?= questa
 SIM_ARGS := -suppress 12110 -autofindloop -suppress 12130
 CCTB_DIR ?= $(CACHE_DIR)/cctb
-SIM_BUILD ?= $(CCTB_DIR)/$(TB_MODULE)
+SIM_BUILD ?= $(CCTB_DIR)/$(COCOTB_TEST_MODULES)
 
 VENV_DIR ?= $(CCTB_DIR)/.venv
 
@@ -36,12 +37,13 @@ run: $(VENV_DIR) $(VERILOG_SOURCES)
 	vlib $(WORK_DIR)
 	vmap work $(WORK_DIR)
 
-	@cp -r $(TB_DIR)/$(TB_MODULE) $(SIM_BUILD)/..
+	@cp -r $(TB_DIR)//$(COCOTB_TEST_MODULES) $(SIM_BUILD)/..
 	source $(VENV_DIR)/bin/activate; \
+	cd $(SIM_BUILD); \
 	make -f $(shell $(VENV_DIR)/bin/cocotb-config --makefiles)/Makefile.sim TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
-	TOPLEVEL=$(TB_MODULE) MODULE=$(TB_MODULE) SIM=$(SIM) SIM_BUILD=$(SIM_BUILD) \
+	COCOTB_TOPLEVEL=$(COCOTB_TOPLEVEL) COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES) SIM=$(SIM) SIM_BUILD=$(SIM_BUILD) \
 	SIM_ARGS='$(SIM_ARGS)' WAVES=$(WAVES) \
-	VERILOG_SOURCES="$(VERILOG_SOURCES) $(TB_FILE)"
+	VERILOG_SOURCES="$(VERILOG_SOURCES) $(TB_FILES)"
 
 wave:
 	vsim -view $(SIM_BUILD)/vsim.wlf
