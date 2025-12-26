@@ -7,9 +7,7 @@
  * Copyright(c) 2017-2020 Stanislav Zhelnio 
  *                        Aleksandr Romanov 
  */ 
-
-`include "sr_cpu.vh"
-
+ 
 module sr_cpu
 (
     input   logic         clk,        // clock
