@@ -1,3 +1,6 @@
 cocotb==2.0
-pytest-cocotb
-pytest-cocotb-cov
+coverage
+pytest
+ipython
+cocotbext_axi
+cocotbext_uart

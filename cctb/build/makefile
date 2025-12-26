@@ -16,7 +16,7 @@ INCLUDE_DIRS ?=
 INCLUDE_DIRS += $(CURDIR)/rtl/axi
 INCLUDE_DIRS += $(CURDIR)/rtl/cores/src
 
-TB_FILES =  $(foreach file,$(shell find tb/ -type f -name '*.sv'), $(CURDIR)/$(file))
+TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'), $(CURDIR)/$(file))
 
 SIM ?= questa
 SIM_ARGS := -suppress 12110 -autofindloop -suppress 12130
@@ -29,9 +29,9 @@ WAVES ?= 1
 
 VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)), $(CURDIR)/$(file))
 
-.PHONY: run clean
+.PHONY: run wave clean_module
 
-run: $(VENV_DIR) $(VERILOG_SOURCES)
+runt: $(VENV_DIR) $(VERILOG_SOURCES)
 	@mkdir -p $(SIM_BUILD)
 	@cp -r $(TB_DIR)/$(COCOTB_TEST_MODULES) $(SIM_BUILD)/..
 	source $(VENV_DIR)/bin/activate; \
@@ -50,5 +50,6 @@ $(VENV_DIR): cctb/build/user_requirements.txt cctb/build/requirements.txt
 	pip install -r cctb/build/requirements.txt; \
 	pip install -r cctb/build/user_requirements.txt
 
-clean:
+
+clean_module:
 	@rm -rf $(SIM_BUILD)

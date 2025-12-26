@@ -3,7 +3,7 @@ rtl/axi/axi2axis_typedef.svh
 rtl/cores/src/sr_cpu.vh 
 rtl/cores/src/sm_register.v 
 rtl/cores/src/sm_rom.v 
-rtl/cores/src/sr_cpu.sv
+rtl/cores/src/sr_cpu.v
 rtl/cores/src/sr_cpu_axi.sv
 rtl/cores/src/sr_axi_adapter.sv
 rtl/axi/cross_router_logic/algorithm_selector_XY.sv
