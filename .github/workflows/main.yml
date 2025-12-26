@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
-  ALTERA_TOOLS_CALL: "docker run axi-noc-with-built-in-pmus-altera_tools:latest"
+  ALTERA_TOOLS_CALL: "docker run --mount type=bind,src=$PWD,dst=$PWD axi-noc-with-built-in-pmus-altera_tools:latest"
 
 jobs:
   build:
