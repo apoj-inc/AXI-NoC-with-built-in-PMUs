@@ -18,13 +18,10 @@ jobs:
     - name: Setup tools
       run: docker compose up
 
+    - name: Run configure
+      shell: bash
+      run: docker run --mount type=bind,src=$PWD,dst=$PWD axi-noc-with-built-in-pmus-altera_tools:latest "chmod +x $PWD/configure; $PWD/configure --prefix=QUESTA;"
+      
     - name: Run make
       shell: bash
-      run: |
-        alias qrun="${{env.ALTERA_TOOLS_CALL}} qrun"; \
-        alias vlib="${{env.ALTERA_TOOLS_CALL}} vlib"; \
-        alias vmap="${{env.ALTERA_TOOLS_CALL}} vmap"; \
-        alias vsim="${{env.ALTERA_TOOLS_CALL}} vsim"; \
-        alias vis="${{env.ALTERA_TOOLS_CALL}} vis"; \
-        chmod +x configure; ./configure --prefix=QUESTA; \
-        make
+      run: docker run --mount type=bind,src=$PWD,dst=$PWD axi-noc-with-built-in-pmus-altera_tools:latest "cd $PWD; make;"
