@@ -34,9 +34,6 @@ VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)), $(CURDIR)/$(file))
 
 run: $(VENV_DIR) $(VERILOG_SOURCES)
 	@mkdir -p $(SIM_BUILD) $(WORK_DIR)
-	vlib $(WORK_DIR)
-	vmap work $(WORK_DIR)
-
 	@cp -r $(TB_DIR)//$(COCOTB_TEST_MODULES) $(SIM_BUILD)/..
 	source $(VENV_DIR)/bin/activate; \
 	cd $(SIM_BUILD); \
