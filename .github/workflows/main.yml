@@ -7,7 +7,8 @@ on:
     branches: [ "main" ]
 
 env:
-  ALTERA_TOOLS_CALL: "docker run --mount type=bind,src=$PWD,dst=$PWD altera_tools:latest"
+  WORKDIR: /mnt/work
+  ALTERA_TOOLS_CALL: "docker run --mount type=bind,src=$PWD,dst=${{env.WORKDIR}} altera_tools:latest"
 
 jobs:
   build:
@@ -22,8 +23,8 @@ jobs:
       shell: bash
       run: |
         chmod +x configure
-        ${{env.ALTERA_TOOLS_CALL}} "$PWD/configure --prefix=QUESTA"
+        ${{env.ALTERA_TOOLS_CALL}} "${{env.WORKDIR}}/configure --prefix=QUESTA"
       
     - name: Run make
       shell: bash
-      run: ${{env.ALTERA_TOOLS_CALL}} "cd $PWD; make"
+      run: ${{env.ALTERA_TOOLS_CALL}} "cd ${{env.WORKDIR}}; make"
