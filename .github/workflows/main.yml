@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
-  ALTERA_TOOLS_CALL: "docker run --mount type=bind,src=$PWD,dst=$PWD axi-noc-with-built-in-pmus-altera_tools:latest"
+  ALTERA_TOOLS_CALL: "docker run --mount type=bind,src=$PWD,dst=$PWD altera_tools:latest"
 
 jobs:
   build:
@@ -20,8 +20,10 @@ jobs:
 
     - name: Run configure
       shell: bash
-      run: docker run --mount type=bind,src=$PWD,dst=$PWD axi-noc-with-built-in-pmus-altera_tools:latest "chmod +x $PWD/configure; $PWD/configure --prefix=QUESTA;"
+      run: |
+        chmod +x configure
+        ${{env.ALTERA_TOOLS_CALL}} "$PWD/configure --prefix=QUESTA"
       
     - name: Run make
       shell: bash
-      run: docker run --mount type=bind,src=$PWD,dst=$PWD axi-noc-with-built-in-pmus-altera_tools:latest "cd $PWD; make;"
+      run: ${{env.ALTERA_TOOLS_CALL}} "cd $PWD; make"
