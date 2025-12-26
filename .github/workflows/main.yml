@@ -23,10 +23,11 @@ jobs:
       run: echo "$GITHUB_WORKSPACE/.utils" >> "$GITHUB_PATH"
 
     - name: Create aliasses
-      run: alias qrun="${{env.ALTERA_TOOLS_CALL}} qrun"; \
-        alias vlib="${{env.ALTERA_TOOLS_CALL}} vlib"; \
-        alias vmap="${{env.ALTERA_TOOLS_CALL}} vmap"; \
-        alias vsim="${{env.ALTERA_TOOLS_CALL}} vsim"; \
+      run: |
+        alias qrun="${{env.ALTERA_TOOLS_CALL}} qrun"
+        alias vlib="${{env.ALTERA_TOOLS_CALL}} vlib"
+        alias vmap="${{env.ALTERA_TOOLS_CALL}} vmap"
+        alias vsim="${{env.ALTERA_TOOLS_CALL}} vsim"
         alias vis="${{env.ALTERA_TOOLS_CALL}} vis"
 
     - name: Configure makefile
