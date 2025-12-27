@@ -12,9 +12,11 @@ TB_EXT ?= sv
 LIST_DIR ?= $(CURDIR)/rtl/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
 
-INCLUDE_DIRS ?=
+ifndef INCLUDE_DIRS
+INCLUDE_DIRS :=
 INCLUDE_DIRS += $(CURDIR)/rtl/axi
 INCLUDE_DIRS += $(CURDIR)/rtl/cores/src
+endif
 
 TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'), $(CURDIR)/$(file))
 
@@ -31,7 +33,7 @@ VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)), $(CURDIR)/$(file))
 
 .PHONY: run wave clean_module
 
-runt: $(VENV_DIR) $(VERILOG_SOURCES)
+run: $(VENV_DIR) $(VERILOG_SOURCES)
 	@mkdir -p $(SIM_BUILD)
 	@cp -r $(TB_DIR)/$(COCOTB_TEST_MODULES) $(SIM_BUILD)/..
 	source $(VENV_DIR)/bin/activate; \
