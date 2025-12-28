@@ -1,3 +1,5 @@
+`include "axi2axis_typedef.svh"
+
 module arbiter #(
     parameter DATA_WIDTH = 32
     `ifdef TID_PRESENT

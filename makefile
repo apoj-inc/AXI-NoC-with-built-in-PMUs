@@ -4,6 +4,7 @@ CCTB_MAKEFILE ?= $(CURDIR)/cctb/build/makefile
 
 CACHE_DIR ?= $(CURDIR)/.cache
 VENV_DIR ?= $(CACHE_DIR)/.venv
+COCOTB_DIR ?= $(CACHE_DIR)/cocotb
 
 ifndef INCLUDE_DIRS
 INCLUDE_DIRS :=
@@ -13,9 +14,9 @@ endif
 
 LIST_DIR ?= $(CURDIR)/rtl/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
-VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)), $(CURDIR)/$(file))
+VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)),$(CURDIR)/$(file))
 
-TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'), $(CURDIR)/$(file))
+TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'),$(CURDIR)/$(file))
 
 .PHONY: all test clean run_pytest
 all: test
@@ -26,6 +27,7 @@ test: $(VENV_DIR)
 run_pytest: $(VENV_DIR)
 	export INCLUDE_DIRS="$(INCLUDE_DIRS)"; \
 	export VERILOG_SOURCES="$(VERILOG_SOURCES) $(TB_FILES)"; \
+	export BUILD_DIR="$(COCOTB_DIR)"; \
 	source $(VENV_DIR)/bin/activate; \
 	python3 -m pytest
 

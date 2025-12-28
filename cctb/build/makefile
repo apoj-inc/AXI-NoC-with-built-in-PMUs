@@ -18,18 +18,18 @@ INCLUDE_DIRS += $(CURDIR)/rtl/axi
 INCLUDE_DIRS += $(CURDIR)/rtl/cores/src
 endif
 
-TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'), $(CURDIR)/$(file))
+TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'),$(CURDIR)/$(file))
 
 SIM ?= questa
 SIM_ARGS := -suppress 12110 -autofindloop -suppress 12130
 CCTB_DIR ?= $(CACHE_DIR)/cctb
 SIM_BUILD ?= $(CCTB_DIR)/$(COCOTB_TEST_MODULES)
 
-VENV_DIR ?= $(CCTB_DIR)/.venv
+VENV_DIR ?= $(CACHE_DIR)/.venv
 
 WAVES ?= 1
 
-VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)), $(CURDIR)/$(file))
+VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)),$(CURDIR)/$(file))
 
 .PHONY: run wave clean_module
 

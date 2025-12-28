@@ -1,3 +1,5 @@
+`include "axi2axis_typedef.svh"
+
 module axi2axis_XY #(
     parameter ADDR_WIDTH = 16,
     parameter DATA_WIDTH = 32,

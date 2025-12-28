@@ -36,3 +36,5 @@ transcript
 .venv
 qrun.log
 modelsim.ini
+
+__pycache__

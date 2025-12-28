@@ -1,3 +1,5 @@
+`include "axi2axis_typedef.svh"
+
 module algorithm_dual #(
     parameter DATA_WIDTH = 32
     `ifdef TID_PRESENT
