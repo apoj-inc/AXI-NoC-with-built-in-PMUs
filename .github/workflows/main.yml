@@ -8,16 +8,20 @@ on:
 
 env:
   WORKDIR: /mnt/work
-  ALTERA_TOOLS_CALL: "docker run --mount type=bind,src=$PWD,dst=/mnt/work --mac-address=4e:dc:e2:0a:bc:fb altera_tools:latest"
+  ALTERA_TOOLS_CALL: "docker run --mount type=bind,src=$PWD,dst=/mnt/work --mac-address=4e:dc:e2:0a:bc:fb docker.pkg.github.com/apoj-inc/AXI-NoC-with-built-in-PMUs/altera_tools:latest"
 
 jobs:
-  build:
+  compile_and_test_tools:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
     - name: Setup tools
-      run: docker compose up
+      shell: bash
+      run: |
+        docker build .docker/altera_tools -t "docker.pkg.github.com/apoj-inc/AXI-NoC-with-built-in-PMUs/altera_tools:latest"
+        docker login docker.pkg.github.com -u $GITHUB_ACTOR -p ${{secrets.GITHUB_TOKEN}}
+        docker push "docker.pkg.github.com/apoj-inc/AXI-NoC-with-built-in-PMUs/github-actions"
 
     - name: Run configure
       shell: bash
@@ -25,15 +29,10 @@ jobs:
         chmod +x configure
         ${{env.ALTERA_TOOLS_CALL}} "${{env.WORKDIR}}/configure --prefix=QUESTA"
       
-    - name: Run test
+    - name: Test pure cctb
       shell: bash
       run: ${{env.ALTERA_TOOLS_CALL}} "cd ${{env.WORKDIR}} && make"
-    
-  run_pytest:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
       
-    - name: Run test
+    - name: Test pytest
       shell: bash
       run: ${{env.ALTERA_TOOLS_CALL}} "cd ${{env.WORKDIR}} && make run_pytest"
