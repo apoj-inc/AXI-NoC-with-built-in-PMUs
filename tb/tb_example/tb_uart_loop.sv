@@ -1,4 +1,4 @@
-module uart_loop
+module tb_uart_loop
 #(
 	parameter CLK_FRE = 50,      //clock frequency(Mhz)
 	parameter BAUD_RATE = 115200 //serial baud rate
