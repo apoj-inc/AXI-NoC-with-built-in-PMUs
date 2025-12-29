@@ -1,4 +1,10 @@
 services:
   altera_tools:
     image: altera_tools:latest
-    build: .docker/altera_tools
+    build:
+      context:
+        .docker/altera_tools
+      cache_from:
+        - type=gha
+      cache_to:
+        - type=gha,mode=max

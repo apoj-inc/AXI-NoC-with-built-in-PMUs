@@ -4,7 +4,7 @@ TOPLEVEL_LANG ?= verilog
 
 CACHE_DIR ?= $(CURDIR)/.cache
 
-COCOTB_TOPLEVEL ?= uart_loop
+COCOTB_TOPLEVEL ?= tb_uart_loop
 COCOTB_TEST_MODULES ?= tb_example
 TB_DIR ?= $(CURDIR)/tb
 TB_EXT ?= sv
@@ -12,33 +12,35 @@ TB_EXT ?= sv
 LIST_DIR ?= $(CURDIR)/rtl/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
 
-INCLUDE_DIRS ?=
+ifndef INCLUDE_DIRS
+INCLUDE_DIRS :=
 INCLUDE_DIRS += $(CURDIR)/rtl/axi
 INCLUDE_DIRS += $(CURDIR)/rtl/cores/src
+endif
 
-TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'), $(CURDIR)/$(file))
+TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'),$(CURDIR)/$(file))
 
 SIM ?= questa
 SIM_ARGS := -suppress 12110 -autofindloop -suppress 12130
 CCTB_DIR ?= $(CACHE_DIR)/cctb
 SIM_BUILD ?= $(CCTB_DIR)/$(COCOTB_TEST_MODULES)
 
-VENV_DIR ?= $(CCTB_DIR)/.venv
+VENV_DIR ?= $(CACHE_DIR)/.venv
 
 WAVES ?= 1
 
-VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)), $(CURDIR)/$(file))
+VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)),$(CURDIR)/$(file))
 
 .PHONY: run wave clean_module
 
-runt: $(VENV_DIR) $(VERILOG_SOURCES)
+run: $(VENV_DIR) $(VERILOG_SOURCES)
 	@mkdir -p $(SIM_BUILD)
 	@cp -r $(TB_DIR)/$(COCOTB_TEST_MODULES) $(SIM_BUILD)/..
 	source $(VENV_DIR)/bin/activate; \
 	cd $(SIM_BUILD); \
 	make -f $(shell $(VENV_DIR)/bin/cocotb-config --makefiles)/Makefile.sim TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
 	COCOTB_TOPLEVEL=$(COCOTB_TOPLEVEL) COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES) SIM=$(SIM) SIM_BUILD=$(SIM_BUILD) \
-	SIM_ARGS='$(SIM_ARGS)' WAVES=$(WAVES) \
+	SIM_ARGS='$(SIM_ARGS)' WAVES=$(WAVES) VERILOG_INCLUDE_DIRS="$(INCLUDE_DIRS)" \
 	VERILOG_SOURCES="$(VERILOG_SOURCES) $(TB_FILES)"
 
 wave:
