@@ -31,7 +31,6 @@ jobs:
           target: test
           load: true
           tags: altera_tools-dev:latest
-          platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
         
@@ -73,8 +72,7 @@ jobs:
           ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest
           ${{ secrets.DOCKER_USERNAME }}/altera_tools:${{ steps.meta.outputs.SHORT_SHA }}
         cache-from: type=local
-        cache-to: type=gha,mode=max,dest=/tmp/.buildx-cache
-        load: True
+        cache-to: type=gha,mode=max
     
   run_tests:
     runs-on: ubuntu-latest
