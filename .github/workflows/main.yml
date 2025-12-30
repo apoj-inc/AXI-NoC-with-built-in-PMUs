@@ -30,7 +30,7 @@ jobs:
           tags: altera_tools-dev:latest
           platforms: linux/amd64
           cache-from: type=gha
-          cache-to: type=gha
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
         
       - name: Run docker image tests
         run: |
@@ -69,8 +69,8 @@ jobs:
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest
           ${{ secrets.DOCKER_USERNAME }}/altera_tools:${{ steps.meta.outputs.SHORT_SHA }}
-        cache-from: type=gha
-        cache-to: type=gha
+        cache-from: type=local,dest=/tmp/.buildx-cache
+        cache-to: type=gha,mode=max
     
   run_tests:
     runs-on: ubuntu-latest
