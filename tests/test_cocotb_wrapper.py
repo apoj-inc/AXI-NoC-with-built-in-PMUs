@@ -9,6 +9,7 @@ VERILOG_SOURCES   = environ['VERILOG_SOURCES'].strip().split(' ')
 INCLUDE_DIRS      = environ['INCLUDE_DIRS'].strip().split(' ')
 COCOTB_TESTS_DIRS = environ['TESTS_DIRS'].strip().split(' ')
 BUILD_DIR         = environ['BUILD_DIR']
+TESTS_DIR         = environ['TESTS_DIR']
 LOGS_DIR          = environ['LOGS_DIR']
 RESULTS_DIR       = environ['RESULTS_DIR']
 
@@ -21,12 +22,12 @@ def _have_questa() -> bool:
 def test_cocotb(cocotb_test_dir) -> None:
     runner = get_runner('questa')
 
-    test_dir = BUILD_DIR
-    makedirs(test_dir, exist_ok=True)
+    makedirs(BUILD_DIR, exist_ok=True)
+    makedirs(TESTS_DIR, exist_ok=True)
     makedirs(LOGS_DIR, exist_ok=True)
     makedirs(RESULTS_DIR, exist_ok=True)
 
-    copytree(cocotb_test_dir, test_dir, dirs_exist_ok=True)
+    copytree(cocotb_test_dir, TESTS_DIR, dirs_exist_ok=True)
 
     hdl_toplevel = path.basename(glob.glob('tb_*.sv', root_dir=cocotb_test_dir)[0]).split('.')[0]
     test_module = path.basename(glob.glob('tb_*.py', root_dir=cocotb_test_dir)[0]).split('.')[0]
@@ -36,17 +37,17 @@ def test_cocotb(cocotb_test_dir) -> None:
         sources=VERILOG_SOURCES,
         includes=INCLUDE_DIRS,
         hdl_toplevel=hdl_toplevel,
-        build_dir=test_dir,
+        build_dir=BUILD_DIR,
         waves=False,
     )
 
     runner.test(
-        hdl_toplevel_library='work',
+        hdl_toplevel_library='../work',
         test_module=test_module,
         hdl_toplevel=hdl_toplevel,
         hdl_toplevel_lang='verilog',
-        build_dir=test_dir,
-        test_dir=test_dir,
+        build_dir=BUILD_DIR,
+        test_dir=TESTS_DIR,
         waves=False,
         log_file=LOGS_DIR+f'/{test_module}.log',
         results_xml=RESULTS_DIR+f'/{test_module}.xml'

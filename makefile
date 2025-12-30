@@ -21,8 +21,9 @@ TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'),$(CURDIR)/$(f
 TB_DIR ?= $(CURDIR)/tb
 TESTS_DIRS ?= $(sort $(dir $(wildcard $(TB_DIR)/*/)))
 
-BUILD_DIR   ?= $(COCOTB_DIR)/tests
-LOGS_DIR    ?= $(BUILD_DIR)/logs
+BUILD_DIR   ?= $(COCOTB_DIR)
+TESTS_DIR   ?= $(BUILD_DIR)/tests
+LOGS_DIR    ?= $(TESTS_DIR)/logs
 RESULTS_DIR ?= ${LOGS_DIR}/results
 
 .PHONY: all test clean run_pytest
@@ -37,6 +38,7 @@ run_pytest: $(VENV_DIR)
 	export VERILOG_SOURCES="$(sort $(VERILOG_SOURCES) $(TB_FILES))"; \
 	export LOGS_DIR=${LOGS_DIR}; \
 	export RESULTS_DIR=${RESULTS_DIR}; \
+	export TESTS_DIR=${TESTS_DIR}; \
 	export BUILD_DIR="$(BUILD_DIR)"; \
 	source $(VENV_DIR)/bin/activate; \
 	python3 -m pytest --junit-xml=${RESULTS_DIR}/all.xml
@@ -48,7 +50,8 @@ $(VENV_DIR) : $(CURDIR)/requirements.txt
 
 clean:
 	@rm -rf $(CURDIR)/.cache \
+	$(CURDIR)/.pytest_cache \
 	$(CURDIR)/tests/__pycache__ \
 	$(CURDIR)/qrun.log \
-	$(CURDIR)/modelsim.ini\
+	$(CURDIR)/modelsim.ini \
 	$(CURDIR)/transcript
