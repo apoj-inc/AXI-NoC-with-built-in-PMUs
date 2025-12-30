@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 AS build
+FROM alpine:latest AS build
 RUN apt-get update
 
 ENV MAIN=/home/main
