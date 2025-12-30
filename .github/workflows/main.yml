@@ -29,7 +29,7 @@ jobs:
         with:
           platforms: linux/amd64
           load: true
-          context: "{{defaultContext}}.docker/altera_tools"
+          context: "{{defaultContext}}:.docker/altera_tools"
           target: test
           tags: altera_tools-dev:latest
           cache-from: type=gha
@@ -65,7 +65,7 @@ jobs:
     - name: Build and push amd64-arch production image
       uses: docker/build-push-action@v6
       with:
-        context: "{{defaultContext}}.docker/altera_tools"
+        context: "{{defaultContext}}:.docker/altera_tools"
         target: production
         push: true
         platforms: linux/amd64
