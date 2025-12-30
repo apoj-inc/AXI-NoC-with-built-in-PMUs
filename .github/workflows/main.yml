@@ -20,9 +20,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
       
       - name: Build test image
         uses: docker/build-push-action@v6
@@ -36,7 +33,7 @@ jobs:
         
       - name: Run docker image tests
         run: |
-          docker create altera_tools-dev
+          docker build altera_tools-dev
           chmod +x configure
           docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "./configure --prefix=QUESTA"
           docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "make test"
