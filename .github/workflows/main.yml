@@ -26,6 +26,7 @@ jobs:
         with:
           context: .docker/altera_tools
           target: test
+          load: true
           tags: altera_tools-dev:latest
           platforms: linux/amd64
           cache-from: type=gha
@@ -33,7 +34,6 @@ jobs:
         
       - name: Run docker image tests
         run: |
-          docker build .docker/altera_tools -t altera_tools-dev
           chmod +x configure
           docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "./configure --prefix=QUESTA"
           docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "make test"
