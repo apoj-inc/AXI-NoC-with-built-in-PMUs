@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS build
 RUN apt-get update
 
 ENV MAIN=/home/main
@@ -26,3 +26,7 @@ RUN echo "SALT_LICENSE_SERVER=\"${LM_LICENSE_FILE}\"" >> /etc/environment
 
 ENTRYPOINT ["/bin/bash", "-c"]
 CMD ["echo Tools are ready!"]
+
+FROM build AS test
+
+FROM build AS production
