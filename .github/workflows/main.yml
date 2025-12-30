@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
-  ALTERA_TOOLS_ARGS: "--mount type=bind,src=$PWD,dst=/mnt/work --mac-address=${{ secrets.LM_LICENSE_MAC }} --workdir=/mnt/work"
+  ALTERA_TOOLS_ARGS: "--mount type=bind,src=$PWD,dst=/mnt/work --mac-address=${{ secrets.LM_LICENSE_MAC }} --workdir=/mnt/work --network host"
 
 jobs:
   build_docker_test_image:
@@ -29,7 +29,6 @@ jobs:
         with:
           context: .docker/altera_tools
           target: test
-          load: true
           tags: altera_tools-dev:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
