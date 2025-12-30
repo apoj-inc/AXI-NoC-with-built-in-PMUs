@@ -69,8 +69,9 @@ jobs:
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest
           ${{ secrets.DOCKER_USERNAME }}/altera_tools:${{ steps.meta.outputs.SHORT_SHA }}
-        cache-from: type=local,dest=/tmp/.buildx-cache
-        cache-to: type=gha,mode=max
+        cache-from: type=local
+        cache-to: type=gha,mode=max,dest=/tmp/.buildx-cache
+        outputs: type=docker
     
   run_tests:
     runs-on: ubuntu-latest
