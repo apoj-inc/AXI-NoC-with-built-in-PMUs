@@ -31,12 +31,12 @@ jobs:
           target: test
           tags: altera_tools-dev:latest
           platforms: linux/amd64
-          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
         
       - name: Run docker image tests
         run: |
+          docker create altera_tools-dev
           chmod +x configure
           docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "./configure --prefix=QUESTA"
           docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "make test"
