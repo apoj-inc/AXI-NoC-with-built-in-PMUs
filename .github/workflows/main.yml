@@ -12,21 +12,9 @@ env:
 jobs:
   build_docker_test_image:
     runs-on: ubuntu-latest
-    outputs:
-      GIT_SHA: ${{ steps.meta.outputs.SHORT_SHA }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Extract SHA
-        id: meta
-        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-
-      - name: log in to docker hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.docker_username }}
-          password: ${{ secrets.dockerhub_token }}
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -37,7 +25,7 @@ jobs:
           context: ".docker/altera_tools"
           target: test
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/altera_tools-dev:latest
+            altera_tools-dev:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
@@ -46,7 +34,7 @@ jobs:
         shell: bash
         run: |
           chmod +x configure
-          docker run ${{env.ALTERA_TOOLS_ARGS}} ${{ secrets.DOCKER_USERNAME }}/altera_tools-dev:latest "./configure --prefix=QUESTA; \
+          docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "./configure --prefix=QUESTA; \
           make test; \
           make run_pytest TESTS_DIRS=tb/tb_example"
         timeout-minutes: 15
@@ -65,6 +53,10 @@ jobs:
       
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+
+    - name: Extract SHA
+      id: meta
+      run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       
     - name: Build and push amd64-arch production image
       uses: docker/build-push-action@v6
@@ -74,7 +66,7 @@ jobs:
         target: production
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest
-          ${{ secrets.DOCKER_USERNAME }}/altera_tools:${{ needs.build_docker_test_image.outputs.GIT_SHA }}
+          ${{ secrets.DOCKER_USERNAME }}/altera_tools:${{ steps.meta.outputs.SHORT_SHA }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         push: true
@@ -85,13 +77,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: log in to docker hub
-      uses: docker/login-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build test image
+      uses: docker/build-push-action@v6
       with:
-        username: ${{ secrets.docker_username }}
-        password: ${{ secrets.dockerhub_token }}
+        context: ".docker/altera_tools"
+        target: test
+        tags: |
+          altera_tools-dev:latest
+        cache-from: type=gha
+        load: true
       
     - name: Run pytest
       shell: bash
-      run: docker run ${{env.ALTERA_TOOLS_ARGS}} ${{ secrets.DOCKER_USERNAME }}/altera_tools-dev:latest "make run_pytest"
+      run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "make run_pytest"
       timeout-minutes: 60
