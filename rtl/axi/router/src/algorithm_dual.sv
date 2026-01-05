@@ -1,21 +1,8 @@
-`include "defines.svh"
-`include "axi2axis_typedef.svh"
-
 module algorithm_dual #(
-    parameter DATA_WIDTH = 32
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
-    ,
+    parameter DATA_WIDTH = 32,
+    parameter ID_WIDTH = 4,
+    parameter DEST_WIDTH = 4,
+    parameter USER_WIDTH = 4,
     parameter CHANNEL_NUMBER = 10,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
@@ -30,8 +17,12 @@ module algorithm_dual #(
 ) (
     input clk, rst_n,
     
-    axis_if.s in,
-    axis_if.m out [CHANNEL_NUMBER],
+    input  axis_data_t in,
+    input  logic  in_valid,
+    output logic  in_ready,
+    output axis_data_t out [CHANNEL_NUMBER],
+    output logic  out_valid [CHANNEL_NUMBER],
+    input  logic  out_ready [CHANNEL_NUMBER]
 
     input logic [CHANNEL_NUMBER_WIDTH-1:0] current_grant,
 
@@ -39,21 +30,11 @@ module algorithm_dual #(
     input logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y
 );
 
-    axis_if #(
-        .DATA_WIDTH(DATA_WIDTH)
-        `ifdef TID_PRESENT
-        ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-        ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-        ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    ) in_filtered();
+    `include "axi_type.svh"
+
+    axis_data_t in_filtered;
+    logic in_filtered_ready;
+    logic in_filtered_valid;
 
     logic [CHANNEL_NUMBER_WIDTH-1:0] ctrl;
     logic [CHANNEL_NUMBER-1:0] selector;
@@ -87,6 +68,10 @@ module algorithm_dual #(
         end
     end
 
+    assign out[ctrl] = in_filtered;
+    assign out_valid[ctrl] = in_filtered_valid;
+    assign in_filtered_ready = out_ready[ctrl];
+
     always_ff @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
             busy <= '0;
@@ -97,106 +82,28 @@ module algorithm_dual #(
 
     always_comb begin
         busy_next = busy;
-        if (in.TVALID && (in.TID == ROUTING_HEADER)) begin
+        if (in_valid && (in.TID == ROUTING_HEADER)) begin
 
-            in_filtered.TVALID = !busy[ctrl] ? '1 : '0;
-            in_filtered.TDATA  = !busy[ctrl] ? in.TDATA : '0;
-            `ifdef TSTRB_PRESENT
-            in_filtered.TSTRB  = !busy[ctrl] ? in.TSTRB : '0;
-            `endif
-            `ifdef TKEEP_PRESENT
-            in_filtered.TKEEP  = !busy[ctrl] ? in.TKEEP : '0;
-            `endif
-            `ifdef TLAST_PRESENT
-            in_filtered.TLAST  = !busy[ctrl] ? in.TLAST : '0;
-            `endif
-            `ifdef TID_PRESENT
-            in_filtered.TID    = !busy[ctrl] ? in.TID : '0;
-            `endif
-            `ifdef TDEST_PRESENT
-            in_filtered.TDEST  = !busy[ctrl] ? in.TDEST : '0;
-            `endif
-            `ifdef TUSER_PRESENT
-            in_filtered.TUSER  = !busy[ctrl] ? in.TUSER : '0;
-            `endif
+            in_filtered_valid = !busy[ctrl] ? '1 : '0;
+            in_filtered  = !busy[ctrl] ? in : '0;
 
-            in.TREADY = !busy[ctrl] ? in_filtered.TREADY : 1'b0;
-            busy_next[ctrl] = in_filtered.TREADY ? 1'b1 : busy[ctrl];
+            in_ready = !busy[ctrl] ? in_filtered_ready : 1'b0;
+            busy_next[ctrl] = in_filtered_ready ? 1'b1 : busy[ctrl];
         end
-        else if (in.TVALID) begin
-            in_filtered.TVALID = in.TVALID;
-            in_filtered.TDATA  = in.TDATA;
-            `ifdef TSTRB_PRESENT
-            in_filtered.TSTRB  = in.TSTRB;
-            `endif
-            `ifdef TKEEP_PRESENT
-            in_filtered.TKEEP  = in.TKEEP;
-            `endif
-            `ifdef TLAST_PRESENT
-            in_filtered.TLAST  = in.TLAST;
-            `endif
-            `ifdef TID_PRESENT
-            in_filtered.TID    = in.TID;
-            `endif
-            `ifdef TDEST_PRESENT
-            in_filtered.TDEST  = in.TDEST;
-            `endif
-            `ifdef TUSER_PRESENT
-            in_filtered.TUSER  = in.TUSER;
-            `endif
+        else if (in_valid) begin
+            in_filtered_valid = in_valid;
+            in_filtered  = in;
+            in_ready = in_filtered_ready;
 
-            in.TREADY = in_filtered.TREADY;
-
-            if (in.TLAST && in_filtered.TREADY) begin
+            if (in.TLAST && in_filtered_ready) begin
                 busy_next[ctrl] = 1'b0;
             end
         end
         else begin
-            in_filtered.TVALID = 1'b0;
-            in_filtered.TDATA  = '0;
-            `ifdef TSTRB_PRESENT
-            in_filtered.TSTRB  = '0;
-            `endif
-            `ifdef TKEEP_PRESENT
-            in_filtered.TKEEP  = '0;
-            `endif
-            `ifdef TLAST_PRESENT
-            in_filtered.TLAST  = '0;
-            `endif
-            `ifdef TID_PRESENT
-            in_filtered.TID    = '0;
-            `endif
-            `ifdef TDEST_PRESENT
-            in_filtered.TDEST  = '0;
-            `endif
-            `ifdef TUSER_PRESENT
-            in_filtered.TUSER  = '0;
-            `endif
-
-            in.TREADY = in_filtered.TREADY;
+            in_filtered_valid = 1'b0;
+            in_filtered  = '0;
+            in_ready = in_filtered_ready;
         end
     end
-
-    axis_if_demux #(
-        .CHANNEL_NUMBER(CHANNEL_NUMBER),
-        .DATA_WIDTH(DATA_WIDTH)
-        `ifdef TID_PRESENT
-        ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-        ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-        ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    ) demux (
-        in_filtered,
-        1'b1,
-        ctrl,
-        out
-    );
 
 endmodule

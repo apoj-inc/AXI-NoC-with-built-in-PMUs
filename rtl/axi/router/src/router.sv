@@ -1,20 +1,22 @@
 `include "defines.svh"
 
 module router #(
-    parameter DATA_WIDTH = 32
+    parameter DATA_WIDTH = 32,
     `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
+    parameter ID_WIDTH = 4,
+    `else
+    parameter ID_WIDTH = 0,
     `endif
     `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
+    parameter DEST_WIDTH = 4,
+    `else
+    parameter DEST_WIDTH = 0,
     `endif
     `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
+    parameter USER_WIDTH = 4,
+    `else
+    parameter USER_WIDTH = 0,
     `endif
-    ,
     parameter CHANNEL_NUMBER = 5,
     parameter BUFFER_LENGTH = 16,
     parameter MAX_ROUTERS_X = 4,
@@ -30,142 +32,80 @@ module router #(
     parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
     = $clog2(MAXIMUM_PACKAGES_NUMBER - 1)
 )(
-    input clk, rst_n,
-    axis_if.s in  [CHANNEL_NUMBER],
-    axis_if.m out [CHANNEL_NUMBER]
+    input  clk, rst_n,
+    input  axi_packet_t in  [CHANNEL_NUMBER],
+    input  logic  in_valid  [CHANNEL_NUMBER],
+    output logic  in_ready  [CHANNEL_NUMBER],
+    output axi_packet_t out [CHANNEL_NUMBER],
+    output logic  out_valid [CHANNEL_NUMBER],
+    input  logic  out_ready [CHANNEL_NUMBER]
 );
 
-    typedef struct packed {
-        logic [DATA_WIDTH-1:0] TDATA;
-        `ifdef TSTRB_PRESENT
-        logic [(DATA_WIDTH/8)-1:0] TSTRB;
-        `endif
-        `ifdef TKEEP_PRESENT
-        logic [(DATA_WIDTH/8)-1:0] TKEEP;
-        `endif
-        `ifdef TLAST_PRESENT
-        logic TLAST;
-        `endif
-        `ifdef TID_PRESENT
-        logic [ID_WIDTH-1:0] TID;
-        `endif
-        `ifdef TDEST_PRESENT
-        logic [DEST_WIDTH-1:0] TDEST;
-        `endif
-        `ifdef TUSER_PRESENT
-        logic [USER_WIDTH-1:0] TUSER;
-        `endif
-    } queue_datatype;
+    `include "axi_type.svh"
 
-    axis_if #(
-        .DATA_WIDTH(DATA_WIDTH)
-        `ifdef TID_PRESENT
-        ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-        ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-        ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    ) 
-    queue_out [CHANNEL_NUMBER](),
-    arbiter_out();
+    axis_data_t queue_out [CHANNEL_NUMBER],
+    arbiter_out;
+
+    logic queue_out_ready [CHANNEL_NUMBER];
+    logic queue_out_valid [CHANNEL_NUMBER];
+
+    logic arbiter_out_ready;
+    logic arbiter_out_valid;
 
     logic [MAX_ROUTERS_X_WIDTH-1:0] target_x;
     logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y;
 
     arbiter #(
-        .DATA_WIDTH(DATA_WIDTH)
-        `ifdef TID_PRESENT
-        ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-        ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-        ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-        ,
+        .DATA_WIDTH(DATA_WIDTH),
+        .ID_WIDTH(ID_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH),
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
         .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER)
     ) arb (
-        clk, rst_n,
-        queue_out,
-        arbiter_out,
-        target_x,
-        target_y
+        .clk(clk), .rst_n(rst_n),
+        .in(queue_out),
+        .in_ready(queue_out_ready),
+        .in_valid(queue_out_valid),
+        .out(arbiter_out),
+        .out_ready(arbiter_out_ready),
+        .out_valid(arbiter_out_valid),
+        .target_x(target_x),
+        .target_y(target_y)
     );
 
     algorithm #(
-        .DATA_WIDTH(DATA_WIDTH)
-        `ifdef TID_PRESENT
-        ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-        ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-        ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-        ,
+        .DATA_WIDTH(DATA_WIDTH),
+        .ID_WIDTH(ID_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH),
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
         .ROUTER_X(ROUTER_X),
         .ROUTER_Y(ROUTER_Y)
     ) alg (
-        clk, rst_n,
-        arbiter_out.s,
-        out,
-        target_x,
-        target_y
+        .clk(clk), .rst_n(rst_n),
+        .in(arbiter_out),
+        .in_ready(arbiter_out_ready),
+        .in_valid(arbiter_out_valid),
+        .out(out),
+        .out_ready(out_ready),
+        .out_valid(out_valid),
+        .target_x(target_x),
+        .target_y(target_y)
     );
 
     generate
         genvar i;
         for(i = 0; i < CHANNEL_NUMBER; i++) begin : axis_if_gen
 
-            queue_datatype data_i, data_o;
+            axis_data_t data_i, data_o;
 
-            assign data_i.TDATA = in[i].TDATA;
-            assign queue_out[i].TDATA = data_o.TDATA;
-            
-            `ifdef TSTRB_PRESENT
-            assign data_i.TSTRB = in[i].TSTRB;
-            assign queue_out[i].TSTRB = data_o.TSTRB;
-            `endif
-            `ifdef TKEEP_PRESENT
-            assign data_i.TKEEP = in[i].TKEEP;
-            assign queue_out[i].TKEEP = data_o.TKEEP;
-            `endif
-            `ifdef TLAST_PRESENT
-            assign data_i.TLAST = in[i].TLAST;
-            assign queue_out[i].TLAST = data_o.TLAST;
-            `endif
-            `ifdef TID_PRESENT
-            assign data_i.TID = in[i].TID;
-            assign queue_out[i].TID = data_o.TID;
-            `endif
-            `ifdef TDEST_PRESENT
-            assign data_i.TDEST = in[i].TDEST;
-            assign queue_out[i].TDEST = data_o.TDEST;
-            `endif
-            `ifdef TUSER_PRESENT
-            assign data_i.TUSER = in[i].TUSER;
-            assign queue_out[i].TUSER = data_o.TUSER;
-            `endif
+            assign data_i = in[i];
+            assign queue_out[i] = data_o;
 
             stream_fifo #(
                 .DATA_WIDTH($bits(data_i)),
@@ -175,12 +115,12 @@ module router #(
                 .ARESETn(rst_n),
                 
                 .data_i(data_i),
-                .valid_i(in[i].TVALID),
-                .ready_o(in[i].TREADY),
+                .valid_i(in_valid[i]),
+                .ready_o(in_ready[i]),
                 
                 .data_o(data_o),
-                .valid_o(queue_out[i].TVALID),
-                .ready_i(queue_out[i].TREADY)
+                .valid_o(queue_out_valid[i]),
+                .ready_i(queue_out_ready[i])
             );
 
         end

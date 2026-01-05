@@ -1,21 +1,8 @@
-`include "defines.svh"
-`include "axi2axis_typedef.svh"
-
 module arbiter #(
-    parameter DATA_WIDTH = 32
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
-    ,
+    parameter DATA_WIDTH = 32,
+    parameter ID_WIDTH = 4,
+    parameter DEST_WIDTH = 4,
+    parameter USER_WIDTH = 4,
     parameter CHANNEL_NUMBER = 5,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
@@ -31,14 +18,21 @@ module arbiter #(
 ) (
     input clk, rst_n,
 
-    axis_if.s in [CHANNEL_NUMBER],
-    axis_if.m out,
+    input axi_packet_t in [CHANNEL_NUMBER],
+    input  logic  in_valid  [CHANNEL_NUMBER],
+    output logic  in_ready  [CHANNEL_NUMBER],
+    output axi_packet_t out,
+    output logic  out_valid,
+    input  logic  out_ready,
 
     output logic [CHANNEL_NUMBER_WIDTH-1:0] current_grant,
 
     output logic [MAX_ROUTERS_X_WIDTH-1:0] target_x,
     output logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y
 );
+
+    `include "axi_type.svh"
+    
     logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_reg [CHANNEL_NUMBER];
     logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_reg [CHANNEL_NUMBER];
    
@@ -50,14 +44,14 @@ module arbiter #(
     // logic [MAXIMUM_PACKAGES_NUMBER_WIDTH-1:0] packages_left;
     logic [7:0] packages_left [CHANNEL_NUMBER];
     
-    logic [DATA_WIDTH-1:0] TDATA [CHANNEL_NUMBER];
+    axis_data_t data [CHANNEL_NUMBER];
 
-    assign target_x = (out.TVALID && (out.TID == ROUTING_HEADER)) ?
+    assign target_x = (out_valid && (out.TID == ROUTING_HEADER)) ?
                         out.TDATA[
                             MAX_ROUTERS_X_WIDTH+MAX_ROUTERS_Y_WIDTH-1:
                             MAX_ROUTERS_X_WIDTH
                         ] : target_x_reg[current_grant];
-    assign target_y = (out.TVALID && (out.TID == ROUTING_HEADER)) ?
+    assign target_y = (out_valid && (out.TID == ROUTING_HEADER)) ?
                         out.TDATA[
                             MAX_ROUTERS_X_WIDTH-1:0
                         ] : target_y_reg[current_grant];
@@ -65,8 +59,8 @@ module arbiter #(
     generate
 	    genvar i;
         for (i = 0; i < CHANNEL_NUMBER; i++) begin : valid_gen
-            assign valid_i[i] = in[i].TVALID;
-            assign TDATA[i] = in[i].TDATA;
+            assign valid_i[i] = in_valid[i];
+            assign data[i] = in[i];
         end
     endgenerate
 
@@ -82,7 +76,7 @@ module arbiter #(
             end
         end
         else begin
-            if (out.TVALID && (out.TID == ROUTING_HEADER)) begin
+            if (out_valid && (out.TID == ROUTING_HEADER)) begin
                 packages_left[current_grant] <= out.TDATA[
                     (MAX_ROUTERS_X_WIDTH+MAX_ROUTERS_Y_WIDTH) * 2
                     +8-1:
@@ -97,9 +91,9 @@ module arbiter #(
                 ];
             end
             else begin
-                packages_left[current_grant] <= packages_left[current_grant] - (out.TREADY & out.TVALID);
+                packages_left[current_grant] <= packages_left[current_grant] - (out_ready & out_valid);
             end
-            if (!out.TREADY || !out.TVALID || (packages_left[current_grant] == 1 && out.TVALID && out.TREADY)) begin
+            if (!out_ready || !out_valid || (packages_left[current_grant] == 1 && out_valid && out_ready)) begin
                 current_grant <= next_grant;
             end
         end
@@ -119,27 +113,8 @@ module arbiter #(
         (next_grant + increment);
     end
 
-    axis_if_mux #(
-        .CHANNEL_NUMBER(CHANNEL_NUMBER),
-        .DATA_WIDTH(DATA_WIDTH)
-        `ifdef TID_PRESENT
-        ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-        ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-        ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    ) mux (
-        in,
-        1'b1,
-        current_grant,
-        out
-    );
-
+    assign out = in[current_grant];
+    assign out_valid = in_valid[current_grant];
+    assign in_ready[current_grant] = out_ready;
     
 endmodule
