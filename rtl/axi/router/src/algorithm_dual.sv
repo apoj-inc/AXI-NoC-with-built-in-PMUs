@@ -30,7 +30,7 @@ module algorithm_dual #(
     input logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y
 );
 
-    `include "axi_type.svh"
+    `include "axis_type.svh"
 
     axis_data_t in_filtered;
     logic in_filtered_ready;

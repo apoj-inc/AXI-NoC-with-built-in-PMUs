@@ -41,7 +41,7 @@ module router_dual_parallel #(
     input  logic  out_ready [CHANNEL_NUMBER]
 );
 
-    `include "axi_type.svh"
+    `include "axis_type.svh"
 
     axis_data_t queue_out [CHANNEL_NUMBER],
     arbiter_out_req, arbiter_out_resp,

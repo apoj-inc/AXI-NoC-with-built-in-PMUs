@@ -31,7 +31,7 @@ module arbiter #(
     output logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y
 );
 
-    `include "axi_type.svh"
+    `include "axis_type.svh"
     
     logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_reg [CHANNEL_NUMBER];
     logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_reg [CHANNEL_NUMBER];
