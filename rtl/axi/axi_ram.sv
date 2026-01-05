@@ -6,17 +6,10 @@ module axi_ram
     parameter DATA_WIDTH = 32,
     parameter BYTE_WIDTH = 8
 ) (
-	input logic clk, rst_n,
-
-    input axi_data_aw_t axi_data_aw,
+	input logic clk_in, rst_n,
     
-    input  logic aw_valid, w_valid, ar_valid,
-    output logic aw_ready, w_ready, ar_ready,
-
-    output axi_data_aw_t axi_data_br,
-
-    output logic b_valid, r_valid,
-    input  logic b_ready, r_ready
+    input  axis_mosi_t in_mosi_i,
+    output axis_miso_t in_miso_o
 
 );
 
@@ -42,7 +35,7 @@ module axi_ram
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH)
         ) axi (
-        .clk(clk), .rst_n(rst_n),
+        .clk_in(clk_in), .rst_n(rst_n),
 
         .addr_a(addr_a),
         .data_a(data_a),
@@ -54,15 +47,8 @@ module axi_ram
         .write_b(write_b),
         .write_en_b(write_en_b),
 
-        .axi_data_aw(axi_data_aw),
-        
-        .aw_valid(aw_valid), .w_valid(w_valid), .ar_valid(ar_valid),
-        .aw_ready(aw_ready), .w_ready(w_ready), .ar_ready(ar_ready),
-
-        .axi_data_br(axi_data_br),
-
-        .b_valid(b_valid), .r_valid(r_valid),
-        .b_ready(b_ready), .r_ready(r_ready)
+        .in_mosi_i(in_mosi_i),
+        .in_miso_o(in_miso_o)
 
     );
 
@@ -71,7 +57,7 @@ module axi_ram
         .BYTE_WIDTH(BYTE_WIDTH),
         .BATCH_WIDTH(WSRTB_W)
     ) coupled_ram (
-        .clk_a(clk), .clk_b(clk),
+        .clk_a(clk_in), .clk_b(clk_in),
 
         .addr_a(addr_a),
         .data_a(data_a),
