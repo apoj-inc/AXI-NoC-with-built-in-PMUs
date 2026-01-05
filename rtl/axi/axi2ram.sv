@@ -4,42 +4,30 @@ module axi2ram
     parameter ID_R_WIDTH = 4,
     parameter ADDR_WIDTH = 16,
     parameter DATA_WIDTH = 32,
-    parameter BYTE_WIDTH = 8
+    parameter BYTE_WIDTH = 8,
+    parameter BATCH_WIDTH = DATA_WIDTH/BYTE_WIDTH
 )
 (
 	input clk, rst_n,
-    ram_if.m ram_ports[DATA_WIDTH/BYTE_WIDTH],
+
+    // Port a 
+    output logic [ADDR_WIDTH-1:0] addr_a,
+    output logic [DATA_WIDTH-1:0] write_a,
+    output logic write_en_a,
+    output logic [BATCH_WIDTH-1:0] byte_en_a,
+    input  logic [DATA_WIDTH-1:0] data_a,
+
+    // Port b 
+    output logic [ADDR_WIDTH-1:0] addr_b,
+    output logic [DATA_WIDTH-1:0] write_b,
+    output logic write_en_b,
+    output logic [BATCH_WIDTH-1:0] byte_en_b,
+    input  logic [DATA_WIDTH-1:0] data_b,
+    
     axi_if.s axi_s
 
 );
     localparam WSRTB_W = DATA_WIDTH/BYTE_WIDTH;
-
-    logic [ADDR_WIDTH-1:0] addr_a [DATA_WIDTH/BYTE_WIDTH];
-    logic [BYTE_WIDTH-1:0] data_a [DATA_WIDTH/BYTE_WIDTH];
-    logic [BYTE_WIDTH-1:0] write_a [DATA_WIDTH/BYTE_WIDTH];
-    logic write_en_a [DATA_WIDTH/BYTE_WIDTH];
-    
-    logic [ADDR_WIDTH-1:0] addr_b [DATA_WIDTH/BYTE_WIDTH];
-    logic [BYTE_WIDTH-1:0] data_b [DATA_WIDTH/BYTE_WIDTH];
-    logic [BYTE_WIDTH-1:0] write_b [DATA_WIDTH/BYTE_WIDTH];
-    logic write_en_b [DATA_WIDTH/BYTE_WIDTH];
-
-    generate
-        genvar i;
-        for (i = 0; i < (DATA_WIDTH/BYTE_WIDTH); i++) begin : assign_ports
-            always_comb begin
-                ram_ports[i].addr_a = addr_a[i];
-                data_a[i] = ram_ports[i].data_a;
-                ram_ports[i].write_a = write_a[i];
-                ram_ports[i].write_en_a = write_en_a[i];
-                
-                ram_ports[i].addr_b = addr_b[i];
-                data_b[i] = ram_ports[i].data_b;
-                ram_ports[i].write_b = write_b[i];
-                ram_ports[i].write_en_b = write_en_b[i];
-            end
-        end
-    endgenerate
 
     enum { READING_ADDRESS, REQUESTING_DATA, RESPONDING }
     r_state, r_state_next,
@@ -77,14 +65,12 @@ module axi2ram
         axi_s.RLAST = 1'b0;
         axi_s.RID = ARID;
 
-        for (int i = 0; i < WSRTB_W; i++) begin
-            addr_a[i] = r_state == RESPONDING ? (ARBURST == 2'b01) ? ARADDR + axi_s.RREADY : 
-                        (ARBURST == 2'b10) ? (ARADDR + axi_s.RREADY > 2**ADDR_WIDTH-1 ? '0 : ARADDR + axi_s.RREADY) : ARADDR
-                        : ARADDR;
-            write_en_a[i] = 1'b0;
-            write_a[i] = '0;
-            axi_s.RDATA[i*8 +: 8] = data_a[i];
-        end
+        addr_a = r_state == RESPONDING ? (ARBURST == 2'b01) ? ARADDR + axi_s.RREADY : 
+                    (ARBURST == 2'b10) ? (ARADDR + axi_s.RREADY > 2**ADDR_WIDTH-1 ? '0 : ARADDR + axi_s.RREADY) : ARADDR
+                    : ARADDR;
+        byte_en_a = '0;
+        write_a = '0;
+        axi_s.RDATA = data_a;
 
                 
         case (r_state)
@@ -115,11 +101,9 @@ module axi2ram
         axi_s.BID = AWID;
         axi_s.BVALID = 1'b0;
 
-        for (int i = 0; i < WSRTB_W; i++) begin
-            write_en_b[i] = 1'b0;
-            addr_b[i] = AWADDR;
-            write_b[i] = axi_s.WDATA[i*8 +: 8];
-        end
+        byte_en_b = 1'b0;
+        addr_b = AWADDR;
+        write_b = axi_s.WDATA;
 
         case (w_state)
             READING_ADDRESS: begin
@@ -133,9 +117,7 @@ module axi2ram
                 axi_s.WREADY = 1'b1;
                 w_state_next = REQUESTING_DATA;
 
-                for (int i = 0; i < WSRTB_W; i++) begin
-                    write_en_b[i] = axi_s.WSTRB[i];
-                end
+                byte_en_b = axi_s.WSTRB;
 
                 if(axi_s.WVALID) begin
                     if(AWLEN == 1'b0 || axi_s.WLAST) begin

@@ -11,6 +11,18 @@ module axi_ram
 );
     localparam WSRTB_W = DATA_WIDTH/BYTE_WIDTH;
 
+    logic [ADDR_WIDTH-1:0] addr_a [DATA_WIDTH/BYTE_WIDTH];
+    logic [BYTE_WIDTH-1:0] data_a [DATA_WIDTH/BYTE_WIDTH];
+    logic [BYTE_WIDTH-1:0] write_a [DATA_WIDTH/BYTE_WIDTH];
+    logic byte_en_a;
+    logic [DATA_WIDTH/BYTE_WIDTH] write_en_a;
+    
+    logic [ADDR_WIDTH-1:0] addr_b [DATA_WIDTH/BYTE_WIDTH];
+    logic [BYTE_WIDTH-1:0] data_b [DATA_WIDTH/BYTE_WIDTH];
+    logic [BYTE_WIDTH-1:0] write_b [DATA_WIDTH/BYTE_WIDTH];
+    logic byte_en_b;
+    logic [DATA_WIDTH/BYTE_WIDTH] write_en_b;
+
     ram_if #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .BYTE_WIDTH(BYTE_WIDTH)
@@ -23,21 +35,39 @@ module axi_ram
         .DATA_WIDTH(DATA_WIDTH)
         ) axi (
         .clk(clk), .rst_n(rst_n),
-        .ram_ports(ram_i),
+
+        .addr_a(addr_a),
+        .data_a(data_a),
+        .write_a(write_a),
+        .write_en_a(write_en_a),
+
+        .addr_b(addr_b),
+        .data_b(data_b),
+        .write_b(write_b),
+        .write_en_b(write_en_b),
+
         .axi_s(axi_s)
     );
 
-    generate
-        genvar i;
-        for (i = 0; i < WSRTB_W; i++) begin : generate_rams
-            ram #(
-                .ADDR_WIDTH(ADDR_WIDTH),
-                .BYTE_WIDTH(BYTE_WIDTH)
-            ) coupled_ram (
-                .clk_a(clk), .clk_b(clk),
-                .ports(ram_i[i])
-            );
-        end
-    endgenerate
+    ram #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .BYTE_WIDTH(BYTE_WIDTH),
+        .BATCH_WIDTH(WSRTB_W)
+    ) coupled_ram (
+        .clk_a(clk), .clk_b(clk),
+
+        .addr_a(addr_a),
+        .data_a(data_a),
+        .write_a(write_a),
+        .byte_en_b(byte_en_b),
+        .write_en_a(write_en_a),
+
+        .addr_b(addr_b),
+        .data_b(data_b),
+        .write_b(write_b),
+        .byte_en_b(byte_en_b),
+        .write_en_b(write_en_b)
+
+    );
   
 endmodule : axi_ram
