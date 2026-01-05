@@ -7,3 +7,12 @@ typedef struct packed {
     logic [DEST_WIDTH-1:0] TDEST;
     logic [USER_WIDTH-1:0] TUSER;
 } axis_data_t;
+
+typedef struct packed {
+    axis_data_t axis_data;
+    logic TVALID;
+} axis_mosi_t;
+
+typedef struct packed {
+    logic TREADY;
+} axis_miso_t;
