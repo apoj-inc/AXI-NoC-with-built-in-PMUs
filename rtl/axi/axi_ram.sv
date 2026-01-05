@@ -6,9 +6,22 @@ module axi_ram
     parameter DATA_WIDTH = 32,
     parameter BYTE_WIDTH = 8
 ) (
-	input clk, rst_n,
-    axi_if.s axi_s
+	input logic clk, rst_n,
+
+    input axi_data_aw_t axi_data_aw,
+    
+    input  logic aw_valid, w_valid, ar_valid,
+    output logic aw_ready, w_ready, ar_ready,
+
+    output axi_data_aw_t axi_data_br,
+
+    output logic b_valid, r_valid,
+    input  logic b_ready, r_ready
+
 );
+
+    `include "axi_type.svh"
+
     localparam WSRTB_W = DATA_WIDTH/BYTE_WIDTH;
 
     logic [ADDR_WIDTH-1:0] addr_a [DATA_WIDTH/BYTE_WIDTH];
@@ -22,11 +35,6 @@ module axi_ram
     logic [BYTE_WIDTH-1:0] write_b [DATA_WIDTH/BYTE_WIDTH];
     logic byte_en_b;
     logic [DATA_WIDTH/BYTE_WIDTH] write_en_b;
-
-    ram_if #(
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .BYTE_WIDTH(BYTE_WIDTH)
-    ) ram_i[WSRTB_W] ();
 
     axi2ram #(
         .ID_W_WIDTH(ID_W_WIDTH),
@@ -46,7 +54,16 @@ module axi_ram
         .write_b(write_b),
         .write_en_b(write_en_b),
 
-        .axi_s(axi_s)
+        .axi_data_aw(axi_data_aw),
+        
+        .aw_valid(aw_valid), .w_valid(w_valid), .ar_valid(ar_valid),
+        .aw_ready(aw_ready), .w_ready(w_ready), .ar_ready(ar_ready),
+
+        .axi_data_br(axi_data_br),
+
+        .b_valid(b_valid), .r_valid(r_valid),
+        .b_ready(b_ready), .r_ready(r_ready)
+
     );
 
     ram #(
