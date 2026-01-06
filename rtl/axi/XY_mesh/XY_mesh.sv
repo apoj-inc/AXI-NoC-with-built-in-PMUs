@@ -13,9 +13,15 @@ module XY_mesh #(
 ) (
     input ACLK, ARESETn,
 
-    axi_if.s s_axi_in[MAX_ROUTERS_X*MAX_ROUTERS_Y],
-    axi_if.m m_axi_out[MAX_ROUTERS_X*MAX_ROUTERS_Y]
+    input  axi_mosi_t s_axi_i[MAX_ROUTERS_X*MAX_ROUTERS_Y],
+    output axi_miso_t s_axi_o[MAX_ROUTERS_X*MAX_ROUTERS_Y],
+
+    input  axi_miso_t m_axi_i[MAX_ROUTERS_X*MAX_ROUTERS_Y],
+    output axi_mosi_t m_axi_o[MAX_ROUTERS_X*MAX_ROUTERS_Y]
 );
+
+    `include "axi_type.svh"
+    `include "axis_type.svh"
 
     typedef enum logic [2:0] {
         HOME,
@@ -25,13 +31,11 @@ module XY_mesh #(
         WEST
     } index;
     
-    axis_if #(
-        .DATA_WIDTH(40)
-    ) router_if[MAX_ROUTERS_Y+2][MAX_ROUTERS_X+2][5]();
+    axis_miso_t router_if_miso[MAX_ROUTERS_Y+2][MAX_ROUTERS_X+2][5];
+    axis_mosi_t router_if_mosi[MAX_ROUTERS_Y+2][MAX_ROUTERS_X+2][5];
 
-    axis_if #(
-        .DATA_WIDTH(40)
-    ) from_home[MAX_ROUTERS_Y+2][MAX_ROUTERS_X+2]();
+    axis_miso_t from_home_miso[MAX_ROUTERS_Y+2][MAX_ROUTERS_X+2][5];
+    axis_mosi_t from_home_mosi[MAX_ROUTERS_Y+2][MAX_ROUTERS_X+2][5];
 
     generate
         genvar i;
@@ -76,11 +80,15 @@ module XY_mesh #(
                     .ACLK(ACLK),
                     .ARESETn(ARESETn),
 
-                    .s_axi_in(s_axi_in[i * MAX_ROUTERS_X + j]),
-                    .s_axis_in(router_if[i+1][j+1][HOME]),
+                    .s_axi_i(s_axi_i[i * MAX_ROUTERS_X + j]),
+                    .s_axi_o(s_axi_o[i * MAX_ROUTERS_X + j]),
+                    .s_axis_i(router_if_mosi[i+1][j+1][HOME]),
+                    .s_axis_o(router_if_miso[i+1][j+1][HOME]),
 
-                    .m_axi_out(m_axi_out[i * MAX_ROUTERS_X + j]),
-                    .m_axis_out(from_home[i+1][j+1])
+                    .m_axi_i(m_axi_o[i * MAX_ROUTERS_X + j]),
+                    .m_axi_o(m_axi_o[i * MAX_ROUTERS_X + j]),
+                    .m_axis_i(from_home_miso[i+1][j+1]),
+                    .m_axis_o(from_home_mosi[i+1][j+1])
                 );
 
                 router #(
@@ -93,8 +101,11 @@ module XY_mesh #(
                     .clk(ACLK),
                     .rst_n(ARESETn),
 
-                    .in('{from_home[i+1][j+1], router_if[i][j+1][SOUTH], router_if[i+1][j+2][WEST], router_if[i+2][j+1][NORTH], router_if[i+1][j][EAST]}),
-                    .out(router_if[i+1][j+1])
+                    .in_mosi_i('{from_home_mosi[i+1][j+1], router_if_mosi[i][j+1][SOUTH], router_if_mosi[i+1][j+2][WEST], router_if_mosi[i+2][j+1][NORTH], router_if_mosi[i+1][j][EAST]}),
+                    .in_miso_o('{from_home_miso[i+1][j+1], router_if_miso[i][j+1][SOUTH], router_if_miso[i+1][j+2][WEST], router_if_miso[i+2][j+1][NORTH], router_if_miso[i+1][j][EAST]}),
+
+                    .out_miso_i(router_if_miso[i+1][j+1]),
+                    .out_mosi_o(router_if_mosi[i+1][j+1])
                 );
 
             end
