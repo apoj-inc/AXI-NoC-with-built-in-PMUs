@@ -31,7 +31,7 @@ SIM_ARGS ?= -suppress 12110 -autofindloop -suppress 12130
 
 COCOTB_TEST_MODULES ?= tb_example
 
-.PHONY: all test clean run_pytest
+.PHONY: all test clean run_pytest run_quartus
 all: test
 
 test: $(VENV_DIR)
@@ -51,6 +51,9 @@ run_pytest: $(VENV_DIR)
 	export SIM_ARGS="$(SIM_ARGS)"; \
 	source $(VENV_DIR)/bin/activate; \
 	python3 -m pytest --junit-xml=${RESULTS_DIR}/all.xml
+
+run_quartus:
+	make -f $(CURDIR)/build_system/quartus/makefile
 
 $(VENV_DIR) : $(CURDIR)/requirements.txt
 	python3 -m venv $(VENV_DIR)
