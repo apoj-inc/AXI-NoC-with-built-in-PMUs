@@ -1,8 +1,25 @@
+`include "defines.svh"
+
 module axi_master_loader #(
     parameter DATA_WIDTH   = 32,
     parameter ADDR_WIDTH   = 16,
     parameter ID_W_WIDTH   = 5,
     parameter ID_R_WIDTH   = 5,
+    `ifdef TID_PRESENT
+    parameter ID_WIDTH = 4,
+    `else
+    parameter ID_WIDTH = 0,
+    `endif
+    `ifdef TDEST_PRESENT
+    parameter DEST_WIDTH = 4,
+    `else
+    parameter DEST_WIDTH = 0,
+    `endif
+    `ifdef TUSER_PRESENT
+    parameter USER_WIDTH = 4,
+    `else
+    parameter USER_WIDTH = 0,
+    `endif
     parameter FIFO_DEPTH   = 32,
     parameter LOADER_ID    = 0,
 
@@ -20,8 +37,12 @@ module axi_master_loader #(
 
     input  logic                    start_i,
     output logic                    idle_o,
-    axi_if.m                        m_axi_o
+
+    input  axi_miso_t               m_axi_i,    
+    output axi_mosi_t               m_axi_o
 );
+
+    `include "axi_type.svh"
 
     typedef enum logic[1:0] {
         IDLE,
@@ -41,22 +62,22 @@ module axi_master_loader #(
     logic aw_was_next, w_was_next;
 
 
-    assign m_axi_o.AWID    = id_rd;
-    assign m_axi_o.AWADDR  = LOADER_ID << 2;
-    assign m_axi_o.AWLEN   = axlen_rd;
-    assign m_axi_o.AWSIZE  = $clog2(DATA_WIDTH/8);
-    assign m_axi_o.AWBURST = 2'b01;
+    assign m_axi_o.data.aw.AWID    = id_rd;
+    assign m_axi_o.data.aw.AWADDR  = LOADER_ID << 2;
+    assign m_axi_o.data.aw.AWLEN   = axlen_rd;
+    assign m_axi_o.data.aw.AWSIZE  = $clog2(DATA_WIDTH/8);
+    assign m_axi_o.data.aw.AWBURST = 2'b01;
 
-    assign m_axi_o.WDATA   = 'h30 + LOADER_ID;
-    assign m_axi_o.WSTRB   = '1;
+    assign m_axi_o.data.w.WDATA   = 'h30 + LOADER_ID;
+    assign m_axi_o.data.w.WSTRB   = '1;
 
     assign m_axi_o.BREADY  = 1'b1;
 
-    assign m_axi_o.ARID    = id_rd;
-    assign m_axi_o.ARADDR  = LOADER_ID << 2;
-    assign m_axi_o.ARLEN   = axlen_rd;
-    assign m_axi_o.ARSIZE  = $clog2(DATA_WIDTH/8);
-    assign m_axi_o.ARBURST = 2'b01;
+    assign m_axi_o.data.ar.ARID    = id_rd;
+    assign m_axi_o.data.ar.ARADDR  = LOADER_ID << 2;
+    assign m_axi_o.data.ar.ARLEN   = axlen_rd;
+    assign m_axi_o.data.ar.ARSIZE  = $clog2(DATA_WIDTH/8);
+    assign m_axi_o.data.ar.ARBURST = 2'b01;
 
     assign m_axi_o.RREADY = 1'b1;
 
@@ -124,9 +145,9 @@ module axi_master_loader #(
                 end
             end
             RESP_WAIT: begin
-                if ((rresp_cnt == 0 && bresp_cnt == 1 && m_axi_o.BREADY && m_axi_o.BVALID) ||
-                    (rresp_cnt == 1 && bresp_cnt == 0 && m_axi_o.RREADY && m_axi_o.RVALID && m_axi_o.RLAST) ||
-                    (rresp_cnt == 1 && bresp_cnt == 1 && m_axi_o.RREADY && m_axi_o.RVALID && m_axi_o.RLAST && m_axi_o.BREADY && m_axi_o.BVALID)) begin
+                if ((rresp_cnt == 0 && bresp_cnt == 1 && m_axi_o.BREADY && m_axi_i.BVALID) ||
+                    (rresp_cnt == 1 && bresp_cnt == 0 && m_axi_o.RREADY && m_axi_i.RVALID && m_axi_i.data.r.RLAST) ||
+                    (rresp_cnt == 1 && bresp_cnt == 1 && m_axi_o.RREADY && m_axi_i.RVALID && m_axi_i.data.r.RLAST && m_axi_o.BREADY && m_axi_i.BVALID)) begin
                     state_next = fifo_valid_rd ? AX_HANDSHAKE : IDLE;
                 end
                 else begin
@@ -146,7 +167,7 @@ module axi_master_loader #(
         w_was_next = w_was;
         
         m_axi_o.WVALID = '0;
-        m_axi_o.WLAST = '0;
+        m_axi_o.data.w.WLAST = '0;
         m_axi_o.AWVALID = '0;
         m_axi_o.ARVALID = '0;
 
@@ -163,34 +184,34 @@ module axi_master_loader #(
                 if (fifo_valid_rd) begin
                     if (write_rd) begin
                         m_axi_o.WVALID = (trans_counter <= axlen_rd);
-                        m_axi_o.WLAST = (trans_counter == axlen_rd);
+                        m_axi_o.data.w.WLAST = (trans_counter == axlen_rd);
                         m_axi_o.AWVALID = !aw_was;
 
                         m_axi_o.ARVALID = '0;
 
-                        aw_was_next = (aw_was | (m_axi_o.AWVALID & m_axi_o.AWREADY));
-                        w_was_next  = (w_was | (m_axi_o.WVALID & m_axi_o.WREADY & m_axi_o.WLAST));
+                        aw_was_next = (aw_was | (m_axi_o.AWVALID & m_axi_i.AWREADY));
+                        w_was_next  = (w_was | (m_axi_o.WVALID & m_axi_i.WREADY & m_axi_o.data.w.WLAST));
 
                         fifo_ready_rd = (w_was & aw_was_next) || (aw_was & w_was_next) || (aw_was_next & w_was_next);
 
                         aw_was_next = aw_was_next & ~fifo_ready_rd;
                         w_was_next  = w_was_next & ~fifo_ready_rd;
 
-                        trans_counter_next = fifo_ready_rd ? '0 : (trans_counter + (m_axi_o.WVALID & m_axi_o.WREADY));
+                        trans_counter_next = fifo_ready_rd ? '0 : (trans_counter + (m_axi_o.WVALID & m_axi_i.WREADY));
                     end
                     else begin
                         m_axi_o.WVALID = '0;
-                        m_axi_o.WLAST = '0;
+                        m_axi_o.data.w.WLAST = '0;
                         m_axi_o.AWVALID = '0;
 
                         m_axi_o.ARVALID = '1;
 
-                        fifo_ready_rd = m_axi_o.ARVALID & m_axi_o.ARREADY;
+                        fifo_ready_rd = m_axi_o.ARVALID & m_axi_i.ARREADY;
                     end
                 end
                 else begin
                     m_axi_o.WVALID = '0;
-                    m_axi_o.WLAST = '0;
+                    m_axi_o.data.w.WLAST = '0;
                     m_axi_o.AWVALID = '0;
 
                     m_axi_o.ARVALID = '0;
@@ -198,23 +219,23 @@ module axi_master_loader #(
                     fifo_ready_rd = '0;
                 end
 
-                bresp_cnt_next = bresp_cnt + (fifo_ready_rd & write_rd) - (m_axi_o.BVALID & m_axi_o.BREADY);
-                rresp_cnt_next = rresp_cnt + (fifo_ready_rd & !write_rd) - (m_axi_o.RVALID & m_axi_o.RREADY & m_axi_o.RLAST);
+                bresp_cnt_next = bresp_cnt + (fifo_ready_rd & write_rd) - (m_axi_i.BVALID & m_axi_o.BREADY);
+                rresp_cnt_next = rresp_cnt + (fifo_ready_rd & !write_rd) - (m_axi_i.RVALID & m_axi_o.RREADY & m_axi_i.data.r.RLAST);
                 req_counter_next = req_counter - fifo_ready_rd;
             end
             RESP_WAIT: begin
                 req_counter_next = req_depth_i;
                 
                 m_axi_o.WVALID = '0;
-                m_axi_o.WLAST = '0;
+                m_axi_o.data.w.WLAST = '0;
                 m_axi_o.AWVALID = '0;
                 m_axi_o.ARVALID = '0;
 
-                if (m_axi_o.BVALID && m_axi_o.BREADY) begin
+                if (m_axi_i.BVALID && m_axi_o.BREADY) begin
                     bresp_cnt_next = bresp_cnt - 1;
                 end
 
-                if (m_axi_o.RVALID && m_axi_o.RREADY && m_axi_o.RLAST) begin
+                if (m_axi_i.RVALID && m_axi_o.RREADY && m_axi_i.data.r.RLAST) begin
                     rresp_cnt_next = rresp_cnt - 1;
                 end
             end

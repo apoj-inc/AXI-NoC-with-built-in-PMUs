@@ -3,43 +3,41 @@ module axi2ram
     parameter ID_W_WIDTH = 4,
     parameter ID_R_WIDTH = 4,
     parameter ADDR_WIDTH = 16,
+
     parameter DATA_WIDTH = 32,
-    parameter BYTE_WIDTH = 8
+    parameter ID_WIDTH = 4,
+    parameter DEST_WIDTH = 4,
+    parameter USER_WIDTH = 4,
+    
+    parameter BYTE_WIDTH = 8,
+    parameter BATCH_WIDTH = DATA_WIDTH/BYTE_WIDTH
 )
 (
-	input clk, rst_n,
-    ram_if.m ram_ports[DATA_WIDTH/BYTE_WIDTH],
-    axi_if.s axi_s
+	input clk_in, rst_n_i,
+
+    // Port a 
+    output logic [ADDR_WIDTH-1:0] addr_a,
+    output logic [DATA_WIDTH-1:0] write_a,
+    output logic write_en_a,
+    output logic [BATCH_WIDTH-1:0] byte_en_a,
+    input  logic [DATA_WIDTH-1:0] data_a,
+
+    // Port b 
+    output logic [ADDR_WIDTH-1:0] addr_b,
+    output logic [DATA_WIDTH-1:0] write_b,
+    output logic write_en_b,
+    output logic [BATCH_WIDTH-1:0] byte_en_b,
+    input  logic [DATA_WIDTH-1:0] data_b,
+
+    //AXI
+    input  axi_mosi_t in_mosi_i,
+    output axi_miso_t in_miso_o
 
 );
+
+    `include "axi_type.svh"
+
     localparam WSRTB_W = DATA_WIDTH/BYTE_WIDTH;
-
-    logic [ADDR_WIDTH-1:0] addr_a [DATA_WIDTH/BYTE_WIDTH];
-    logic [BYTE_WIDTH-1:0] data_a [DATA_WIDTH/BYTE_WIDTH];
-    logic [BYTE_WIDTH-1:0] write_a [DATA_WIDTH/BYTE_WIDTH];
-    logic write_en_a [DATA_WIDTH/BYTE_WIDTH];
-    
-    logic [ADDR_WIDTH-1:0] addr_b [DATA_WIDTH/BYTE_WIDTH];
-    logic [BYTE_WIDTH-1:0] data_b [DATA_WIDTH/BYTE_WIDTH];
-    logic [BYTE_WIDTH-1:0] write_b [DATA_WIDTH/BYTE_WIDTH];
-    logic write_en_b [DATA_WIDTH/BYTE_WIDTH];
-
-    generate
-        genvar i;
-        for (i = 0; i < (DATA_WIDTH/BYTE_WIDTH); i++) begin : assign_ports
-            always_comb begin
-                ram_ports[i].addr_a = addr_a[i];
-                data_a[i] = ram_ports[i].data_a;
-                ram_ports[i].write_a = write_a[i];
-                ram_ports[i].write_en_a = write_en_a[i];
-                
-                ram_ports[i].addr_b = addr_b[i];
-                data_b[i] = ram_ports[i].data_b;
-                ram_ports[i].write_b = write_b[i];
-                ram_ports[i].write_en_b = write_en_b[i];
-            end
-        end
-    endgenerate
 
     enum { READING_ADDRESS, REQUESTING_DATA, RESPONDING }
     r_state, r_state_next,
@@ -59,8 +57,8 @@ module axi2ram
     logic [2:0] AWSIZE;
     logic [1:0] AWBURST;
 
-    always_ff @( posedge clk or negedge rst_n ) begin : StateSwitchBlock
-        if(!rst_n) begin            
+    always_ff @( posedge clk_in or negedge rst_n_i ) begin : StateSwitchBlock
+        if(!rst_n_i) begin            
             r_state <= READING_ADDRESS;
             w_state <= READING_ADDRESS;
         end else begin
@@ -72,36 +70,34 @@ module axi2ram
     always_comb begin : FSMOutputBlock
         r_state_next = READING_ADDRESS;
 
-        axi_s.ARREADY = 1'b0;
-        axi_s.RVALID = 1'b0;
-        axi_s.RLAST = 1'b0;
-        axi_s.RID = ARID;
+        in_miso_o.ARREADY = 1'b0;
+        in_miso_o.RVALID = 1'b0;
+        in_miso_o.data.r.RLAST = 1'b0;
+        in_miso_o.data.r.RID = ARID;
 
-        for (int i = 0; i < WSRTB_W; i++) begin
-            addr_a[i] = r_state == RESPONDING ? (ARBURST == 2'b01) ? ARADDR + axi_s.RREADY : 
-                        (ARBURST == 2'b10) ? (ARADDR + axi_s.RREADY > 2**ADDR_WIDTH-1 ? '0 : ARADDR + axi_s.RREADY) : ARADDR
-                        : ARADDR;
-            write_en_a[i] = 1'b0;
-            write_a[i] = '0;
-            axi_s.RDATA[i*8 +: 8] = data_a[i];
-        end
+        addr_a = r_state == RESPONDING ? (ARBURST == 2'b01) ? ARADDR + in_mosi_i.RREADY : 
+                    (ARBURST == 2'b10) ? (ARADDR + in_mosi_i.RREADY > 2**ADDR_WIDTH-1 ? '0 : ARADDR + in_mosi_i.RREADY) : ARADDR
+                    : ARADDR;
+        byte_en_a = '0;
+        write_a = '0;
+        in_miso_o.data.r.RDATA = data_a;
 
                 
         case (r_state)
             READING_ADDRESS: begin
                 r_state_next = READING_ADDRESS;
-                axi_s.ARREADY = 1'b1;
-                if(axi_s.ARVALID)
+                in_miso_o.ARREADY = 1'b1;
+                if(in_mosi_i.ARVALID)
                     r_state_next = REQUESTING_DATA;
             end
             REQUESTING_DATA:
                 r_state_next = RESPONDING;
             RESPONDING: begin
                 r_state_next = RESPONDING;
-                axi_s.RVALID = 1'b1;
+                in_miso_o.RVALID = 1'b1;
                 if(ARLEN == 8'o0) begin
-                    axi_s.RLAST = 1'b1;
-                    if(axi_s.RREADY)
+                    in_miso_o.data.r.RLAST = 1'b1;
+                    if(in_mosi_i.RREADY)
                         r_state_next = READING_ADDRESS;
                 end
             end
@@ -110,43 +106,39 @@ module axi2ram
         
         w_state_next = READING_ADDRESS;
 
-        axi_s.AWREADY = 1'b0;
-        axi_s.WREADY = 1'b0;
-        axi_s.BID = AWID;
-        axi_s.BVALID = 1'b0;
+        in_miso_o.AWREADY = 1'b0;
+        in_miso_o.WREADY = 1'b0;
+        in_miso_o.data.b.BID = AWID;
+        in_miso_o.BVALID = 1'b0;
 
-        for (int i = 0; i < WSRTB_W; i++) begin
-            write_en_b[i] = 1'b0;
-            addr_b[i] = AWADDR;
-            write_b[i] = axi_s.WDATA[i*8 +: 8];
-        end
+        byte_en_b = 1'b0;
+        addr_b = AWADDR;
+        write_b = in_mosi_i.data.w.WDATA;
 
         case (w_state)
             READING_ADDRESS: begin
                 w_state_next = READING_ADDRESS;
-                axi_s.AWREADY = 1'b1;
-                if(axi_s.AWVALID)
+                in_miso_o.AWREADY = 1'b1;
+                if(in_mosi_i.AWVALID)
                     w_state_next = REQUESTING_DATA;
             end
             REQUESTING_DATA: begin
 
-                axi_s.WREADY = 1'b1;
+                in_miso_o.WREADY = 1'b1;
                 w_state_next = REQUESTING_DATA;
 
-                for (int i = 0; i < WSRTB_W; i++) begin
-                    write_en_b[i] = axi_s.WSTRB[i];
-                end
+                byte_en_b = in_mosi_i.data.w.WSTRB;
 
-                if(axi_s.WVALID) begin
-                    if(AWLEN == 1'b0 || axi_s.WLAST) begin
+                if(in_mosi_i.WVALID) begin
+                    if(AWLEN == 1'b0 || in_mosi_i.data.w.WLAST) begin
                         w_state_next = RESPONDING;
                     end
                 end
             end
             RESPONDING: begin
                 w_state_next = RESPONDING;
-                axi_s.BVALID = 1'b1;
-                if(axi_s.BREADY)
+                in_miso_o.BVALID = 1'b1;
+                if(in_mosi_i.BREADY)
                     w_state_next = READING_ADDRESS;
             end
             default:;
@@ -154,8 +146,8 @@ module axi2ram
 
     end : FSMOutputBlock
 
-    always_ff @( posedge clk or negedge rst_n ) begin : LogicBlock
-    if(!rst_n) begin
+    always_ff @( posedge clk_in or negedge rst_n_i ) begin : LogicBlock
+    if(!rst_n_i) begin
         ARID <= '0;
         ARADDR <= '0;
         ARLEN <= '0;
@@ -171,16 +163,16 @@ module axi2ram
     end else begin
         case (r_state)
             READING_ADDRESS: begin
-                ARID <= axi_s.ARID;
-                ARADDR <= axi_s.ARADDR;
-                ARLEN <= axi_s.ARLEN;
-                ARSIZE <= 1'b1 << axi_s.ARSIZE;
-                ARBURST <= axi_s.ARBURST;
+                ARID <= in_mosi_i.data.ar.ARID;
+                ARADDR <= in_mosi_i.data.ar.ARADDR;
+                ARLEN <= in_mosi_i.data.ar.ARLEN;
+                ARSIZE <= 1'b1 << in_mosi_i.data.ar.ARSIZE;
+                ARBURST <= in_mosi_i.data.ar.ARBURST;
             end
             REQUESTING_DATA: begin
             end
             RESPONDING: begin
-                if(axi_s.RREADY) begin
+                if(in_mosi_i.RREADY) begin
                     ARLEN <= (ARLEN == 0) ? '0 : ARLEN - 1'b1;
 
                     case (ARBURST)
@@ -204,14 +196,14 @@ module axi2ram
 
         case (w_state)
             READING_ADDRESS: begin
-                AWID <= axi_s.AWID;
-                AWADDR <= axi_s.AWADDR;
-                AWLEN <= axi_s.AWLEN;
-                AWSIZE <= 1'b1 << axi_s.AWSIZE;
-                AWBURST <= axi_s.AWBURST;
+                AWID <= in_mosi_i.data.aw.AWID;
+                AWADDR <= in_mosi_i.data.aw.AWADDR;
+                AWLEN <= in_mosi_i.data.aw.AWLEN;
+                AWSIZE <= 1'b1 << in_mosi_i.data.aw.AWSIZE;
+                AWBURST <= in_mosi_i.data.aw.AWBURST;
             end
             REQUESTING_DATA: begin
-                if(axi_s.WVALID) begin
+                if(in_mosi_i.WVALID) begin
                     AWLEN <= (AWLEN == 0) ? '0 : AWLEN - 1'b1;
                     // Address shift logic
                     case (AWBURST)
