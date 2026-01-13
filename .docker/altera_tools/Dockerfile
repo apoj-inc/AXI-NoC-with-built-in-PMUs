@@ -27,7 +27,7 @@ CMD ["echo Test ready!"]
 
 FROM build AS production
 
-RUN apt install libglib2.0-dev -y
+RUN apt update && apt install libglib2.0-dev -y
 
 RUN wget https://downloads.intel.com/akdlm/software/acdsinst/25.1std/1129/qinst/qinst-lite-linux-25.1std-1129.run 2> /dev/null;\
     chmod +x ./qinst-lite-linux-25.1std-1129.run;\
