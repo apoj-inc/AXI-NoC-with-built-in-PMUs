@@ -10,6 +10,7 @@ ifndef INCLUDE_DIRS
 INCLUDE_DIRS :=
 INCLUDE_DIRS += $(CURDIR)/rtl/axi
 INCLUDE_DIRS += $(CURDIR)/rtl/cores/src
+INCLUDE_DIRS += $(CURDIR)/tests/inc
 endif
 
 LIST_DIR ?= $(CURDIR)/rtl/lists
@@ -38,7 +39,7 @@ all: test
 
 test: $(VENV_DIR)
 	make -f $(CCTB_MAKEFILE) run CACHE_DIR=$(CACHE_DIR) \
-	VENV_DIR=$(VENV_DIR) INCLUDE_DIRS=$(INCLUDE_DIRS) \
+	VENV_DIR=$(VENV_DIR) INCLUDE_DIRS="$(INCLUDE_DIRS)" \
 	COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES)
 
 run_pytest: $(VENV_DIR)

@@ -16,6 +16,7 @@ ifndef INCLUDE_DIRS
 INCLUDE_DIRS :=
 INCLUDE_DIRS += $(CURDIR)/rtl/axi
 INCLUDE_DIRS += $(CURDIR)/rtl/cores/src
+INCLUDE_DIRS += $(CURDIR)/tests/inc
 endif
 
 TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'),$(CURDIR)/$(file))
