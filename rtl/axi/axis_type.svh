@@ -1,7 +1,7 @@
 typedef struct packed {
-    logic [DATA_WIDTH-1:0] TDATA;
-    logic [(DATA_WIDTH/8)-1:0] TSTRB;
-    logic [(DATA_WIDTH/8)-1:0] TKEEP;
+    logic [AXIS_DATA_WIDTH-1:0] TDATA;
+    logic [(AXIS_DATA_WIDTH/8)-1:0] TSTRB;
+    logic [(AXIS_DATA_WIDTH/8)-1:0] TKEEP;
     logic TLAST;
     `ifdef TID_PRESENT
     logic [ID_WIDTH-1:0] TID;

@@ -6,7 +6,7 @@ module axi_pmu # (
     parameter MAX_ID_WIDTH = 4,
     parameter ADDR_WIDTH = 16,
 
-    parameter DATA_WIDTH = 32
+    parameter AXI_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4

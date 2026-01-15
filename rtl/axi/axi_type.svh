@@ -9,8 +9,8 @@ typedef struct packed {
 
 typedef struct packed {
      // W channel
-    logic [DATA_WIDTH-1:0] WDATA;
-    logic [(DATA_WIDTH/8)-1:0] WSTRB;
+    logic [AXI_DATA_WIDTH-1:0] WDATA;
+    logic [(AXI_DATA_WIDTH/8)-1:0] WSTRB;
     logic WLAST;
 } axi_data_w_t;
 
@@ -31,7 +31,7 @@ typedef struct packed {
 typedef struct packed {
     // R channel
     logic [ID_R_WIDTH-1:0] RID;
-    logic [DATA_WIDTH-1:0] RDATA;
+    logic [AXI_DATA_WIDTH-1:0] RDATA;
     logic RLAST;
 } axi_data_r_t;
 

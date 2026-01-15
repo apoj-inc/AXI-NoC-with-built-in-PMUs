@@ -1,7 +1,7 @@
 `include "defines.svh"
 
 interface axis_if #(
-    parameter DATA_WIDTH = 32
+    parameter AXIS_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -19,13 +19,13 @@ interface axis_if #(
     // T channel 
     logic TVALID;
     logic TREADY;
-    logic [DATA_WIDTH-1:0] TDATA;
+    logic [AXIS_DATA_WIDTH-1:0] TDATA;
     
     `ifdef TSTRB_PRESENT
-    logic [(DATA_WIDTH/8)-1:0] TSTRB;
+    logic [(AXIS_DATA_WIDTH/8)-1:0] TSTRB;
     `endif
     `ifdef TKEEP_PRESENT
-    logic [(DATA_WIDTH/8)-1:0] TKEEP;
+    logic [(AXIS_DATA_WIDTH/8)-1:0] TKEEP;
     `endif
     `ifdef TLAST_PRESENT
     logic TLAST;

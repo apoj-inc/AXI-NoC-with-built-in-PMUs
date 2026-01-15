@@ -22,7 +22,6 @@ module tb_axi_memory;
         .ID_W_WIDTH(ID_W_WIDTH),
         .ID_R_WIDTH(ID_R_WIDTH),
         .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH),
         .BYTE_WIDTH(BYTE_WIDTH)
     ) axi_r (.clk(ACLK), .rst_n(ARESETn), .axi_s(axi_i.s));
 

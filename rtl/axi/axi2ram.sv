@@ -6,7 +6,7 @@ module axi2ram
     parameter ID_R_WIDTH = 4,
     parameter ADDR_WIDTH = 4,
 
-    parameter DATA_WIDTH = 32
+    parameter AXI_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -21,24 +21,24 @@ module axi2ram
     `endif,
     
     parameter BYTE_WIDTH = 8,
-    parameter BATCH_WIDTH = DATA_WIDTH/BYTE_WIDTH
+    parameter BATCH_WIDTH = AXI_DATA_WIDTH/BYTE_WIDTH
 )
 (
 	input clk_i, rst_n_i,
 
     // Port a 
     output logic [ADDR_WIDTH-1:0] addr_a,
-    output logic [DATA_WIDTH-1:0] write_a,
+    output logic [AXI_DATA_WIDTH-1:0] write_a,
     output logic write_en_a,
     output logic [BATCH_WIDTH-1:0] byte_en_a,
-    input  logic [DATA_WIDTH-1:0] data_a,
+    input  logic [AXI_DATA_WIDTH-1:0] data_a,
 
     // Port b 
     output logic [ADDR_WIDTH-1:0] addr_b,
-    output logic [DATA_WIDTH-1:0] write_b,
+    output logic [AXI_DATA_WIDTH-1:0] write_b,
     output logic write_en_b,
     output logic [BATCH_WIDTH-1:0] byte_en_b,
-    input  logic [DATA_WIDTH-1:0] data_b,
+    input  logic [AXI_DATA_WIDTH-1:0] data_b,
 
     //AXI
     input  axi_mosi_t in_mosi_i,
@@ -48,7 +48,7 @@ module axi2ram
 
     `include "axi_type.svh"
 
-    localparam WSRTB_W = DATA_WIDTH/BYTE_WIDTH;
+    localparam WSRTB_W = AXI_DATA_WIDTH/BYTE_WIDTH;
 
     enum { READING_ADDRESS, REQUESTING_DATA, RESPONDING }
     r_state, r_state_next,

@@ -6,7 +6,8 @@ module mesh_with_loaders # (
     parameter MAX_ID_WIDTH = 4,
     parameter ADDR_WIDTH = 8,
 
-    parameter DATA_WIDTH = 8
+    parameter DATA_WIDTH = 8,
+    parameter AXI_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -49,7 +50,6 @@ module mesh_with_loaders # (
 
             axi_pmu #(
                 .ADDR_WIDTH(ADDR_WIDTH),
-                .DATA_WIDTH(DATA_WIDTH),
                 .ID_W_WIDTH(ID_W_WIDTH),
                 .ID_R_WIDTH(ID_R_WIDTH),
                 .MAX_ID_WIDTH(MAX_ID_WIDTH)
@@ -76,7 +76,6 @@ module mesh_with_loaders # (
 
             axi_master_loader #(
                 .ADDR_WIDTH(ADDR_WIDTH),
-                .DATA_WIDTH(DATA_WIDTH),
                 .ID_W_WIDTH(ID_W_WIDTH),
                 .ID_R_WIDTH(ID_R_WIDTH),
                 .MAX_ID_WIDTH(MAX_ID_WIDTH)

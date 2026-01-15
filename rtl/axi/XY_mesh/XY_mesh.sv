@@ -1,11 +1,12 @@
 `include "defines.svh"
 
 module XY_mesh #(
+    parameter AXI_DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 16,
-    parameter DATA_WIDTH = 32,
     parameter ID_W_WIDTH = 4,
     parameter ID_R_WIDTH = 4,
-    parameter MAX_ID_WIDTH = 4
+    parameter MAX_ID_WIDTH = 4,
+    parameter AXIS_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -78,10 +79,10 @@ module XY_mesh #(
                 
                 axi2axis_XY #(
                     .ADDR_WIDTH(ADDR_WIDTH),
-                    .DATA_WIDTH(DATA_WIDTH),
                     .ID_W_WIDTH(ID_W_WIDTH),
-                    .ID_R_WIDTH(ID_R_WIDTH)
+                    .ID_R_WIDTH(ID_R_WIDTH),
 
+                    .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
                     `ifdef TID_PRESENT
                     ,
                     .ID_WIDTH(ID_WIDTH)
@@ -122,8 +123,9 @@ module XY_mesh #(
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
                     .ROUTER_Y(i),
-                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y)
+                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
 
+                    .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
                     `ifdef TID_PRESENT
                     ,
                     .ID_WIDTH(ID_WIDTH)

@@ -2,11 +2,11 @@ module axi_demux #(
     parameter OUTPUT_NUM = 3,
     parameter integer ID_ROUTING [(OUTPUT_NUM-1) * 2] = '{0, 0, 1, 1},
 
+    parameter AXI_DATA_WIDTH = 32,
     parameter ID_W_WIDTH = 4,
     parameter ID_R_WIDTH = 4,
     parameter ADDR_WIDTH = 16,
     
-    parameter DATA_WIDTH = 32,
 
     parameter Ax_FIFO_LEN = 4,
     parameter W_FIFO_LEN = 4,
@@ -40,8 +40,8 @@ module axi_demux #(
     // W channel
     logic [OUTPUT_NUM-1:0] WVALID;
     logic [OUTPUT_NUM-1:0] WREADY;
-    logic [DATA_WIDTH-1:0] WDATA [OUTPUT_NUM];
-    logic [(DATA_WIDTH/8)-1:0] WSTRB [OUTPUT_NUM];
+    logic [AXI_DATA_WIDTH-1:0] WDATA [OUTPUT_NUM];
+    logic [(AXI_DATA_WIDTH/8)-1:0] WSTRB [OUTPUT_NUM];
     logic WLAST [OUTPUT_NUM];
 
     // B channel
@@ -62,7 +62,7 @@ module axi_demux #(
     logic [OUTPUT_NUM-1:0] RVALID;
     logic [OUTPUT_NUM-1:0] RREADY;
     logic [ID_R_WIDTH-1:0] RID [OUTPUT_NUM];
-    logic [DATA_WIDTH-1:0] RDATA [OUTPUT_NUM];
+    logic [AXI_DATA_WIDTH-1:0] RDATA [OUTPUT_NUM];
     logic RLAST [OUTPUT_NUM];
 
     // --- demux_in --- //
@@ -78,8 +78,8 @@ module axi_demux #(
     // W channel
     logic WVALID_fifo;
     logic WREADY_fifo;
-    logic [DATA_WIDTH-1:0] WDATA_fifo;
-    logic [(DATA_WIDTH/8)-1:0] WSTRB_fifo;
+    logic [AXI_DATA_WIDTH-1:0] WDATA_fifo;
+    logic [(AXI_DATA_WIDTH/8)-1:0] WSTRB_fifo;
     logic WLAST_fifo;
 
 
@@ -100,7 +100,7 @@ module axi_demux #(
     );
 
     stream_fifo #(
-        .DATA_WIDTH(DATA_WIDTH + (DATA_WIDTH/8) + 1),
+        .DATA_WIDTH(AXI_DATA_WIDTH + (AXI_DATA_WIDTH/8) + 1),
         .FIFO_LEN(W_FIFO_LEN)
     ) stream_fifo_w (
         .ACLK(ACLK),
@@ -125,7 +125,7 @@ module axi_demux #(
     logic [1:0] ARBURST_fifo;
 
     stream_fifo #(
-        .DATA_WIDTH(ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
+        .AXI_DATA_WIDTH(ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
         .FIFO_LEN(Ax_FIFO_LEN)
     ) stream_fifo_ar (
         .ACLK(ACLK),
@@ -295,7 +295,7 @@ module axi_demux #(
     // B channel arbiter
 
     stream_arbiter #(
-        .DATA_WIDTH(ID_W_WIDTH),
+        .AXI_DATA_WIDTH(ID_W_WIDTH),
         .INPUT_NUM(OUTPUT_NUM)
     ) stream_arbiter_b (
         .ACLK(ACLK),
@@ -346,7 +346,7 @@ module axi_demux #(
 
     // R channel arbiter
 
-    logic [ID_R_WIDTH + DATA_WIDTH + 1 - 1:0] data_i [OUTPUT_NUM];
+    logic [ID_R_WIDTH + AXI_DATA_WIDTH + 1 - 1:0] data_i [OUTPUT_NUM];
 
     generate
         for (i = 0; i < OUTPUT_NUM; i++) begin : map_data
@@ -355,7 +355,7 @@ module axi_demux #(
     endgenerate
 
     stream_arbiter #(
-        .DATA_WIDTH(ID_R_WIDTH + DATA_WIDTH + 1),
+        .AXI_DATA_WIDTH(ID_R_WIDTH + AXI_DATA_WIDTH + 1),
         .INPUT_NUM(OUTPUT_NUM)
     ) stream_arbiter_r (
         .ACLK(ACLK),

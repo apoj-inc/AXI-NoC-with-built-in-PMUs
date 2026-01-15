@@ -1,7 +1,7 @@
 `include "defines.svh"
 
 module router_dual_parallel #(
-    parameter DATA_WIDTH = 32
+    parameter AXIS_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -62,10 +62,10 @@ module router_dual_parallel #(
     logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_req, target_x_resp;
     logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_req, target_y_resp;
 
-    axi_fifo_buffer #(
+    axis_fifo_buffer #(
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
         .BUFFER_LENGTH(BUFFER_LENGTH),
-        .DATA_WIDTH(DATA_WIDTH)
+        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
         `ifdef TID_PRESENT
          ,
         .ID_WIDTH(ID_WIDTH)
@@ -106,7 +106,7 @@ module router_dual_parallel #(
     endgenerate
 
     arbiter #(
-        .DATA_WIDTH(DATA_WIDTH)
+        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
         `ifdef TID_PRESENT
          ,
         .ID_WIDTH(ID_WIDTH)
@@ -148,7 +148,7 @@ module router_dual_parallel #(
     );
 
     algorithm #(
-        .DATA_WIDTH(DATA_WIDTH)
+        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
         `ifdef TID_PRESENT
          ,
         .ID_WIDTH(ID_WIDTH)

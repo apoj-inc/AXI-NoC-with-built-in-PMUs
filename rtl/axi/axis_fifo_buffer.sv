@@ -1,9 +1,9 @@
 `include "defines.svh"
 
-module axi_fifo_buffer #(
+module axis_fifo_buffer #(
     parameter CHANNEL_NUMBER = 8,
     parameter BUFFER_LENGTH = 8,
-    parameter DATA_WIDTH = 32
+    parameter AXIS_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4

@@ -3,7 +3,7 @@
 module axis_if_demux #(
     parameter CHANNEL_NUMBER = 5,
     parameter CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
-    parameter DATA_WIDTH = 32
+    parameter AXIS_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -25,13 +25,13 @@ module axis_if_demux #(
     // T channel 
     logic TVALID [CHANNEL_NUMBER];
     logic TREADY [CHANNEL_NUMBER];
-    logic [DATA_WIDTH-1:0] TDATA [CHANNEL_NUMBER];
+    logic [AXIS_DATA_WIDTH-1:0] TDATA [CHANNEL_NUMBER];
     
     `ifdef TSTRB_PRESENT
-    logic [(DATA_WIDTH/8)-1:0] TSTRB [CHANNEL_NUMBER];
+    logic [(AXIS_DATA_WIDTH/8)-1:0] TSTRB [CHANNEL_NUMBER];
     `endif
     `ifdef TKEEP_PRESENT
-    logic [(DATA_WIDTH/8)-1:0] TKEEP [CHANNEL_NUMBER];
+    logic [(AXIS_DATA_WIDTH/8)-1:0] TKEEP [CHANNEL_NUMBER];
     `endif
     `ifdef TLAST_PRESENT
     logic TLAST [CHANNEL_NUMBER];

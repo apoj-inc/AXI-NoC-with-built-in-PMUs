@@ -6,7 +6,7 @@ module axi_ram
     parameter ID_R_WIDTH = 4,
     parameter ADDR_WIDTH = 16,
 
-    parameter DATA_WIDTH = 32
+    parameter AXI_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -31,7 +31,7 @@ module axi_ram
 
     `include "axi_type.svh"
 
-    localparam WSRTB_W = DATA_WIDTH/BYTE_WIDTH;
+    localparam WSRTB_W = AXI_DATA_WIDTH/BYTE_WIDTH;
 
     logic [ADDR_WIDTH-1:0] addr_a;
     logic [BYTE_WIDTH*WSRTB_W-1:0] data_a;
@@ -48,7 +48,7 @@ module axi_ram
         .ID_R_WIDTH(ID_R_WIDTH),
         .ADDR_WIDTH(ADDR_WIDTH),
 
-        .DATA_WIDTH(DATA_WIDTH)
+        .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
         `ifdef TID_PRESENT
          ,
         .ID_WIDTH(ID_WIDTH)

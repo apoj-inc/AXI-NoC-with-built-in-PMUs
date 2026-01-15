@@ -2,7 +2,7 @@
 
 module XY_mesh_dual_parallel #(
     parameter ADDR_WIDTH = 16,
-    parameter DATA_WIDTH = 8,
+    parameter AXI_DATA_WIDTH = 8,
     parameter ID_W_WIDTH = 5,
     parameter ID_R_WIDTH = 5
     `ifdef TID_PRESENT
@@ -46,21 +46,21 @@ module XY_mesh_dual_parallel #(
     localparam B_SUBHEADER_EFFECTIVE = ID_W_WIDTH;
     localparam B_SUBHEADER_WIDTH = (B_SUBHEADER_EFFECTIVE / 8 + ((B_SUBHEADER_EFFECTIVE % 8) != 0)) * 8;
 
-    localparam W_DATA_EFFECTIVE = DATA_WIDTH;
-    localparam W_DATA_WIDTH = (W_DATA_EFFECTIVE / 8 + ((W_DATA_EFFECTIVE % 8) != 0)) * 8;
+    localparam W_DATA_EFFECTIVE = AXI_DATA_WIDTH;
+    localparam W_AXI_DATA_WIDTH = (W_DATA_EFFECTIVE / 8 + ((W_DATA_EFFECTIVE % 8) != 0)) * 8;
 
     localparam AR_SUBHEADER_EFFECTIVE = ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2;
     localparam AR_SUBHEADER_WIDTH = (AR_SUBHEADER_EFFECTIVE / 8 + ((AR_SUBHEADER_EFFECTIVE % 8) != 0)) * 8;
 
-    localparam R_DATA_EFFECTIVE = ID_R_WIDTH + DATA_WIDTH;
-    localparam R_DATA_WIDTH = (R_DATA_EFFECTIVE / 8 + ((R_DATA_EFFECTIVE % 8) != 0)) * 8;
+    localparam R_DATA_EFFECTIVE = ID_R_WIDTH + AXI_DATA_WIDTH;
+    localparam R_AXI_DATA_WIDTH = (R_DATA_EFFECTIVE / 8 + ((R_DATA_EFFECTIVE % 8) != 0)) * 8;
 
     localparam COMP_1 = (ROUTING_HEADER_WIDTH > AW_SUBHEADER_WIDTH) ? ROUTING_HEADER_WIDTH : AW_SUBHEADER_WIDTH;
-    localparam COMP_2 = (B_SUBHEADER_WIDTH > W_DATA_WIDTH) ? B_SUBHEADER_WIDTH : W_DATA_WIDTH;
-    localparam COMP_3 = (AR_SUBHEADER_WIDTH > R_DATA_WIDTH) ? AR_SUBHEADER_WIDTH : R_DATA_WIDTH;
+    localparam COMP_2 = (B_SUBHEADER_WIDTH > W_AXI_DATA_WIDTH) ? B_SUBHEADER_WIDTH : W_AXI_DATA_WIDTH;
+    localparam COMP_3 = (AR_SUBHEADER_WIDTH > R_AXI_DATA_WIDTH) ? AR_SUBHEADER_WIDTH : R_AXI_DATA_WIDTH;
 
     localparam COMP_4 = (COMP_1 > COMP_2) ? COMP_1 : COMP_2;
-    localparam AXIS_CHANNEL_WIDTH = (COMP_3 > COMP_4) ? COMP_3 : COMP_4;
+    localparam AXIS_DATA_WIDTH = (COMP_3 > COMP_4) ? COMP_3 : COMP_4;
 
     typedef enum logic [3:0] {
         HOME_REQ,
@@ -119,11 +119,10 @@ module XY_mesh_dual_parallel #(
                 
                 axi2axis_XY #(
                     .ADDR_WIDTH(ADDR_WIDTH),
-                    .DATA_WIDTH(DATA_WIDTH),
                     .ID_W_WIDTH(ID_W_WIDTH),
                     .ID_R_WIDTH(ID_R_WIDTH),
-                    .AXIS_CHANNEL_WIDTH(AXIS_CHANNEL_WIDTH)
 
+                    .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
                     `ifdef TID_PRESENT
                     ,
                     .ID_WIDTH(ID_WIDTH)
@@ -200,12 +199,12 @@ module XY_mesh_dual_parallel #(
                 assign router_if_miso[i+1][j][EAST_RESP] = router_i_miso[i][j][9];
                 
                 router_dual_parallel #(
-                    .DATA_WIDTH(AXIS_CHANNEL_WIDTH),
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
                     .ROUTER_Y(i),
-                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y)
+                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
 
+                    .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
                     `ifdef TID_PRESENT
                     ,
                     .ID_WIDTH(ID_WIDTH)

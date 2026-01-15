@@ -2,7 +2,7 @@ interface axi_if #(
     parameter ID_W_WIDTH = 4,
     parameter ID_R_WIDTH = 4,
     parameter ADDR_WIDTH = 16,
-    parameter DATA_WIDTH = 32
+    parameter AXI_DATA_WIDTH = 32
 ) ();
 
     // AW channel 
@@ -17,8 +17,8 @@ interface axi_if #(
     // W channel
     logic WVALID;
     logic WREADY;
-    logic [DATA_WIDTH-1:0] WDATA;
-    logic [(DATA_WIDTH/8)-1:0] WSTRB;
+    logic [AXI_DATA_WIDTH-1:0] WDATA;
+    logic [(AXI_DATA_WIDTH/8)-1:0] WSTRB;
     logic WLAST;
 
     // B channel
@@ -39,7 +39,7 @@ interface axi_if #(
     logic RVALID;
     logic RREADY;
     logic [ID_R_WIDTH-1:0] RID;
-    logic [DATA_WIDTH-1:0] RDATA;
+    logic [AXI_DATA_WIDTH-1:0] RDATA;
     logic RLAST;
 
     modport m (

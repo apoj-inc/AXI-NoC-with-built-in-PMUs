@@ -1,10 +1,10 @@
 `include "defines.svh"
 
 module axi_master_loader #(
-    parameter DATA_WIDTH   = 32,
     parameter ADDR_WIDTH   = 16,
     parameter ID_W_WIDTH   = 5,
-    parameter ID_R_WIDTH   = 5
+    parameter ID_R_WIDTH   = 5,
+    parameter AXI_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4

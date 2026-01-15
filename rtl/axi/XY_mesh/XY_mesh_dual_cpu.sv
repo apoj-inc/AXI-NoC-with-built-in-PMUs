@@ -2,10 +2,10 @@
 
 module XY_mesh_dual_cpu #(
     parameter ADDR_WIDTH = 12,
-    parameter DATA_WIDTH = 32,
     parameter ID_W_WIDTH = 4,
     parameter ID_R_WIDTH = 4,
-    parameter MAX_ID_WIDTH = 4
+    parameter MAX_ID_WIDTH = 4,
+    parameter AXI_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -41,10 +41,10 @@ module XY_mesh_dual_cpu #(
 
     sr_cpu_axi #(
         .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH),
         .ID_W_WIDTH(ID_W_WIDTH),
         .ID_R_WIDTH(ID_R_WIDTH),
-        .MAX_ID_WIDTH(MAX_ID_WIDTH)
+        .MAX_ID_WIDTH(MAX_ID_WIDTH),
+        .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
         `ifdef TID_PRESENT
          ,
         .ID_WIDTH(ID_WIDTH)
@@ -67,9 +67,9 @@ module XY_mesh_dual_cpu #(
 
     axi_ram #(
         .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH),
         .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH)
+        .ID_R_WIDTH(ID_R_WIDTH),
+        .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
         `ifdef TID_PRESENT
          ,
         .ID_WIDTH(ID_WIDTH)
@@ -92,7 +92,6 @@ module XY_mesh_dual_cpu #(
 
     XY_mesh_dual #(
     .ADDR_WIDTH(ADDR_WIDTH),
-    .DATA_WIDTH(DATA_WIDTH),
     .ID_W_WIDTH(ID_W_WIDTH),
     .ID_R_WIDTH(ID_R_WIDTH)
     `ifdef TID_PRESENT

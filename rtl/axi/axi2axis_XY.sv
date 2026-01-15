@@ -1,21 +1,24 @@
 `include "defines.svh"
 
 module axi2axis_XY #(
+    parameter AXI_DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 16,
-    parameter DATA_WIDTH = 32,
     parameter ID_W_WIDTH = 4,
     parameter ID_R_WIDTH = 4,
-    parameter AXIS_CHANNEL_WIDTH = 40,
     
+    parameter AXIS_DATA_WIDTH = 40
     `ifdef TID_PRESENT
-    parameter ID_WIDTH = 4,
+    ,
+    parameter ID_WIDTH = 4
     `endif
     `ifdef TDEST_PRESENT
-    parameter DEST_WIDTH = 4,
+    ,
+    parameter DEST_WIDTH = 4
     `endif
     `ifdef TUSER_PRESENT
-    parameter USER_WIDTH = 4,
-    `endif
+    ,
+    parameter USER_WIDTH = 4
+    `endif,
 
     parameter ROUTER_X = 0,
     parameter MAX_ROUTERS_X = 4,
@@ -52,7 +55,7 @@ module axi2axis_XY #(
     `include "axis_type.svh"
 
     typedef struct packed {
-        logic [AXIS_CHANNEL_WIDTH - (8 + (MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH) * 2) - 1:0] RESERVED;
+        logic [AXIS_DATA_WIDTH - (8 + (MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH) * 2) - 1:0] RESERVED;
         logic [7:0] PACKET_COUNT;
         logic [MAX_ROUTERS_X_WIDTH-1:0] SOURCE_X;
         logic [MAX_ROUTERS_Y_WIDTH-1:0] SOURCE_Y;
@@ -61,7 +64,7 @@ module axi2axis_XY #(
     } routing_header;
 
     typedef struct packed {
-        logic [AXIS_CHANNEL_WIDTH - (ID_W_WIDTH + ADDR_WIDTH + 8 + 3 + 2) - 1:0] RESERVED;
+        logic [AXIS_DATA_WIDTH - (ID_W_WIDTH + ADDR_WIDTH + 8 + 3 + 2) - 1:0] RESERVED;
         logic [ID_W_WIDTH-1:0] ID;
         logic [ADDR_WIDTH-1:0] ADDR;
         logic [7:0] LEN;
@@ -70,17 +73,17 @@ module axi2axis_XY #(
     } aw_subheader;
 
     typedef struct packed {
-        logic [AXIS_CHANNEL_WIDTH - (ID_W_WIDTH) - 1:0] RESERVED;
+        logic [AXIS_DATA_WIDTH - (ID_W_WIDTH) - 1:0] RESERVED;
         logic [ID_W_WIDTH-1:0] ID;
     } b_subheader;
 
     typedef struct packed {
-        logic [AXIS_CHANNEL_WIDTH - (DATA_WIDTH) - 1:0] RESERVED;
-        logic [DATA_WIDTH-1:0] DATA;
+        logic [AXIS_DATA_WIDTH - (AXI_DATA_WIDTH) - 1:0] RESERVED;
+        logic [AXI_DATA_WIDTH-1:0] DATA;
     } w_data;
 
     typedef struct packed {
-        logic [AXIS_CHANNEL_WIDTH - (ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2) - 1:0] RESERVED;
+        logic [AXIS_DATA_WIDTH - (ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2) - 1:0] RESERVED;
         logic [ID_R_WIDTH-1:0] ID;
         logic [ADDR_WIDTH-1:0] ADDR;
         logic [7:0] LEN;
@@ -89,9 +92,9 @@ module axi2axis_XY #(
     } ar_subheader;
 
     typedef struct packed {
-        logic [AXIS_CHANNEL_WIDTH - (ID_R_WIDTH + DATA_WIDTH) - 1:0] RESERVED;
+        logic [AXIS_DATA_WIDTH - (ID_R_WIDTH + AXI_DATA_WIDTH) - 1:0] RESERVED;
         logic [ID_R_WIDTH-1:0] ID;
-        logic [DATA_WIDTH-1:0] DATA;
+        logic [AXI_DATA_WIDTH-1:0] DATA;
     } r_data;
 
     // response coordinate logic

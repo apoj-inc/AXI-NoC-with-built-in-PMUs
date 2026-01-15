@@ -2,11 +2,11 @@ module axi_mux #(
     parameter INPUT_NUM = 3,
     parameter integer ID_ROUTING [(INPUT_NUM-1) * 2] = '{0, 0, 1, 1},
 
+    parameter AXI_DATA_WIDTH = 32,
     parameter ID_W_WIDTH = 4,
     parameter ID_R_WIDTH = 4,
     parameter ADDR_WIDTH = 16,
     
-    parameter DATA_WIDTH = 32,
 
     parameter Ax_FIFO_LEN = 4
 ) (
@@ -31,8 +31,8 @@ module axi_mux #(
     // W channel
     logic [INPUT_NUM-1:0] WVALID;
     logic [INPUT_NUM-1:0] WREADY;
-    logic [DATA_WIDTH-1:0] WDATA [INPUT_NUM];
-    logic [(DATA_WIDTH/8)-1:0] WSTRB [INPUT_NUM];
+    logic [AXI_DATA_WIDTH-1:0] WDATA [INPUT_NUM];
+    logic [(AXI_DATA_WIDTH/8)-1:0] WSTRB [INPUT_NUM];
     logic WLAST [INPUT_NUM];
 
     // B channel
@@ -53,7 +53,7 @@ module axi_mux #(
     logic [INPUT_NUM-1:0] RVALID;
     logic [INPUT_NUM-1:0] RREADY;
     logic [ID_R_WIDTH-1:0] RID [INPUT_NUM];
-    logic [DATA_WIDTH-1:0] RDATA [INPUT_NUM];
+    logic [AXI_DATA_WIDTH-1:0] RDATA [INPUT_NUM];
     logic RLAST [INPUT_NUM];
 
 
@@ -125,7 +125,7 @@ module axi_mux #(
     endgenerate
 
     stream_arbiter #(
-        .DATA_WIDTH(ID_W_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
+        .AXI_DATA_WIDTH(ID_W_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
         .INPUT_NUM(INPUT_NUM)
     ) stream_arbiter_aw (
         .ACLK(ACLK),
@@ -166,7 +166,7 @@ module axi_mux #(
     endgenerate
 
     stream_arbiter #(
-        .DATA_WIDTH(ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
+        .AXI_DATA_WIDTH(ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
         .INPUT_NUM(INPUT_NUM)
     ) stream_arbiter_ar (
         .ACLK(ACLK),
