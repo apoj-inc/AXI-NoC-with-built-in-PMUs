@@ -54,5 +54,5 @@ def test_cocotb(cocotb_test_dir) -> None:
         test_dir=TESTS_DIR,
         waves=False,
         log_file=LOGS_DIR+f'/{test_module}.log',
-        results_xml=RESULTS_DIR+f'/{test_module}.xml'
+        results_xml=None
     )
