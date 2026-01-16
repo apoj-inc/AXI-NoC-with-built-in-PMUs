@@ -3,9 +3,9 @@
 
 `include "defines.svh"
 
-parameter AXIS_DATA_WIDTH = 32;
+parameter AXIS_DATA_WIDTH = 40;
 `ifdef TID_PRESENT
-parameter ID_WIDTH = 8;
+parameter ID_WIDTH = 4;
 `endif
 `ifdef TDEST_PRESENT
 parameter DEST_WIDTH = 8;

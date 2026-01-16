@@ -37,6 +37,8 @@ module mesh_throughput (
     
 );
 
+    `include "axi_type.svh"
+
     logic aclk;
 
     always #1 aclk = ~aclk;
@@ -45,53 +47,51 @@ module mesh_throughput (
         aclk = 1;
     end
 
-    axi_if #(
-        .DATA_WIDTH(8),
-        .ID_W_WIDTH(5),
-        .ID_R_WIDTH(5)
-    ) axi[16](), axi_ram[16]();
+    axi_mosi_t mosi[16], mosi_ram[16];
+    axi_miso_t miso[16], miso_ram[16];
 
     generate
         for (genvar i = 0; i < 16; i++) begin : map_wires
             always_comb begin
-                axi[i].AWVALID = awvalid[i];
-                axi[i].AWID    = awid[i];
-                axi[i].AWADDR  = awaddr[i];
-                axi[i].AWLEN   = awlen[i];
-                axi[i].AWSIZE  = awsize[i];
-                axi[i].AWBURST = awburst[i];
-                awready[i]     = axi[i].AWREADY;
+                mosi[i].AWVALID         = awvalid[i];
+                mosi[i].data.aw.AWID    = awid[i];
+                mosi[i].data.aw.AWADDR  = awaddr[i];
+                mosi[i].data.aw.AWLEN   = awlen[i];
+                mosi[i].data.aw.AWSIZE  = awsize[i];
+                mosi[i].data.aw.AWBURST = awburst[i];
+                awready[i]              = miso[i].AWREADY;
 
-                axi[i].WVALID = wvalid[i];
-                axi[i].WDATA  = wdata[i];
-                axi[i].WSTRB  = wstrb[i];
-                axi[i].WLAST  = wlast[i];
-                wready[i]     = axi[i].WREADY;
-                
-                bvalid[i]     = axi[i].BVALID;
-                bid[i]        = axi[i].BID;
-                axi[i].BREADY = bready[i];
-                
-                axi[i].ARVALID = arvalid[i];
-                axi[i].ARID    = arid[i];
-                axi[i].ARADDR  = araddr[i];
-                axi[i].ARLEN   = arlen[i];
-                axi[i].ARSIZE  = arsize[i];
-                axi[i].ARBURST = arburst[i];
-                arready[i]     = axi[i].ARREADY;
+                mosi[i].WVALID        = wvalid[i];
+                mosi[i].data.w.WDATA  = wdata[i];
+                mosi[i].data.w.WSTRB  = wstrb[i];
+                mosi[i].data.w.WLAST  = wlast[i];
+                wready[i]             = miso[i].WREADY;
 
-                rvalid[i]     = axi[i].RVALID;
-                rid[i]        = axi[i].RID;
-                rdata[i]      = axi[i].RDATA;
-                rlast[i]      = axi[i].RLAST;
-                axi[i].RREADY = rready[i];
+                bvalid[i]      = miso[i].BVALID;
+                bid[i]         = miso[i].data.b.BID;
+                mosi[i].BREADY = bready[i];
+                
+                mosi[i].ARVALID         = arvalid[i];
+                mosi[i].data.ar.ARID    = arid[i];
+                mosi[i].data.ar.ARADDR  = araddr[i];
+                mosi[i].data.ar.ARLEN   = arlen[i];
+                mosi[i].data.ar.ARSIZE  = arsize[i];
+                mosi[i].data.ar.ARBURST = arburst[i];
+                arready[i]              = miso[i].ARREADY;
+
+                rvalid[i]      = miso[i].RVALID;
+                rid[i]         = miso[i].data.r.RID;
+                rdata[i]       = miso[i].data.r.RDATA;
+                rlast[i]       = miso[i].data.r.RLAST;
+                mosi[i].RREADY = rready[i];
 
             end
 
             axi_pmu pmu (
-                .aclk    (aclk),
-                .aresetn (aresetn),
-                .mon_axi (axi[i])
+                .aclk         (aclk),
+                .aresetn      (aresetn),
+                .mon_axi_miso (miso[i]),
+                .mon_axi_mosi (mosi[i])
             );
         end
     endgenerate
@@ -100,25 +100,28 @@ module mesh_throughput (
         .ACLK(aclk),
         .ARESETn(aresetn),
 
-        .s_axi_in(axi),
-        .m_axi_out(axi_ram)
+        .s_axi_i(mosi),
+        .s_axi_o(miso),
+        .m_axi_i(miso_ram),
+        .m_axi_o(mosi_ram)
     );
 
     generate
         for (genvar i = 0; i < 16; i++) begin : map_rams
             axi_ram #(
-                .DATA_WIDTH(8),
+                .AXI_DATA_WIDTH(32),
                 .ID_W_WIDTH(5),
                 .ID_R_WIDTH(5)
             ) ram (
-                .clk(aclk),
-                .rst_n(aresetn),
-                .axi_s(axi_ram[i])
+                .clk_i     (aclk),
+                .rst_n_i   (aresetn),
+                .in_mosi_i (mosi_ram[i]),
+                .in_miso_o (miso_ram[i])
             );
             
             initial begin
                 for (int j = 0; j < 2**16; j++) begin
-                    ram.generate_rams[0].coupled_ram.ram[j] = $urandom();
+                    ram.coupled_ram.ram[j] = $urandom();
                 end
             end
         end

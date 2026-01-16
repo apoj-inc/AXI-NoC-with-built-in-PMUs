@@ -22,7 +22,7 @@ module ram #(
 
 logic [BATCH_WIDTH-1:0][BYTE_WIDTH-1:0] ram [2**ADDR_WIDTH];
 
-always_ff @( posedge clk_i ) begin : ram_a
+always @( posedge clk_i ) begin : ram_a
     begin
         data_a <= ram[addr_a];
         if(write_en_a) begin
@@ -36,7 +36,7 @@ always_ff @( posedge clk_i ) begin : ram_a
     end
 end
 
-always_ff @( posedge clk_i ) begin : ram_b
+always @( posedge clk_i ) begin : ram_b
     begin
         data_b <= ram[addr_b];
         if(write_en_b) begin

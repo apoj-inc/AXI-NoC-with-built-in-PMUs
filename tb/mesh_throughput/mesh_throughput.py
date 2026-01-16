@@ -77,6 +77,9 @@ async def axi_write(axi_master, core_num, depth, tran_count, data_bytes):
 @cocotb.test
 async def test_random(dut):
 
+    dut.aresetn.value = 0
+    await RisingEdge(dut.aclk)
+    
     axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(4)]
     
     filename = "pmu_dump_dual_parallel.json"
