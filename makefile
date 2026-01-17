@@ -27,7 +27,8 @@ LOGS_DIR    ?= $(TESTS_DIR)/logs
 RESULTS_DIR ?= ${LOGS_DIR}/results
 
 BUILD_ARGS ?=
-SIM_ARGS ?= -suppress 12110 -autofindloop -suppress 12130
+SIM_ARGS ?=
+SIM_ARGS += -suppress 12110 -autofindloop -suppress 12130
 
 ifndef GENERAL_TOPLEVEL
 COCOTB_TOPLEVEL     ?= tb_uart_loop

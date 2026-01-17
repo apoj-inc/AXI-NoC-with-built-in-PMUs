@@ -5,10 +5,12 @@ module tb_arbiter;
     logic [15:0] data_o;
     logic valid_o, ready_i;
 
+    logic finished = '0;
+
     always #10 ACLK = ~ACLK;
 
     stream_arbiter #(
-        .OUTPUT_NUM(5),
+        .INPUT_NUM(5),
         .DATA_WIDTH(16)
     ) sa (
         .ACLK(ACLK),
@@ -50,6 +52,10 @@ module tb_arbiter;
         for (int i = 0; i < 200; i++) begin
             @(posedge ACLK);
         end
+
+        finished = '1;
+
+        @(posedge ACLK);
 
         $finish;
     end
