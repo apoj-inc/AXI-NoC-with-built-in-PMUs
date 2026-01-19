@@ -6,7 +6,6 @@ module tb_axi;
 
     always #10 ACLK = ~ACLK;
 
-    `include "axi_type_test.svh"
     `include "axi_type.svh"
 
     axi_miso_t axi_miso_master;

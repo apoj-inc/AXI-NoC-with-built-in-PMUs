@@ -22,9 +22,11 @@ endif
 TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'),$(CURDIR)/$(file))
 
 SIM ?= questa
-SIM_ARGS ?=
+ifndef SIM_ARGS
+SIM_ARGS :=
 SIM_ARGS += -suppress 12110 -suppress 12130
 SIM_ARGS += -autofindloop -no_autoacc
+endif
 CCTB_DIR ?= $(CACHE_DIR)/cctb
 SIM_BUILD ?= $(CCTB_DIR)/$(COCOTB_TEST_MODULES)
 

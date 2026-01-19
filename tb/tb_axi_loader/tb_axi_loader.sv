@@ -43,7 +43,6 @@ module tb_axi_loader (
     output logic        idle_o
 );
 
-    `include "axi_type_test.svh"
     `include "axi_type.svh"
 
     axi_miso_t axi_miso;

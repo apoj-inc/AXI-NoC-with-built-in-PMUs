@@ -26,6 +26,7 @@ TESTS_DIR   ?= $(BUILD_DIR)/tests
 LOGS_DIR    ?= $(TESTS_DIR)/logs
 RESULTS_DIR ?= ${LOGS_DIR}/results
 
+SIM ?= questa
 BUILD_ARGS ?=
 SIM_ARGS ?=
 SIM_ARGS += -suppress 12110 -autofindloop -suppress 12130
@@ -49,7 +50,8 @@ test: $(VENV_DIR)
 	make -f $(CCTB_MAKEFILE) run CACHE_DIR=$(CACHE_DIR) \
 	VENV_DIR=$(VENV_DIR) INCLUDE_DIRS="$(INCLUDE_DIRS)" \
 	COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES) \
-	COCOTB_TOPLEVEL=$(COCOTB_TOPLEVEL)
+	COCOTB_TOPLEVEL=$(COCOTB_TOPLEVEL) \
+	SIM=$(SIM)
 
 run_pytest: $(VENV_DIR)
 	@export TESTS_DIRS="$(TESTS_DIRS)"; \

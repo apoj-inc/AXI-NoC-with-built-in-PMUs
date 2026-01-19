@@ -11,7 +11,6 @@ module tb_axi_memory;
 
     logic finished = '0;
 
-    `include "axi_type_test.svh"
     `include "axi_type.svh"
 
     axi_miso_t axi_i_miso;
