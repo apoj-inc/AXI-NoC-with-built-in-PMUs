@@ -37,6 +37,12 @@ module tb_mesh (
     
 );
 
+    axi_miso_t axi_miso_mesh[16];
+    axi_mosi_t axi_mosi_mesh[16];
+
+    axi_miso_t axi_miso_ram[16];
+    axi_mosi_t axi_mosi_ram[16];
+
     logic aclk;
 
     always #1 aclk = ~aclk;
@@ -45,45 +51,44 @@ module tb_mesh (
         aclk = 1;
     end
 
-    axi_if #(
-        .DATA_WIDTH(8)
-    ) axi[16](), axi_ram[16]();
-
     generate
         for (genvar i = 0; i < 16; i++) begin : map_wires
             always_comb begin
-                axi[i].AWVALID = awvalid[i];
-                axi[i].AWID    = awid[i];
-                axi[i].AWADDR  = awaddr[i];
-                axi[i].AWLEN   = awlen[i];
-                axi[i].AWSIZE  = awsize[i];
-                axi[i].AWBURST = awburst[i];
-                awready[i]     = axi[i].AWREADY;
+                axi_mosi_mesh[i].AWVALID = awvalid[i];
+                axi_mosi_mesh[i].data.aw.AWID    = awid[i];
+                axi_mosi_mesh[i].data.aw.AWADDR  = awaddr[i];
+                axi_mosi_mesh[i].data.aw.AWLEN   = awlen[i];
+                axi_mosi_mesh[i].data.aw.AWSIZE  = awsize[i];
+                axi_mosi_mesh[i].data.aw.AWBURST = awburst[i];
+                awready[i]     = axi_miso_mesh[i].AWREADY;
 
-                axi[i].WVALID = wvalid[i];
-                axi[i].WDATA  = wdata[i];
-                axi[i].WSTRB  = wstrb[i];
-                axi[i].WLAST  = wlast[i];
-                wready[i]     = axi[i].WREADY;
+                axi_mosi_mesh[i].WVALID = wvalid[i];
+                axi_mosi_mesh[i].data.w.WDATA  = wdata[i];
+                axi_mosi_mesh[i].data.w.WSTRB  = wstrb[i];
+                axi_mosi_mesh[i].data.w.WLAST  = wlast[i];
+                wready[i]     = axi_miso_mesh[i].WREADY;
                 
-                bvalid[i]     = axi[i].BVALID;
-                bid[i]        = axi[i].BID;
-                axi[i].BREADY = bready[i];
+                bvalid[i]     = axi_miso_mesh[i].BVALID;
+                bid[i]        = axi_miso_mesh[i].data.b.BID;
+                axi_mosi_mesh[i].BREADY = bready[i];
                 
-                axi[i].ARVALID = arvalid[i];
-                axi[i].ARID    = arid[i];
-                axi[i].ARADDR  = araddr[i];
-                axi[i].ARLEN   = arlen[i];
-                axi[i].ARSIZE  = arsize[i];
-                axi[i].ARBURST = arburst[i];
-                arready[i]     = axi[i].ARREADY;
+                axi_mosi_mesh[i].ARVALID = arvalid[i];
+                axi_mosi_mesh[i].data.ar.ARID    = arid[i];
+                axi_mosi_mesh[i].data.ar.ARADDR  = araddr[i];
+                axi_mosi_mesh[i].data.ar.ARLEN   = arlen[i];
+                axi_mosi_mesh[i].data.ar.ARSIZE  = arsize[i];
+                axi_mosi_mesh[i].data.ar.ARBURST = arburst[i];
+                arready[i]     = axi_miso_mesh[i].ARREADY;
 
-                rvalid[i]     = axi[i].RVALID;
-                rid[i]        = axi[i].RID;
-                rdata[i]      = axi[i].RDATA;
-                rlast[i]      = axi[i].RLAST;
-                axi[i].RREADY = rready[i];
+                rvalid[i]     = axi_miso_mesh[i].RVALID;
+                rid[i]        = axi_miso_mesh[i].data.r.RID;
+                rdata[i]      = axi_miso_mesh[i].data.r.RDATA;
+                rlast[i]      = axi_miso_mesh[i].data.r.RLAST;
+                axi_mosi_mesh[i].RREADY = rready[i];
             end
+
+            
+
         end
     endgenerate
 
@@ -91,18 +96,20 @@ module tb_mesh (
         .ACLK(aclk),
         .ARESETn(aresetn),
 
-        .s_axi_in(axi),
-        .m_axi_out(axi_ram)
+        .s_axi_i(axi_mosi_mesh),
+        .s_axi_o(axi_miso_mesh),
+
+        .m_axi_i(axi_miso_ram),
+        .m_axi_o(axi_mosi_ram)
+
     );
 
-    generate
-        for (genvar i = 0; i < 16; i++) begin : map_rams
-            axi_ram ram (
-                .clk(aclk),
-                .rst_n(aresetn),
-                .axi_s(axi_ram[i])
-            );
-        end
-    endgenerate
+    axi_ram ram[16] (
+        .clk_i({16{aclk}}),
+        .rst_n_i({16{aresetn}}),
+
+        .in_mosi_i(axi_mosi_ram),
+        .in_miso_o(axi_miso_ram)
+        );
     
 endmodule

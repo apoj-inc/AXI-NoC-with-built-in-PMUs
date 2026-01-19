@@ -11,19 +11,13 @@ module tb_axi_memory;
 
     logic finished = '0;
 
-    `include "axi_type.svh"
 
     axi_miso_t axi_i_miso;
     axi_mosi_t axi_i_mosi;
 
     always #10 ACLK = ~ACLK;
 
-    axi_ram #(
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .BYTE_WIDTH(BYTE_WIDTH)
-    ) axi_r (
+    axi_ram axi_r (
         .clk_i(ACLK),
         .rst_n_i(ARESETn),
         .in_mosi_i(axi_i_mosi),

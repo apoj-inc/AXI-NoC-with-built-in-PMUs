@@ -100,8 +100,6 @@ module tb_mux (
     input  logic c_RREADY
 );
 
-    `include "axi_type.svh"
-
     axi_miso_t axi_miso_master[3];
     axi_mosi_t axi_mosi_master[3];
 

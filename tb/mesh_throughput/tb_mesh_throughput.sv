@@ -37,8 +37,6 @@ module tb_mesh_throughput (
     
 );
 
-    `include "axi_type.svh"
-
     logic aclk;
 
     always #1 aclk = ~aclk;
@@ -108,11 +106,7 @@ module tb_mesh_throughput (
 
     generate
         for (genvar i = 0; i < 16; i++) begin : map_rams
-            axi_ram #(
-                .AXI_DATA_WIDTH(32),
-                .ID_W_WIDTH(5),
-                .ID_R_WIDTH(5)
-            ) ram (
+            axi_ram ram (
                 .clk_i     (aclk),
                 .rst_n_i   (aresetn),
                 .in_mosi_i (mosi_ram[i]),

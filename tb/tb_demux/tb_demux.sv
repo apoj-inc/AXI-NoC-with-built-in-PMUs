@@ -36,7 +36,6 @@ module tb_demux (
     input  logic RREADY
 );
 
-    `include "axi_type.svh"
 
     axi_miso_t axi_miso_master;
     axi_mosi_t axi_mosi_master;

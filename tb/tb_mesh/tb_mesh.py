@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge, Combine
+from cocotb.triggers import RisingEdge, Combine, Timer, First
 from cocotb.clock import Clock
 from cocotbext.axi import AxiMaster, AxiBus
 
@@ -50,12 +50,11 @@ async def axi_read_write(dut, axi_master, addr, data, id, channel):
 @cocotb.test
 async def feedback_loop(dut):
     
-    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(16)]
-    
     dut.aresetn.value = 0
     await RisingEdge(dut.aclk)
     await RisingEdge(dut.aclk)
     dut.aresetn.value = 1
+    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(16)]
     await RisingEdge(dut.aclk)
 
     processes = []
@@ -68,24 +67,29 @@ async def feedback_loop(dut):
         processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[0], addrs[i * 2], datas[i * 2], 2, 0)))
         processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[1], addrs[i * 2 + 1], datas[i * 2 + 1], 1, 0)))
 
-    await Combine (
-        *processes
+    timeout = Timer(50_000, units='ns')
+
+    result = await First(
+        timeout,
+        Combine (*processes)
     )
 
-    for i in range(10):
+    assert result is not timeout, "Design has hung!"
+
+    for _ in range(10):
         await RisingEdge(dut.aclk)
 
 
 @cocotb.test
 async def test_all_in_one(dut):
-
-    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(16)]
     
     dut.aresetn.value = 0
     await RisingEdge(dut.aclk)
     await RisingEdge(dut.aclk)
     dut.aresetn.value = 1
     await RisingEdge(dut.aclk)
+
+    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(16)]
 
     processes = []
     datas = [b'0000000000000000', b'1111111111111111', b'2222222222222222', b'3333333333333333', b'4444444444444444',
@@ -96,24 +100,29 @@ async def test_all_in_one(dut):
     for j in range(36):
         processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 16], addrs[j % 16], datas[j % 16], 5, 0)))
 
-    await Combine (
-        *processes
+    timeout = Timer(50_000, units='ns')
+
+    result = await First(
+        timeout,
+        Combine (*processes)
     )
 
-    for i in range(10):
+    assert result is not timeout, "Design has hung!"
+
+    for _ in range(10):
         await RisingEdge(dut.aclk)
 
 
 @cocotb.test
 async def test_random(dut):
-
-    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(9)]
     
     dut.aresetn.value = 0
     await RisingEdge(dut.aclk)
     await RisingEdge(dut.aclk)
     dut.aresetn.value = 1
     await RisingEdge(dut.aclk)
+
+    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(9)]
 
     for i in range(1000):
         cocotb.log.info(f"pass {i}")
@@ -125,9 +134,14 @@ async def test_random(dut):
             id = randint(1, 9)
             processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 9], addrs[j % 9], datas[j % 9], id, 0)))
 
-        await Combine (
-            *processes
-        )
+    timeout = Timer(50_000, units='ns')
 
-    for i in range(10):
+    result = await First(
+        timeout,
+        Combine (*processes)
+    )
+
+    assert result is not timeout, "Design has hung!"
+
+    for _ in range(10):
         await RisingEdge(dut.aclk)

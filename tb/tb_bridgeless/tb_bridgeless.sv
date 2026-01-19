@@ -68,7 +68,6 @@ module tb_bridgeless (
     input  logic b_rready
 );
 
-    `include "axi_type.svh"
 
     axi_miso_t axi_miso_master[2];
     axi_mosi_t axi_mosi_master[2];
