@@ -13,17 +13,33 @@ module tb_queue(
     output [32-1:0] s_tdata_alt
 );
 
-    axis_if axis_in(), axis_out();
+    axis_miso_t axis_miso_in, axis_miso_out;
+    axis_mosi_t axis_mosi_in, axis_mosi_out;
 
-    assign axis_in.TVALID = m_tvalid;
-    assign axis_in.TDATA = m_tdata;
-    assign m_tready = axis_in.TREADY;
+    assign axis_mosi_in.TVALID = m_tvalid;
+    assign axis_mosi_in.data.TDATA = m_tdata;
+    assign m_tready = axis_miso_in.TREADY;
  
-    assign s_tvalid = axis_out.TVALID;
-    assign s_tdata = axis_out.TDATA;
-    assign axis_out.TREADY = s_tready;
+    assign s_tvalid = axis_mosi_out.TVALID;
+    assign s_tdata = axis_mosi_out.data.TDATA;
+    assign axis_miso_out.TREADY = s_tready;
     
-    queue queue_name(clk, rst_n, axis_in, axis_out);
-    stream_fifo #(.DATA_WIDTH(32)) stream_fifo(clk, rst_n, m_tdata, m_tvalid, m_tready_alt, s_tdata_alt, s_tvalid_alt, s_tready);
+    queue queue_name(
+        clk, rst_n,
+
+        axis_mosi_in,
+        axis_miso_in,
+
+        axis_mosi_out,
+        axis_miso_out
+    );
+    
+    stream_fifo #(
+        .DATA_WIDTH(32)
+        ) stream_fifo (
+        clk, rst_n,
+        m_tdata, m_tvalid, m_tready_alt,
+        s_tdata_alt, s_tvalid_alt, s_tready
+        );
 
 endmodule
