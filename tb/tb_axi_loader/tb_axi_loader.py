@@ -5,7 +5,7 @@ from cocotbext.axi import AxiSlave, AxiBus, MemoryRegion
 
 @cocotb.test
 async def test(dut):
-    cocotb.start_soon(Clock(dut.clk_i, 2, units='ns').start())
+    cocotb.start_soon(Clock(dut.clk_i, 2, unit='ns').start())
 
     axi_slave = AxiSlave(AxiBus.from_prefix(dut, ""), dut.clk_i, dut.arstn_i, reset_active_level=False, target=MemoryRegion(2**16))
 

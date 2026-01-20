@@ -36,7 +36,7 @@ async def uart_test(dut):
     dut.rst_n.value = 0
     dut.tx_data_valid.value = 0
     dut.rx_data_ready.value = 0
-    cocotb.start_soon(Clock(dut.clk, 2, units='ns').start())  # run the clock "in the background
+    cocotb.start_soon(Clock(dut.clk, 2, unit='ns').start())  # run the clock "in the background
     await RisingEdge(dut.clk)
     dut.rst_n.value = 1
 

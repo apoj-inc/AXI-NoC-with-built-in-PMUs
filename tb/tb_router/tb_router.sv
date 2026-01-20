@@ -94,21 +94,20 @@ module tb_router (
                 .MAX_ROUTERS_X(3),
                 .MAX_ROUTERS_Y(3)
             ) bridges (
-                .ACLK(ACLK),
-                .ARESETn(ARESETn),
+                .ACLK(aclk),
+                .ARESETn(aresetn),
 
                 .s_axi_i(axi_mosi[i]),
                 .s_axi_o(axi_miso[i]),
 
-                .s_axis_resp_i(axis_mosi_from_q[i]),
-                .s_axis_resp_o(axis_miso_from_q[i]),
-
-
                 .m_axi_i(axi_ram_miso[i]),
                 .m_axi_o(axi_ram_mosi[i]),
 
-                .m_axis_resp_i(axis_miso_to_q[i]),
-                .m_axis_resp_o(axis_mosi_to_q[i])
+                .s_axis_req_i(axis_mosi_from_q[i]),
+                .s_axis_req_o(axis_miso_from_q[i]),
+
+                .m_axis_req_i(axis_miso_to_q[i]),
+                .m_axis_req_o(axis_mosi_to_q[i])
             );
         end
     endgenerate

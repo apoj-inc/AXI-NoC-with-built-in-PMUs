@@ -60,7 +60,7 @@ async def test(dut):
     dut.aresetn.value = 1
     await RisingEdge(dut.aclk)
 
-    timeout = Timer(50_000, units='ns')
+    timeout = Timer(50_000, unit='ns')
 
     for _ in range(10):
         processes = []

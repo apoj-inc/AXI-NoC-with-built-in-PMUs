@@ -26,7 +26,7 @@ TESTS_DIR   ?= $(BUILD_DIR)/tests
 LOGS_DIR    ?= $(TESTS_DIR)/logs
 RESULTS_DIR ?= ${LOGS_DIR}/results
 
-SIM ?= questa
+SIM ?= questa-qisqrun
 BUILD_ARGS ?=
 SIM_ARGS ?=
 SIM_ARGS += -suppress 12110 -autofindloop -suppress 12130

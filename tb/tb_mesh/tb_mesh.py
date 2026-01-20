@@ -67,7 +67,7 @@ async def feedback_loop(dut):
         processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[0], addrs[i * 2], datas[i * 2], 2, 0)))
         processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[1], addrs[i * 2 + 1], datas[i * 2 + 1], 1, 0)))
 
-    timeout = Timer(50_000, units='ns')
+    timeout = Timer(50_000, unit='ns')
 
     result = await First(
         timeout,
@@ -100,7 +100,7 @@ async def test_all_in_one(dut):
     for j in range(36):
         processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 16], addrs[j % 16], datas[j % 16], 5, 0)))
 
-    timeout = Timer(50_000, units='ns')
+    timeout = Timer(50_000, unit='ns')
 
     result = await First(
         timeout,
@@ -134,7 +134,7 @@ async def test_random(dut):
             id = randint(1, 9)
             processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 9], addrs[j % 9], datas[j % 9], id, 0)))
 
-    timeout = Timer(50_000, units='ns')
+    timeout = Timer(50_000, unit='ns')
 
     result = await First(
         timeout,
