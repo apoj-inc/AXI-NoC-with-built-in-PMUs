@@ -29,4 +29,4 @@ async def test_uart_trans(dut):
             if(dut.data_ready_o.value):
                 break
         
-        assert sink.read_nowait() == int.to_bytes(i)
+        assert sink.read_nowait() == int.to_bytes(i, 1, 'little')
