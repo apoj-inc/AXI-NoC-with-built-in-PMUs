@@ -100,122 +100,131 @@ module tb_mux (
     input  logic c_RREADY
 );
 
-    axi_if master[3] ();
-    axi_if slave ();
+    axi_miso_t axi_miso_master[3];
+    axi_mosi_t axi_mosi_master[3];
+
+    axi_miso_t axi_miso_slave;
+    axi_mosi_t axi_mosi_slave;
 
     always_comb begin
-        master[0].AWVALID = a_AWVALID;
-        master[0].AWID    = a_AWID;
-        master[0].AWADDR  = a_AWADDR;
-        master[0].AWLEN   = a_AWLEN;
-        master[0].AWSIZE  = a_AWSIZE;
-        master[0].AWBURST = a_AWBURST;
-        a_AWREADY         = master[0].AWREADY;
+        axi_mosi_master[0].AWVALID = a_AWVALID;
+        axi_mosi_master[0].data.aw.AWID    = a_AWID;
+        axi_mosi_master[0].data.aw.AWADDR  = a_AWADDR;
+        axi_mosi_master[0].data.aw.AWLEN   = a_AWLEN;
+        axi_mosi_master[0].data.aw.AWSIZE  = a_AWSIZE;
+        axi_mosi_master[0].data.aw.AWBURST = a_AWBURST;
+        a_AWREADY         = axi_miso_master[0].AWREADY;
 
-        master[0].WVALID = a_WVALID;
-        master[0].WDATA  = a_WDATA;
-        master[0].WSTRB  = a_WSTRB;
-        master[0].WLAST  = a_WLAST;
-        a_WREADY         = master[0].WREADY;
+        axi_mosi_master[0].WVALID = a_WVALID;
+        axi_mosi_master[0].data.w.WDATA  = a_WDATA;
+        axi_mosi_master[0].data.w.WSTRB  = a_WSTRB;
+        axi_mosi_master[0].data.w.WLAST  = a_WLAST;
+        a_WREADY         = axi_miso_master[0].WREADY;
         
-        a_BVALID = master[0].BVALID;
-        a_BID    = master[0].BID;
-        master[0].BREADY = a_BREADY;
+        a_BVALID = axi_miso_master[0].BVALID;
+        a_BID    = axi_miso_master[0].data.b.BID;
+        axi_mosi_master[0].BREADY = a_BREADY;
         
-        master[0].ARVALID = a_ARVALID;
-        master[0].ARID    = a_ARID;
-        master[0].ARADDR  = a_ARADDR;
-        master[0].ARLEN   = a_ARLEN;
-        master[0].ARSIZE  = a_ARSIZE;
-        master[0].ARBURST = a_ARBURST;
-        a_ARREADY         = master[0].ARREADY;
+        axi_mosi_master[0].ARVALID = a_ARVALID;
+        axi_mosi_master[0].data.ar.ARID    = a_ARID;
+        axi_mosi_master[0].data.ar.ARADDR  = a_ARADDR;
+        axi_mosi_master[0].data.ar.ARLEN   = a_ARLEN;
+        axi_mosi_master[0].data.ar.ARSIZE  = a_ARSIZE;
+        axi_mosi_master[0].data.ar.ARBURST = a_ARBURST;
+        a_ARREADY         = axi_miso_master[0].ARREADY;
 
-        a_RVALID = master[0].RVALID;
-        a_RID    = master[0].RID;
-        a_RDATA  = master[0].RDATA;
-        a_RLAST  = master[0].RLAST;
-        master[0].RREADY = a_RREADY;
+        a_RVALID = axi_miso_master[0].RVALID;
+        a_RID    = axi_miso_master[0].data.r.RID;
+        a_RDATA  = axi_miso_master[0].data.r.RDATA;
+        a_RLAST  = axi_miso_master[0].data.r.RLAST;
+        axi_mosi_master[0].RREADY = a_RREADY;
     end
 
     always_comb begin
-        master[1].AWVALID = b_AWVALID;
-        master[1].AWID    = b_AWID;
-        master[1].AWADDR  = b_AWADDR;
-        master[1].AWLEN   = b_AWLEN;
-        master[1].AWSIZE  = b_AWSIZE;
-        master[1].AWBURST = b_AWBURST;
-        b_AWREADY         = master[1].AWREADY;
+        axi_mosi_master[1].AWVALID = b_AWVALID;
+        axi_mosi_master[1].data.aw.AWID    = b_AWID;
+        axi_mosi_master[1].data.aw.AWADDR  = b_AWADDR;
+        axi_mosi_master[1].data.aw.AWLEN   = b_AWLEN;
+        axi_mosi_master[1].data.aw.AWSIZE  = b_AWSIZE;
+        axi_mosi_master[1].data.aw.AWBURST = b_AWBURST;
+        b_AWREADY         = axi_miso_master[1].AWREADY;
 
-        master[1].WVALID = b_WVALID;
-        master[1].WDATA  = b_WDATA;
-        master[1].WSTRB  = b_WSTRB;
-        master[1].WLAST  = b_WLAST;
-        b_WREADY         = master[1].WREADY;
+        axi_mosi_master[1].WVALID = b_WVALID;
+        axi_mosi_master[1].data.w.WDATA  = b_WDATA;
+        axi_mosi_master[1].data.w.WSTRB  = b_WSTRB;
+        axi_mosi_master[1].data.w.WLAST  = b_WLAST;
+        b_WREADY         = axi_miso_master[1].WREADY;
         
-        b_BVALID = master[1].BVALID;
-        b_BID    = master[1].BID;
-        master[1].BREADY = b_BREADY;
+        b_BVALID = axi_miso_master[1].BVALID;
+        b_BID    = axi_miso_master[1].data.b.BID;
+        axi_mosi_master[1].BREADY = b_BREADY;
         
-        master[1].ARVALID = b_ARVALID;
-        master[1].ARID    = b_ARID;
-        master[1].ARADDR  = b_ARADDR;
-        master[1].ARLEN   = b_ARLEN;
-        master[1].ARSIZE  = b_ARSIZE;
-        master[1].ARBURST = b_ARBURST;
-        b_ARREADY         = master[1].ARREADY;
+        axi_mosi_master[1].ARVALID = b_ARVALID;
+        axi_mosi_master[1].data.ar.ARID    = b_ARID;
+        axi_mosi_master[1].data.ar.ARADDR  = b_ARADDR;
+        axi_mosi_master[1].data.ar.ARLEN   = b_ARLEN;
+        axi_mosi_master[1].data.ar.ARSIZE  = b_ARSIZE;
+        axi_mosi_master[1].data.ar.ARBURST = b_ARBURST;
+        b_ARREADY         = axi_miso_master[1].ARREADY;
 
-        b_RVALID = master[1].RVALID;
-        b_RID    = master[1].RID;
-        b_RDATA  = master[1].RDATA;
-        b_RLAST  = master[1].RLAST;
-        master[1].RREADY = b_RREADY;
+        b_RVALID = axi_miso_master[1].RVALID;
+        b_RID    = axi_miso_master[1].data.r.RID;
+        b_RDATA  = axi_miso_master[1].data.r.RDATA;
+        b_RLAST  = axi_miso_master[1].data.r.RLAST;
+        axi_mosi_master[1].RREADY = b_RREADY;
     end
 
     always_comb begin
-        master[2].AWVALID = c_AWVALID;
-        master[2].AWID    = c_AWID;
-        master[2].AWADDR  = c_AWADDR;
-        master[2].AWLEN   = c_AWLEN;
-        master[2].AWSIZE  = c_AWSIZE;
-        master[2].AWBURST = c_AWBURST;
-        c_AWREADY         = master[2].AWREADY;
+        axi_mosi_master[2].AWVALID = c_AWVALID;
+        axi_mosi_master[2].data.aw.AWID    = c_AWID;
+        axi_mosi_master[2].data.aw.AWADDR  = c_AWADDR;
+        axi_mosi_master[2].data.aw.AWLEN   = c_AWLEN;
+        axi_mosi_master[2].data.aw.AWSIZE  = c_AWSIZE;
+        axi_mosi_master[2].data.aw.AWBURST = c_AWBURST;
+        c_AWREADY         = axi_miso_master[2].AWREADY;
 
-        master[2].WVALID = c_WVALID;
-        master[2].WDATA  = c_WDATA;
-        master[2].WSTRB  = c_WSTRB;
-        master[2].WLAST  = c_WLAST;
-        c_WREADY         = master[2].WREADY;
+        axi_mosi_master[2].WVALID = c_WVALID;
+        axi_mosi_master[2].data.w.WDATA  = c_WDATA;
+        axi_mosi_master[2].data.w.WSTRB  = c_WSTRB;
+        axi_mosi_master[2].data.w.WLAST  = c_WLAST;
+        c_WREADY         = axi_miso_master[2].WREADY;
         
-        c_BVALID = master[2].BVALID;
-        c_BID    = master[2].BID;
-        master[2].BREADY = c_BREADY;
+        c_BVALID = axi_miso_master[2].BVALID;
+        c_BID    = axi_miso_master[2].data.b.BID;
+        axi_mosi_master[2].BREADY = c_BREADY;
         
-        master[2].ARVALID = c_ARVALID;
-        master[2].ARID    = c_ARID;
-        master[2].ARADDR  = c_ARADDR;
-        master[2].ARLEN   = c_ARLEN;
-        master[2].ARSIZE  = c_ARSIZE;
-        master[2].ARBURST = c_ARBURST;
-        c_ARREADY         = master[2].ARREADY;
+        axi_mosi_master[2].ARVALID = c_ARVALID;
+        axi_mosi_master[2].data.ar.ARID    = c_ARID;
+        axi_mosi_master[2].data.ar.ARADDR  = c_ARADDR;
+        axi_mosi_master[2].data.ar.ARLEN   = c_ARLEN;
+        axi_mosi_master[2].data.ar.ARSIZE  = c_ARSIZE;
+        axi_mosi_master[2].data.ar.ARBURST = c_ARBURST;
+        c_ARREADY         = axi_miso_master[2].ARREADY;
 
-        c_RVALID = master[2].RVALID;
-        c_RID    = master[2].RID;
-        c_RDATA  = master[2].RDATA;
-        c_RLAST  = master[2].RLAST;
-        master[2].RREADY = c_RREADY;
+        c_RVALID = axi_miso_master[2].RVALID;
+        c_RID    = axi_miso_master[2].data.r.RID;
+        c_RDATA  = axi_miso_master[2].data.r.RDATA;
+        c_RLAST  = axi_miso_master[2].data.r.RLAST;
+        axi_mosi_master[2].RREADY = c_RREADY;
     end
 
-    axi_mux dut (
+    axi_mux  #(
+        .INPUT_NUM(3)
+        ) dut (
         .ACLK(ACLK),
         .ARESETn(ARESETn),
 
-        .s_axi_in(master),
-        .m_axi_out(slave)
+        .s_axi_i(axi_mosi_master),
+        .s_axi_o(axi_miso_master),
+
+        .m_axi_i(axi_miso_slave),
+        .m_axi_o(axi_mosi_slave)
     );
 
     axi_ram ram (
-        .clk(ACLK), .rst_n(ARESETn),
-        .axi_s(slave)
+        .clk_i(ACLK), .rst_n_i(ARESETn),
+        .in_mosi_i(axi_mosi_slave),
+        .in_miso_o(axi_miso_slave)
     );
     
 endmodule

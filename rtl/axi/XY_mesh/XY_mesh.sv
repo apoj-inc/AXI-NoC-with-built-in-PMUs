@@ -6,7 +6,7 @@ module XY_mesh #(
     parameter ID_W_WIDTH = 4,
     parameter ID_R_WIDTH = 4,
     parameter MAX_ID_WIDTH = 4,
-    parameter AXIS_DATA_WIDTH = 32
+    parameter AXIS_DATA_WIDTH = 40
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4

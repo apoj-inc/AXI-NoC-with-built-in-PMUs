@@ -4,9 +4,10 @@ module mesh_with_loaders # (
     parameter ID_W_WIDTH = 5,
     parameter ID_R_WIDTH = 5,
     parameter MAX_ID_WIDTH = 4,
-    parameter ADDR_WIDTH = 8,
+    parameter ADDR_WIDTH = 16,
 
-    parameter DATA_WIDTH = 8,
+    parameter N = (ID_W_WIDTH-1)*(ID_R_WIDTH-1),
+
     parameter AXI_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
@@ -24,29 +25,29 @@ module mesh_with_loaders # (
     input  logic        aclk,
     input  logic        aresetn,
 
-    input  logic [4:0]  pmu_addr_i   [16],
-    output logic [63:0] pmu_data_o   [16],
+    input  logic [4:0]  pmu_addr_i   [N],
+    output logic [63:0] pmu_data_o   [N],
 
     input  logic [7:0]  req_depth_i,
-    input  logic [4:0]  id_i         [16],
-    input  logic        write_i      [16],
-    input  logic [7:0]  axlen_i      [16],
-    input  logic        fifo_push_i  [16],
+    input  logic [4:0]  id_i         [N],
+    input  logic        write_i      [N],
+    input  logic [7:0]  axlen_i      [N],
+    input  logic        fifo_push_i  [N],
     input  logic        start_i,
-    output logic        idle_o       [16]
+    output logic        idle_o       [N]
 );
 
     `include "axi_type.svh"
 
-    axi_mosi_t axi_mosi[16];
-    axi_miso_t axi_miso[16];
+    axi_mosi_t axi_mosi[N];
+    axi_miso_t axi_miso[N];
 
-    axi_mosi_t axi_mosi_ram[16];
-    axi_miso_t axi_miso_ram[16];
+    axi_mosi_t axi_mosi_ram[N];
+    axi_miso_t axi_miso_ram[N];
 
     generate
         genvar i;
-        for (i = 0; i < 16; i++) begin : map_wires
+        for (i = 0; i < N; i++) begin : map_wires
 
             axi_pmu #(
                 .ADDR_WIDTH(ADDR_WIDTH),
@@ -108,7 +109,7 @@ module mesh_with_loaders # (
     endgenerate
 
     XY_mesh_dual_parallel #(
-        .ADDR_WIDTH(8)
+        .ADDR_WIDTH(ADDR_WIDTH)
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
@@ -120,22 +121,17 @@ module mesh_with_loaders # (
         .m_axi_o(axi_mosi_ram)
     );
 
-    generate
-        for (i = 0; i < 16; i++) begin : map_rams
-            axi_ram #(
-                .AXI_DATA_WIDTH(32),
-                .BYTE_WIDTH(8),
-                .ADDR_WIDTH(12),
-                .ID_W_WIDTH(5),
-                .ID_R_WIDTH(5)
-            ) ram (
-                .clk_i(aclk),
-                .rst_n_i(aresetn),
-                .in_mosi_i(axi_mosi_ram[i]),
-                .in_miso_o(axi_miso_ram[i])
-            );
-        end
-
-    endgenerate
+    axi_ram #(
+        .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+        .BYTE_WIDTH(AXI_DATA_WIDTH/8 + (AXI_DATA_WIDTH%8 != 0)),
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .ID_W_WIDTH(ID_W_WIDTH),
+        .ID_R_WIDTH(ID_R_WIDTH)
+    ) ram[N] (
+        .clk_i({N{aclk}}),
+        .rst_n_i({N{aresetn}}),
+        .in_mosi_i(axi_mosi_ram),
+        .in_miso_o(axi_miso_ram)
+    );
     
 endmodule

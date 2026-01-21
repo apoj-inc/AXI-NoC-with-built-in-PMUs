@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module tb_mesh_throughput (
+module mesh_throughput (
     input aresetn,
 
     output logic awready[16],
@@ -36,8 +36,6 @@ module tb_mesh_throughput (
     input  logic rready[16]
     
 );
-
-    `include "axi_type.svh"
 
     logic aclk;
 
@@ -108,11 +106,7 @@ module tb_mesh_throughput (
 
     generate
         for (genvar i = 0; i < 16; i++) begin : map_rams
-            axi_ram #(
-                .AXI_DATA_WIDTH(32),
-                .ID_W_WIDTH(5),
-                .ID_R_WIDTH(5)
-            ) ram (
+            axi_ram ram (
                 .clk_i     (aclk),
                 .rst_n_i   (aresetn),
                 .in_mosi_i (mosi_ram[i]),

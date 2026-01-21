@@ -1,7 +1,7 @@
 `include "defines.svh"
 
 module algorithm_dual #(
-    parameter AXIS_DATA_WIDTH = 32
+    parameter AXIS_DATA_WIDTH = 40
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -77,8 +77,8 @@ module algorithm_dual #(
         for (int i = 0; i < CHANNEL_NUMBER; i++) begin
             out_mosi_o[i] = '0;
         end
-        in_miso_o = out_miso_i[ctrl];
-        out_mosi_o[ctrl] = in_mosi_i;
+        in_miso_o = ((in_mosi_i.data.TID != ROUTING_HEADER) || !busy[ctrl]) ? out_miso_i[ctrl] : '0;
+        out_mosi_o[ctrl] = ((in_mosi_i.data.TID != ROUTING_HEADER) || !busy[ctrl]) ? in_mosi_i : '0;
     end
 
     always_ff @(posedge clk_i or negedge rst_n_i) begin
@@ -91,10 +91,11 @@ module algorithm_dual #(
 
     always_comb begin
         busy_next = busy;
-        if (in_mosi_i.TVALID) begin
-            if (in_mosi_i.data.TID == ROUTING_HEADER) begin
-                busy_next[ctrl] = out_miso_i[ctrl].TREADY ? 1'b1 : busy[ctrl];
-            end else if (in_mosi_i.data.TLAST && out_miso_i[ctrl].TREADY) begin
+        if (in_mosi_i.TVALID && (in_mosi_i.data.TID == ROUTING_HEADER)) begin
+            busy_next[ctrl] = out_miso_i[ctrl].TREADY ? 1'b1 : busy[ctrl];
+        end
+        else if (in_mosi_i.TVALID) begin
+            if (in_mosi_i.data.TLAST && out_miso_i[ctrl].TREADY) begin
                 busy_next[ctrl] = 1'b0;
             end
         end

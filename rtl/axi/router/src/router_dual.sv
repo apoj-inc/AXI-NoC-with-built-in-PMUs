@@ -103,6 +103,8 @@ module router_dual #(
         .out_mosi_o(arbiter_o_mosi),
         .out_miso_i(arbiter_o_miso),
 
+        .current_grant_o(current_grant),
+
         .target_x_o(target_x),
         .target_y_o(target_y)
     );
@@ -134,6 +136,8 @@ module router_dual #(
 
         .out_mosi_o(out_mosi_o),
         .out_miso_i(out_miso_i),
+
+        .current_grant_i(current_grant),
 
         .target_x_i(target_x),
         .target_y_i(target_y)

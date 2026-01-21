@@ -8,14 +8,13 @@ async def test_ram(dut):
     clock = Clock(dut.aclk, 10, units="ns")
     cocotb.start_soon(clock.start())
 
-    axi_master = AxiMaster(AxiBus.from_prefix(dut, ""), dut.aclk, reset=dut.aresetn, reset_active_level=False)
-
-    dut.kalstrb.value = 0b1111
-
     dut.aresetn.value = 0
     await RisingEdge(dut.aclk)
     await RisingEdge(dut.aclk)
     dut.aresetn.value = 1
+    axi_master = AxiMaster(AxiBus.from_prefix(dut, ""), dut.aclk, reset=dut.aresetn, reset_active_level=False)
+    dut.kalstrb.value = 0b1111
+
     await RisingEdge(dut.aclk)
 
     await axi_master.write(0x00000000, bytes(24))

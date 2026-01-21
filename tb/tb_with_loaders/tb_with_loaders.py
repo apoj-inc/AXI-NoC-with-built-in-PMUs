@@ -58,7 +58,7 @@ async def test(dut):
     await RisingEdge(dut.aclk)
 
     for i in range(16):
-        for j in range(32):
+        for _ in range(32):
             dut.fifo_push_i[i].value = 1
             dut.id_i[i].value = randint(1, 16)
             dut.write_i[i].value = 1

@@ -9,12 +9,6 @@ async def test_demux(dut):
     clock = Clock(dut.ACLK, 10, units="ns")
     cocotb.start_soon(clock.start())
 
-    axi_master = AxiMaster(
-        AxiBus.from_prefix(dut, ""),
-        dut.ACLK, reset=dut.ARESETn,
-        reset_active_level=False
-          )
-
     dut.WSTRB.value = 0xF
 
     dut.ARESETn.value = 0
@@ -22,6 +16,12 @@ async def test_demux(dut):
     await RisingEdge(dut.ACLK)
     dut.ARESETn.value = 1
     await RisingEdge(dut.ACLK)
+
+    axi_master = AxiMaster(
+        AxiBus.from_prefix(dut, ""),
+        dut.ACLK, reset=dut.ARESETn,
+        reset_active_level=False
+          )
 
     await Combine(
         cocotb.start_soon(axi_master.write(0x00000000, b'test', awid=0)),

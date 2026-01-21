@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge, Combine
+from cocotb.triggers import RisingEdge, Combine, Timer, First
 from cocotb.clock import Clock
 from cocotbext.axi import AxiMaster, AxiBus
 from cocotb.handle import Force
@@ -60,7 +60,9 @@ async def test(dut):
     dut.aresetn.value = 1
     await RisingEdge(dut.aclk)
 
-    for i in range(10):
+    timeout = Timer(50_000, unit='ns')
+
+    for _ in range(10):
         processes = []
         datas = [b'12345678', b'87654321', b'18273645', b'81726354', b'12348765']
         ids = [5, 2, 6, 8, 4]
@@ -69,9 +71,14 @@ async def test(dut):
                 processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j], datas[j], ids[j], 0)))
         if len(processes) == 0:
                 processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[0], datas[0], ids[0], 0)))
-        await Combine (
-            *processes
+        
+
+        result = await First(
+            timeout,
+            Combine (*processes)
         )
 
-    for i in range(10):
+        assert result is not timeout, "Design has hung!"
+
+    for _ in range(10):
         await RisingEdge(dut.aclk)

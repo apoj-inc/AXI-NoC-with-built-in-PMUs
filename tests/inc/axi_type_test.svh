@@ -5,8 +5,8 @@
 
 parameter AXI_DATA_WIDTH = 32;
 parameter ADDR_WIDTH = 16;
-parameter ID_R_WIDTH = 4;
-parameter ID_W_WIDTH = 4;
+parameter ID_R_WIDTH = 5;
+parameter ID_W_WIDTH = 5;
 
 `include "axi_type.svh"
 

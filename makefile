@@ -17,22 +17,31 @@ LIST_DIR ?= $(CURDIR)/rtl/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
 VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)),$(CURDIR)/$(file))
 
-TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'),$(CURDIR)/$(file))
-
 TB_DIR ?= $(CURDIR)/tb
-TESTS_DIRS ?= $(sort $(dir $(wildcard $(TB_DIR)/*/)))
+TESTS_DIRS ?= $(sort $(dir $(wildcard $(TB_DIR)/tb_*/)))
+TB_FILES ?=  $(foreach file,$(shell find $(TB_DIR)/ -type f -name '*.sv'),$(file))
 
 BUILD_DIR   ?= $(COCOTB_DIR)
 TESTS_DIR   ?= $(BUILD_DIR)/tests
 LOGS_DIR    ?= $(TESTS_DIR)/logs
 RESULTS_DIR ?= ${LOGS_DIR}/results
 
+SIM ?= questa-qisqrun
 BUILD_ARGS ?=
-SIM_ARGS ?= -suppress 12110 -autofindloop -suppress 12130
+SIM_ARGS ?=
+SIM_ARGS += -suppress 12110 -autofindloop -suppress 12130
 
+ifndef GENERAL_TOPLEVEL
+COCOTB_TOPLEVEL     ?= tb_uart_loop
 COCOTB_TEST_MODULES ?= tb_example
+else
+COCOTB_TOPLEVEL     ?= $(GENERAL_TOPLEVEL)
+COCOTB_TEST_MODULES ?= $(GENERAL_TOPLEVEL)
+endif
 
 TOPLEVEL ?= toplevel
+
+ARGS ?=
 
 .PHONY: all test clean run_pytest run_quartus
 all: test
@@ -40,7 +49,16 @@ all: test
 test: $(VENV_DIR)
 	make -f $(CCTB_MAKEFILE) run CACHE_DIR=$(CACHE_DIR) \
 	VENV_DIR=$(VENV_DIR) INCLUDE_DIRS="$(INCLUDE_DIRS)" \
-	COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES)
+	COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES) \
+	COCOTB_TOPLEVEL=$(COCOTB_TOPLEVEL) \
+	SIM=$(SIM)
+
+wave: $(VENV_DIR)
+	make -f $(CCTB_MAKEFILE) wave CACHE_DIR=$(CACHE_DIR) \
+	VENV_DIR=$(VENV_DIR) INCLUDE_DIRS="$(INCLUDE_DIRS)" \
+	COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES) \
+	COCOTB_TOPLEVEL=$(COCOTB_TOPLEVEL) \
+	SIM=$(SIM)
 
 run_pytest: $(VENV_DIR)
 	@export TESTS_DIRS="$(TESTS_DIRS)"; \
@@ -53,7 +71,7 @@ run_pytest: $(VENV_DIR)
 	export BUILD_ARGS="$(BUILD_ARGS)"; \
 	export SIM_ARGS="$(SIM_ARGS)"; \
 	source $(VENV_DIR)/bin/activate; \
-	python3 -m pytest --junit-xml=${RESULTS_DIR}/all.xml
+	python3 -m pytest --junit-xml=${RESULTS_DIR}/all.xml $(ARGS)
 
 run_quartus:
 	make -f $(CURDIR)/build_system/quartus/makefile TOPLEVEL=$(TOPLEVEL)

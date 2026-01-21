@@ -13,9 +13,15 @@ module axi_mux #(
     input logic ACLK,
     input logic ARESETn,
 
-    axi_if.s s_axi_in[INPUT_NUM],
-    axi_if.m m_axi_out
+    output axi_miso_t s_axi_o[INPUT_NUM],
+    input  axi_mosi_t s_axi_i[INPUT_NUM],
+
+    output axi_mosi_t m_axi_o,
+    input  axi_miso_t m_axi_i
+
 );
+
+    `include "axi_type.svh"
 
     enum { AW_HANDSHAKE, W_HANDSHAKE } w_state, w_next_state;
 
@@ -80,37 +86,37 @@ module axi_mux #(
 
         for (i = 0; i < INPUT_NUM; i++) begin : map_if
             always_comb begin
-                s_axi_in[i].AWREADY = AWREADY[i];
-                AWVALID[i] = s_axi_in[i].AWVALID;
-                AWID[i] = s_axi_in[i].AWID;
-                AWADDR[i] = s_axi_in[i].AWADDR;
-                AWLEN[i] = s_axi_in[i].AWLEN;
-                AWSIZE[i] = s_axi_in[i].AWSIZE;
-                AWBURST[i] = s_axi_in[i].AWBURST;
+                s_axi_o[i].AWREADY = AWREADY[i];
+                AWVALID[i] = s_axi_i[i].AWVALID;
+                AWID[i] = s_axi_i[i].data.aw.AWID;
+                AWADDR[i] = s_axi_i[i].data.aw.AWADDR;
+                AWLEN[i] = s_axi_i[i].data.aw.AWLEN;
+                AWSIZE[i] = s_axi_i[i].data.aw.AWSIZE;
+                AWBURST[i] = s_axi_i[i].data.aw.AWBURST;
 
-                s_axi_in[i].WREADY = WREADY[i];
-                WVALID[i] = s_axi_in[i].WVALID;
-                WDATA[i] = s_axi_in[i].WDATA;
-                WSTRB[i] = s_axi_in[i].WSTRB;
-                WLAST[i] = s_axi_in[i].WLAST;
+                s_axi_o[i].WREADY = WREADY[i];
+                WVALID[i] = s_axi_i[i].WVALID;
+                WDATA[i] = s_axi_i[i].data.w.WDATA;
+                WSTRB[i] = s_axi_i[i].data.w.WSTRB;
+                WLAST[i] = s_axi_i[i].data.w.WLAST;
 
-                BREADY[i] = s_axi_in[i].BREADY;
-                s_axi_in[i].BVALID = BVALID[i];
-                s_axi_in[i].BID = BID[i];
+                BREADY[i] = s_axi_i[i].BREADY;
+                s_axi_o[i].BVALID = BVALID[i];
+                s_axi_o[i].data.b.BID = BID[i];
 
-                s_axi_in[i].ARREADY = ARREADY[i];
-                ARVALID[i] = s_axi_in[i].ARVALID;
-                ARID[i] = s_axi_in[i].ARID;
-                ARADDR[i] = s_axi_in[i].ARADDR;
-                ARLEN[i] = s_axi_in[i].ARLEN;
-                ARSIZE[i] = s_axi_in[i].ARSIZE;
-                ARBURST[i] = s_axi_in[i].ARBURST;
+                s_axi_o[i].ARREADY = ARREADY[i];
+                ARVALID[i] = s_axi_i[i].ARVALID;
+                ARID[i] = s_axi_i[i].data.ar.ARID;
+                ARADDR[i] = s_axi_i[i].data.ar.ARADDR;
+                ARLEN[i] = s_axi_i[i].data.ar.ARLEN;
+                ARSIZE[i] = s_axi_i[i].data.ar.ARSIZE;
+                ARBURST[i] = s_axi_i[i].data.ar.ARBURST;
 
-                RREADY[i] = s_axi_in[i].RREADY;
-                s_axi_in[i].RVALID = RVALID[i];
-                s_axi_in[i].RID = RID[i];
-                s_axi_in[i].RDATA = RDATA[i];
-                s_axi_in[i].RLAST = RLAST[i];
+                RREADY[i] = s_axi_i[i].RREADY;
+                s_axi_o[i].RVALID = RVALID[i];
+                s_axi_o[i].data.r.RID = RID[i];
+                s_axi_o[i].data.r.RDATA = RDATA[i];
+                s_axi_o[i].data.r.RLAST = RLAST[i];
             end
         end
     endgenerate
@@ -125,7 +131,7 @@ module axi_mux #(
     endgenerate
 
     stream_arbiter #(
-        .AXI_DATA_WIDTH(ID_W_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
+        .DATA_WIDTH(ID_W_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
         .INPUT_NUM(INPUT_NUM)
     ) stream_arbiter_aw (
         .ACLK(ACLK),
@@ -166,7 +172,7 @@ module axi_mux #(
     endgenerate
 
     stream_arbiter #(
-        .AXI_DATA_WIDTH(ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
+        .DATA_WIDTH(ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
         .INPUT_NUM(INPUT_NUM)
     ) stream_arbiter_ar (
         .ACLK(ACLK),
@@ -176,9 +182,9 @@ module axi_mux #(
         .valid_i(ARVALID),
         .ready_o(ARREADY),
 
-        .data_o({m_axi_out.ARID, m_axi_out.ARADDR, m_axi_out.ARLEN, m_axi_out.ARSIZE, m_axi_out.ARBURST}),
-        .valid_o(m_axi_out.ARVALID),
-        .ready_i(m_axi_out.ARREADY)
+        .data_o({m_axi_o.data.ar.ARID, m_axi_o.data.ar.ARADDR, m_axi_o.data.ar.ARLEN, m_axi_o.data.ar.ARSIZE, m_axi_o.data.ar.ARBURST}),
+        .valid_o(m_axi_o.ARVALID),
+        .ready_i(m_axi_i.ARREADY)
     );
 
 
@@ -217,12 +223,12 @@ module axi_mux #(
         w_next_state = AW_HANDSHAKE;
         case (w_state)
             AW_HANDSHAKE: begin
-                if (m_axi_out.AWVALID && m_axi_out.AWREADY) begin
+                if (m_axi_o.AWVALID && m_axi_i.AWREADY) begin
                     w_next_state = W_HANDSHAKE;
                 end
             end
             W_HANDSHAKE: begin
-                if (m_axi_out.WREADY && m_axi_out.WVALID && m_axi_out.WLAST) begin
+                if (m_axi_i.WREADY && m_axi_o.WVALID && m_axi_o.data.w.WLAST) begin
                     w_next_state = AW_HANDSHAKE;
                 end
                 else begin
@@ -250,26 +256,26 @@ module axi_mux #(
                     end
                 end
 
-                AWREADY_fifo = m_axi_out.AWREADY;
-                m_axi_out.AWVALID = AWVALID_fifo;
-                m_axi_out.AWID = AWID_fifo;
-                m_axi_out.AWADDR = AWADDR_fifo;
-                m_axi_out.AWLEN = AWLEN_fifo;
-                m_axi_out.AWSIZE = AWSIZE_fifo;
-                m_axi_out.AWBURST = AWBURST_fifo;
+                AWREADY_fifo = m_axi_i.AWREADY;
+                m_axi_o.AWVALID = AWVALID_fifo;
+                m_axi_o.data.aw.AWID = AWID_fifo;
+                m_axi_o.data.aw.AWADDR = AWADDR_fifo;
+                m_axi_o.data.aw.AWLEN = AWLEN_fifo;
+                m_axi_o.data.aw.AWSIZE = AWSIZE_fifo;
+                m_axi_o.data.aw.AWBURST = AWBURST_fifo;
 
-                WREADY[sel] = m_axi_out.WREADY;
-                m_axi_out.WVALID = WVALID[sel];
-                m_axi_out.WDATA = WDATA[sel];
-                m_axi_out.WSTRB = WSTRB[sel];
-                m_axi_out.WLAST = WLAST[sel];
+                WREADY[sel] = m_axi_i.WREADY;
+                m_axi_o.WVALID = WVALID[sel];
+                m_axi_o.data.w.WDATA = WDATA[sel];
+                m_axi_o.data.w.WSTRB = WSTRB[sel];
+                m_axi_o.data.w.WLAST = WLAST[sel];
             end
             W_HANDSHAKE: begin
-                WREADY[selected] = m_axi_out.WREADY;
-                m_axi_out.WVALID = WVALID[selected];
-                m_axi_out.WDATA = WDATA[selected];
-                m_axi_out.WSTRB = WSTRB[selected];
-                m_axi_out.WLAST = WLAST[selected];
+                WREADY[selected] = m_axi_i.WREADY;
+                m_axi_o.WVALID = WVALID[selected];
+                m_axi_o.data.w.WDATA = WDATA[selected];
+                m_axi_o.data.w.WSTRB = WSTRB[selected];
+                m_axi_o.data.w.WLAST = WLAST[selected];
             end
         endcase
     end
@@ -279,36 +285,51 @@ module axi_mux #(
 
     always_comb begin
         int sel;
+        int i;
+        
+        for(int i = 0; i < INPUT_NUM; i++) begin
+            BVALID[i] = '0;
+            BID[i] = '0;
+        end
+
         sel = INPUT_NUM - 1;
 
         for (int j = 0; j < INPUT_NUM-1; j++) begin
-            if (m_axi_out.BID >= ID_ROUTING[j * 2] && m_axi_out.BID <= ID_ROUTING[j * 2 + 1]) begin
+            if (m_axi_i.data.b.BID >= ID_ROUTING[j * 2] && m_axi_i.data.b.BID <= ID_ROUTING[j * 2 + 1]) begin
                 sel = j;
             end
         end
 
-        m_axi_out.BREADY = BREADY[sel];
-        BVALID[sel] = m_axi_out.BVALID;
-        BID[sel] = m_axi_out.BID;
+        m_axi_o.BREADY = BREADY[sel];
+        BVALID[sel] = m_axi_i.BVALID;
+        BID[sel] = m_axi_i.data.b.BID;
     end
 
     // R procedural
 
     always_comb begin
         int sel;
+        int i;
         sel = INPUT_NUM - 1;
+        
+        for(int i = 0; i < INPUT_NUM; i++) begin
+            RVALID[i] = '0;
+            RID[i] = '0;
+            RDATA[i] = '0;
+            RLAST[i] = '0;
+        end
 
         for (int j = 0; j < INPUT_NUM-1; j++) begin
-            if (m_axi_out.RID >= ID_ROUTING[j * 2] && m_axi_out.RID <= ID_ROUTING[j * 2 + 1]) begin
+            if (m_axi_i.data.r.RID >= ID_ROUTING[j * 2] && m_axi_i.data.r.RID <= ID_ROUTING[j * 2 + 1]) begin
                 sel = j;
             end
         end
 
-        m_axi_out.RREADY = RREADY[sel];
-        RVALID[sel] = m_axi_out.RVALID;
-        RID[sel] = m_axi_out.RID;
-        RDATA[sel] = m_axi_out.RDATA;
-        RLAST[sel] = m_axi_out.RLAST;
+        m_axi_o.RREADY = RREADY[sel];
+        RVALID[sel] = m_axi_i.RVALID;
+        RID[sel] = m_axi_i.data.r.RID;
+        RDATA[sel] = m_axi_i.data.r.RDATA;
+        RLAST[sel] = m_axi_i.data.r.RLAST;
     end
 
 endmodule

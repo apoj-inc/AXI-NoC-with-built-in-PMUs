@@ -3,7 +3,7 @@
 module axis_if_demux #(
     parameter CHANNEL_NUMBER = 5,
     parameter CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
-    parameter AXIS_DATA_WIDTH = 32
+    parameter AXIS_DATA_WIDTH = 40
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4

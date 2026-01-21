@@ -16,9 +16,14 @@ module axi_demux #(
     input logic ACLK,
     input logic ARESETn,
 
-    axi_if.s s_axi_in,
-    axi_if.m m_axi_out[OUTPUT_NUM]
+    output axi_miso_t s_axi_o,
+    input  axi_mosi_t s_axi_i,
+
+    output axi_mosi_t m_axi_o[OUTPUT_NUM],
+    input  axi_miso_t m_axi_i[OUTPUT_NUM]
 );
+
+    `include "axi_type.svh"
 
     parameter AW_HANDSHAKE = 0, W_HANDSHAKE = 1;
     parameter AR_HANDSHAKE = 0, R_HANDSHAKE = 1;
@@ -90,9 +95,9 @@ module axi_demux #(
         .ACLK(ACLK),
         .ARESETn(ARESETn),
 
-        .data_i({s_axi_in.AWID, s_axi_in.AWADDR, s_axi_in.AWLEN, s_axi_in.AWSIZE, s_axi_in.AWBURST}),
-        .valid_i(s_axi_in.AWVALID),
-        .ready_o(s_axi_in.AWREADY),
+        .data_i({s_axi_i.data.aw.AWID, s_axi_i.data.aw.AWADDR, s_axi_i.data.aw.AWLEN, s_axi_i.data.aw.AWSIZE, s_axi_i.data.aw.AWBURST}),
+        .valid_i(s_axi_i.AWVALID),
+        .ready_o(s_axi_o.AWREADY),
 
         .data_o({AWID_fifo, AWADDR_fifo, AWLEN_fifo, AWSIZE_fifo, AWBURST_fifo}),
         .valid_o(AWVALID_fifo),
@@ -106,9 +111,9 @@ module axi_demux #(
         .ACLK(ACLK),
         .ARESETn(ARESETn),
 
-        .data_i({s_axi_in.WDATA, s_axi_in.WSTRB, s_axi_in.WLAST}),
-        .valid_i(s_axi_in.WVALID),
-        .ready_o(s_axi_in.WREADY),
+        .data_i({s_axi_i.data.w.WDATA, s_axi_i.data.w.WSTRB, s_axi_i.data.w.WLAST}),
+        .valid_i(s_axi_i.WVALID),
+        .ready_o(s_axi_o.WREADY),
 
         .data_o({WDATA_fifo, WSTRB_fifo, WLAST_fifo}),
         .valid_o(WVALID_fifo),
@@ -125,15 +130,15 @@ module axi_demux #(
     logic [1:0] ARBURST_fifo;
 
     stream_fifo #(
-        .AXI_DATA_WIDTH(ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
+        .DATA_WIDTH(ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2),
         .FIFO_LEN(Ax_FIFO_LEN)
     ) stream_fifo_ar (
         .ACLK(ACLK),
         .ARESETn(ARESETn),
 
-        .data_i({s_axi_in.ARID, s_axi_in.ARADDR, s_axi_in.ARLEN, s_axi_in.ARSIZE, s_axi_in.ARBURST}),
-        .valid_i(s_axi_in.ARVALID),
-        .ready_o(s_axi_in.ARREADY),
+        .data_i({s_axi_i.data.ar.ARID, s_axi_i.data.ar.ARADDR, s_axi_i.data.ar.ARLEN, s_axi_i.data.ar.ARSIZE, s_axi_i.data.ar.ARBURST}),
+        .valid_i(s_axi_i.ARVALID),
+        .ready_o(s_axi_o.ARREADY),
 
         .data_o({ARID_fifo, ARADDR_fifo, ARLEN_fifo, ARSIZE_fifo, ARBURST_fifo}),
         .valid_o(ARVALID_fifo),
@@ -144,37 +149,37 @@ module axi_demux #(
         genvar i;
         for (i = 0; i < OUTPUT_NUM; i++) begin : map_if
             always_comb begin
-                AWREADY[i] = m_axi_out[i].AWREADY;
-                m_axi_out[i].AWVALID = AWVALID[i];
-                m_axi_out[i].AWID = AWID[i];
-                m_axi_out[i].AWADDR = AWADDR[i];
-                m_axi_out[i].AWLEN = AWLEN[i];
-                m_axi_out[i].AWSIZE = AWSIZE[i];
-                m_axi_out[i].AWBURST = AWBURST[i];
+                AWREADY[i] = m_axi_i[i].AWREADY;
+                m_axi_o[i].AWVALID = AWVALID[i];
+                m_axi_o[i].data.aw.AWID = AWID[i];
+                m_axi_o[i].data.aw.AWADDR = AWADDR[i];
+                m_axi_o[i].data.aw.AWLEN = AWLEN[i];
+                m_axi_o[i].data.aw.AWSIZE = AWSIZE[i];
+                m_axi_o[i].data.aw.AWBURST = AWBURST[i];
 
-                WREADY[i] = m_axi_out[i].WREADY;
-                m_axi_out[i].WVALID = WVALID[i];
-                m_axi_out[i].WDATA = WDATA[i];
-                m_axi_out[i].WSTRB = WSTRB[i];
-                m_axi_out[i].WLAST = WLAST[i];
+                WREADY[i] = m_axi_i[i].WREADY;
+                m_axi_o[i].WVALID = WVALID[i];
+                m_axi_o[i].data.w.WDATA = WDATA[i];
+                m_axi_o[i].data.w.WSTRB = WSTRB[i];
+                m_axi_o[i].data.w.WLAST = WLAST[i];
 
-                BVALID[i] = m_axi_out[i].BVALID;
-                BID[i] = m_axi_out[i].BID;
-                m_axi_out[i].BREADY = BREADY[i];
+                BVALID[i] = m_axi_i[i].BVALID;
+                BID[i] = m_axi_i[i].data.b.BID;
+                m_axi_o[i].BREADY = BREADY[i];
 
-                ARREADY[i] = m_axi_out[i].ARREADY;
-                m_axi_out[i].ARVALID = ARVALID[i];
-                m_axi_out[i].ARID = ARID[i];
-                m_axi_out[i].ARADDR = ARADDR[i];
-                m_axi_out[i].ARLEN = ARLEN[i];
-                m_axi_out[i].ARSIZE = ARSIZE[i];
-                m_axi_out[i].ARBURST = ARBURST[i];
+                ARREADY[i] = m_axi_i[i].ARREADY;
+                m_axi_o[i].ARVALID = ARVALID[i];
+                m_axi_o[i].data.ar.ARID = ARID[i];
+                m_axi_o[i].data.ar.ARADDR = ARADDR[i];
+                m_axi_o[i].data.ar.ARLEN = ARLEN[i];
+                m_axi_o[i].data.ar.ARSIZE = ARSIZE[i];
+                m_axi_o[i].data.ar.ARBURST = ARBURST[i];
 
-                m_axi_out[i].RREADY = RREADY[i];
-                RVALID[i] = m_axi_out[i].RVALID;
-                RID[i] = m_axi_out[i].RID;
-                RDATA[i] = m_axi_out[i].RDATA;
-                RLAST[i] = m_axi_out[i].RLAST;
+                m_axi_o[i].RREADY = RREADY[i];
+                RVALID[i] = m_axi_i[i].RVALID;
+                RID[i] = m_axi_i[i].data.r.RID;
+                RDATA[i] = m_axi_i[i].data.r.RDATA;
+                RLAST[i] = m_axi_i[i].data.r.RLAST;
             end
         end
     endgenerate
@@ -295,7 +300,7 @@ module axi_demux #(
     // B channel arbiter
 
     stream_arbiter #(
-        .AXI_DATA_WIDTH(ID_W_WIDTH),
+        .DATA_WIDTH(ID_W_WIDTH),
         .INPUT_NUM(OUTPUT_NUM)
     ) stream_arbiter_b (
         .ACLK(ACLK),
@@ -305,9 +310,9 @@ module axi_demux #(
         .valid_i(BVALID),
         .ready_o(BREADY),
 
-        .data_o(s_axi_in.BID),
-        .valid_o(s_axi_in.BVALID),
-        .ready_i(s_axi_in.BREADY)
+        .data_o(s_axi_o.data.b.BID),
+        .valid_o(s_axi_o.BVALID),
+        .ready_i(s_axi_i.BREADY)
     );
 
 
@@ -355,7 +360,7 @@ module axi_demux #(
     endgenerate
 
     stream_arbiter #(
-        .AXI_DATA_WIDTH(ID_R_WIDTH + AXI_DATA_WIDTH + 1),
+        .DATA_WIDTH(ID_R_WIDTH + AXI_DATA_WIDTH + 1),
         .INPUT_NUM(OUTPUT_NUM)
     ) stream_arbiter_r (
         .ACLK(ACLK),
@@ -365,9 +370,9 @@ module axi_demux #(
         .valid_i(RVALID),
         .ready_o(RREADY),
 
-        .data_o({s_axi_in.RID, s_axi_in.RDATA, s_axi_in.RLAST}),
-        .valid_o(s_axi_in.RVALID),
-        .ready_i(s_axi_in.RREADY)
+        .data_o({s_axi_o.data.r.RID, s_axi_o.data.r.RDATA, s_axi_o.data.r.RLAST}),
+        .valid_o(s_axi_o.RVALID),
+        .ready_i(s_axi_i.RREADY)
     );
 
 endmodule

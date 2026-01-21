@@ -1,6 +1,6 @@
 // TODO Not actually implemented
 module router #(
-    parameter AXIS_DATA_WIDTH = 32
+    parameter AXIS_DATA_WIDTH = 40
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
