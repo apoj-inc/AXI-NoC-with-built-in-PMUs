@@ -11,6 +11,6 @@ foreach rtl $RTL_FILES {
 set_global_assignment -name SEARCH_PATH $INCDIR
 
 load_package flow
-execute_flow -compile
+execute_flow -analysis_and_elaboration
 
 project_close

@@ -86,13 +86,13 @@ jobs:
         context: ".docker/altera_tools"
         target: production
         tags: |
-          altera_tools-dev:latest
+          altera_tools:latest
         cache-from: type=gha
         load: true
       
     - name: Run build release
       shell: bash
-      run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "make make_release"
+      run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools:latest "make make_release"
       timeout-minutes: 60
     
   run_tests:

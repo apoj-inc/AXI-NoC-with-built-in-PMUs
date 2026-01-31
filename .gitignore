@@ -38,4 +38,6 @@ transcript
 qrun.log
 modelsim.ini
 
+release/*/package
+
 __pycache__
