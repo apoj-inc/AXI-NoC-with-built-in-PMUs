@@ -1,0 +1,10 @@
+rtl/axi/XY_mesh/XY_mesh_dual_parallel.sv
+rtl/axi/axi2axis_XY.sv
+rtl/axi/cross_router_logic/algorithm_selector_XY.sv
+rtl/axi/router/src/router_dual_parallel.sv
+rtl/axi/stream_arbiter.sv
+rtl/axi/stream_fifo.sv
+rtl/axi/axis_fifo_buffer.sv
+rtl/axi/cross_router_logic/algorithm_selector_XY.sv
+rtl/axi/router/src/algorithm.sv
+rtl/axi/router/src/arbiter.sv

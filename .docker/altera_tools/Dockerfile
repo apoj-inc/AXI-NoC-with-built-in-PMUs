@@ -29,6 +29,8 @@ FROM build AS production
 
 RUN apt update && apt install libglib2.0-dev -y
 
+ENV QUARTUS_BIN_DIR=/home/altera/25.1std/quartus/bin
+
 RUN wget https://downloads.intel.com/akdlm/software/acdsinst/25.1std/1129/qinst/qinst-lite-linux-25.1std-1129.run 2> /dev/null;\
     chmod +x ./qinst-lite-linux-25.1std-1129.run;\
     ./qinst-lite-linux-25.1std-1129.run\
@@ -37,7 +39,6 @@ RUN wget https://downloads.intel.com/akdlm/software/acdsinst/25.1std/1129/qinst/
     --install-dir /home/altera/25.1std --download-dir /tmp/quartus_download;\
     rm -r qinst-lite-linux-25.1std-1129.run /tmp/quartus_download
 
-ENV QUARTUS_BIN_DIR=/home/altera/25.1std/quartus/bin
 ENV PATH=${PATH}:${QUARTUS_BIN_DIR}
 
 CMD ["echo Tools are ready!"]

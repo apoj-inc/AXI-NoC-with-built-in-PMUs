@@ -1,6 +1,9 @@
 SHELL := /bin/bash
 
+BUILD_SYSTEM_DIR ?= $(CURDIR)/build_system
+
 CCTB_MAKEFILE ?= $(CURDIR)/cctb/build/makefile
+QUARTUS_MAKEFILE ?= $(BUILD_SYSTEM_DIR)/quartus/makefile
 
 CACHE_DIR ?= $(CURDIR)/.cache
 VENV_DIR ?= $(CACHE_DIR)/.venv
@@ -74,12 +77,15 @@ run_pytest: $(VENV_DIR)
 	python3 -m pytest --junit-xml=${RESULTS_DIR}/all.xml $(ARGS)
 
 run_quartus:
-	make -f $(CURDIR)/build_system/quartus/makefile TOPLEVEL=$(TOPLEVEL)
+	make -f $(QUARTUS_MAKEFILE) compile TOPLEVEL=$(TOPLEVEL)
 
 $(VENV_DIR) : $(CURDIR)/requirements.txt
 	python3 -m venv $(VENV_DIR)
 	source $(VENV_DIR)/bin/activate; \
 	pip install -r $(CURDIR)/requirements.txt
+
+make_release:
+	make -f $(QUARTUS_MAKEFILE) create_releases
 
 clean:
 	@rm -rf $(CURDIR)/.cache \
