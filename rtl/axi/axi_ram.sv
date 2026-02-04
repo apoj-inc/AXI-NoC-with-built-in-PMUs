@@ -83,7 +83,7 @@ module axi_ram
                 .waddr(waddr),
                 .raddr(raddr),
                 .wdata(wdata[i*BYTE_WIDTH +: BYTE_WIDTH]),
-                .we(we & be[i]),
+                .we(be[i]),
                 .rdata(rdata[i*BYTE_WIDTH +: BYTE_WIDTH])
 
             );

@@ -34,7 +34,7 @@ module tb_axi_loader (
     input  logic        rlast,
     output logic        rready,
 
-    input  logic [7:0]  req_depth_i,
+    input  logic        resp_wait_i,
     input  logic [4:0]  id_i,
     input  logic        write_i,
     input  logic [7:0]  axlen_i,
@@ -92,8 +92,7 @@ module tb_axi_loader (
         .clk_i       (clk_i),
         .arstn_i     (arstn_i),
 
-        .req_depth_i (req_depth_i ),
-
+        .resp_wait_i (resp_wait_i ),
         .id_i        (id_i        ),
         .write_i     (write_i     ),
         .axlen_i     (axlen_i     ),

@@ -70,6 +70,7 @@ async def feedback_loop(dut):
     timeout = Timer(200_000, unit='ns')
 
     result = await First(
+        timeout,
         Combine (*processes)
     )
 
@@ -102,6 +103,7 @@ async def test_all_in_one(dut):
     timeout = Timer(200_000, unit='ns')
 
     result = await First(
+        timeout,
         Combine (*processes)
     )
 

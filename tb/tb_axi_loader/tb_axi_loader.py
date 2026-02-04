@@ -7,11 +7,14 @@ from cocotbext.axi import AxiSlave, AxiBus, MemoryRegion
 async def test(dut):
     cocotb.start_soon(Clock(dut.clk_i, 2, unit='ns').start())
 
+    dut.arstn_i.value = 1
+    await RisingEdge(dut.clk_i)
+    dut.arstn_i.value = 0
+    await RisingEdge(dut.clk_i)
+
     axi_slave = AxiSlave(AxiBus.from_prefix(dut, ""), dut.clk_i, dut.arstn_i, reset_active_level=False, target=MemoryRegion(2**16))
 
-    dut.arstn_i.value = 0
-
-    dut.req_depth_i.value = 1
+    dut.resp_wait_i.value = 1
     dut.id_i.value = 0
     dut.write_i.value = 0
     dut.fifo_push_i.value = 0
