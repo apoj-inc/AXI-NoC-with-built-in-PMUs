@@ -21,7 +21,7 @@ endif
 
 TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'),$(CURDIR)/$(file))
 
-SIM ?= questa
+SIM ?= questa-compat
 
 ifndef COMPILE_ARGS
 COMPILE_ARGS :=
@@ -29,8 +29,7 @@ endif
 
 ifndef SIM_ARGS
 SIM_ARGS :=
-SIM_ARGS += -suppress 12110 -suppress 12130
-SIM_ARGS += -autofindloop +acc -debug
+SIM_ARGS += -suppress 12110 -autofindloop -suppress 12130 -suppress 13314
 endif
 
 CCTB_DIR ?= $(CACHE_DIR)/cctb

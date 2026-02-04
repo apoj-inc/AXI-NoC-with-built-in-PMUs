@@ -4,7 +4,7 @@
 `include "defines.svh"
 
 parameter AXI_DATA_WIDTH = 32;
-parameter ADDR_WIDTH = 16;
+parameter ADDR_WIDTH = 12;
 parameter ID_R_WIDTH = 5;
 parameter ID_W_WIDTH = 5;
 

@@ -27,39 +27,39 @@ module axi_pmu # (
     input axi_mosi_t mon_axi_mosi,
 
     input  logic [4:0]  addr_i,
-    output logic [63:0] data_o
+    output logic [31:0] data_o
 );
 
     `include "axi_type.svh"
 
-    typedef struct {
-        logic [63:0] idle;
-        logic [63:0] outstanding;
-        logic [63:0] ar_stall;
-        logic [63:0] ar_handshake;
-        logic [63:0] rvalid_stall;
-        logic [63:0] rready_stall;
-        logic [63:0] r_handshake;
+    typedef struct packed {
+        logic [31:0] idle;
+        logic [31:0] outstanding;
+        logic [31:0] ar_stall;
+        logic [31:0] ar_handshake;
+        logic [31:0] rvalid_stall;
+        logic [31:0] rready_stall;
+        logic [31:0] r_handshake;
     } read_counters;
 
-    typedef struct {
-        logic [63:0] idle;
-        logic [63:0] outstanding;
-        logic [63:0] responding;
-        logic [63:0] aw_stall;
-        logic [63:0] aw_handshake;
-        logic [63:0] wvalid_stall;
-        logic [63:0] wready_stall;
-        logic [63:0] w_handshake;
-        logic [63:0] bvalid_stall;
-        logic [63:0] bready_stall;
-        logic [63:0] b_handshake;
+    typedef struct packed {
+        logic [31:0] idle;
+        logic [31:0] outstanding;
+        logic [31:0] responding;
+        logic [31:0] aw_stall;
+        logic [31:0] aw_handshake;
+        logic [31:0] wvalid_stall;
+        logic [31:0] wready_stall;
+        logic [31:0] w_handshake;
+        logic [31:0] bvalid_stall;
+        logic [31:0] bready_stall;
+        logic [31:0] b_handshake;
     } write_counters;
 
 
     read_counters rc;
     write_counters wc;
-    logic [63:0] clock_counter;
+    logic [31:0] clock_counter;
 
     always_comb begin
         case (addr_i)
@@ -97,7 +97,7 @@ module axi_pmu # (
 
     always_ff @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
-            rc <= {default:'0};
+            rc <= '0;
         end
         else begin
             if (!mon_axi_mosi.ARVALID && (rc.outstanding == 0)) begin
@@ -143,7 +143,7 @@ module axi_pmu # (
 
     always_ff @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
-            wc <= {default:'0};
+            wc <= '0;
         end
         else begin
             if (!mon_axi_mosi.AWVALID && (wc.outstanding == 0)) begin

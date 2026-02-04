@@ -6,7 +6,7 @@ module tb_mesh (
     output logic awready[16],
     input  logic awvalid[16],
     input  logic [4:0] awid[16],
-    input  logic [15:0] awaddr[16],
+    input  logic [11:0] awaddr[16],
     input  logic [7:0] awlen[16],
     input  logic [2:0] awsize[16],
     input  logic [1:0] awburst[16],
@@ -24,7 +24,7 @@ module tb_mesh (
     output logic arready[16],
     input  logic arvalid[16],
     input  logic [4:0] arid[16],
-    input  logic [15:0] araddr[16],
+    input  logic [11:0] araddr[16],
     input  logic [7:0] arlen[16],
     input  logic [2:0] arsize[16],
     input  logic [1:0] arburst[16],
@@ -92,7 +92,9 @@ module tb_mesh (
         end
     endgenerate
 
-    XY_mesh_dual dut (
+    XY_mesh_dual #(
+        .ADDR_WIDTH(12)
+    ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
 
@@ -107,7 +109,8 @@ module tb_mesh (
     axi_ram #(
         .ID_W_WIDTH(5),
         .ID_R_WIDTH(5),
-        .AXI_DATA_WIDTH(8)
+        .AXI_DATA_WIDTH(32),
+        .ADDR_WIDTH(12)
     ) ram[16] (
         .clk_i({16{aclk}}),
         .rst_n_i({16{aresetn}}),

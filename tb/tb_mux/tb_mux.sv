@@ -6,7 +6,7 @@ module tb_mux (
     output logic a_AWREADY,
     input  logic a_AWVALID,
     input  logic [3:0] a_AWID,
-    input  logic [15:0] a_AWADDR,
+    input  logic [11:0] a_AWADDR,
     input  logic [7:0] a_AWLEN,
     input  logic [2:0] a_AWSIZE,
     input  logic [1:0] a_AWBURST,
@@ -24,7 +24,7 @@ module tb_mux (
     output logic a_ARREADY,
     input  logic a_ARVALID,
     input  logic [3:0] a_ARID,
-    input  logic [15:0] a_ARADDR,
+    input  logic [11:0] a_ARADDR,
     input  logic [7:0] a_ARLEN,
     input  logic [2:0] a_ARSIZE,
     input  logic [1:0] a_ARBURST,
@@ -38,7 +38,7 @@ module tb_mux (
     output logic b_AWREADY,
     input  logic b_AWVALID,
     input  logic [3:0] b_AWID,
-    input  logic [15:0] b_AWADDR,
+    input  logic [11:0] b_AWADDR,
     input  logic [7:0] b_AWLEN,
     input  logic [2:0] b_AWSIZE,
     input  logic [1:0] b_AWBURST,
@@ -56,7 +56,7 @@ module tb_mux (
     output logic b_ARREADY,
     input  logic b_ARVALID,
     input  logic [3:0] b_ARID,
-    input  logic [15:0] b_ARADDR,
+    input  logic [11:0] b_ARADDR,
     input  logic [7:0] b_ARLEN,
     input  logic [2:0] b_ARSIZE,
     input  logic [1:0] b_ARBURST,
@@ -70,7 +70,7 @@ module tb_mux (
     output logic c_AWREADY,
     input  logic c_AWVALID,
     input  logic [3:0] c_AWID,
-    input  logic [15:0] c_AWADDR,
+    input  logic [11:0] c_AWADDR,
     input  logic [7:0] c_AWLEN,
     input  logic [2:0] c_AWSIZE,
     input  logic [1:0] c_AWBURST,
@@ -88,7 +88,7 @@ module tb_mux (
     output logic c_ARREADY,
     input  logic c_ARVALID,
     input  logic [3:0] c_ARID,
-    input  logic [15:0] c_ARADDR,
+    input  logic [11:0] c_ARADDR,
     input  logic [7:0] c_ARLEN,
     input  logic [2:0] c_ARSIZE,
     input  logic [1:0] c_ARBURST,
@@ -209,8 +209,9 @@ module tb_mux (
     end
 
     axi_mux  #(
-        .INPUT_NUM(3)
-        ) dut (
+        .INPUT_NUM(3),
+        .ADDR_WIDTH(12)
+    ) dut (
         .ACLK(ACLK),
         .ARESETn(ARESETn),
 
@@ -221,7 +222,9 @@ module tb_mux (
         .m_axi_o(axi_mosi_slave)
     );
 
-    axi_ram ram (
+    axi_ram #(
+        .ADDR_WIDTH(12)
+    ) ram (
         .clk_i(ACLK), .rst_n_i(ARESETn),
         .in_mosi_i(axi_mosi_slave),
         .in_miso_o(axi_miso_slave)

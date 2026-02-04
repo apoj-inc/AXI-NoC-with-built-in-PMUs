@@ -1,2 +1,3 @@
 cocotbext_axi
 cocotbext_uart
+numpy

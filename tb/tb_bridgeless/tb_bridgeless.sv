@@ -6,7 +6,7 @@ module tb_bridgeless (
     output logic a_awready,
     input  logic a_awvalid,
     input  logic [3:0] a_awid,
-    input  logic [15:0] a_awaddr,
+    input  logic [11:0] a_awaddr,
     input  logic [7:0] a_awlen,
     input  logic [2:0] a_awsize,
     input  logic [1:0] a_awburst,
@@ -24,7 +24,7 @@ module tb_bridgeless (
     output logic a_arready,
     input  logic a_arvalid,
     input  logic [3:0] a_arid,
-    input  logic [15:0] a_araddr,
+    input  logic [11:0] a_araddr,
     input  logic [7:0] a_arlen,
     input  logic [2:0] a_arsize,
     input  logic [1:0] a_arburst,
@@ -38,7 +38,7 @@ module tb_bridgeless (
     output logic b_awready,
     input  logic b_awvalid,
     input  logic [3:0] b_awid,
-    input  logic [15:0] b_awaddr,
+    input  logic [11:0] b_awaddr,
     input  logic [7:0] b_awlen,
     input  logic [2:0] b_awsize,
     input  logic [1:0] b_awburst,
@@ -56,7 +56,7 @@ module tb_bridgeless (
     output logic b_arready,
     input  logic b_arvalid,
     input  logic [3:0] b_arid,
-    input  logic [15:0] b_araddr,
+    input  logic [11:0] b_araddr,
     input  logic [7:0] b_arlen,
     input  logic [2:0] b_arsize,
     input  logic [1:0] b_arburst,
@@ -151,6 +151,7 @@ module tb_bridgeless (
     end
 
     axi_demux #(
+        .ADDR_WIDTH(12),
         .OUTPUT_NUM(2),
         .ID_ROUTING('{0, 0})
     ) axi_demux (
@@ -165,6 +166,7 @@ module tb_bridgeless (
     );
 
     axi_mux #(
+        .ADDR_WIDTH(12),
         .INPUT_NUM(2),
         .ID_ROUTING('{0, 0})
     ) axi_mux (
@@ -178,13 +180,17 @@ module tb_bridgeless (
         .m_axi_o(axi_mosi_ram[0])
     );
 
-    axi_ram ram_close (
+    axi_ram #(
+        .ADDR_WIDTH(12)
+    ) ram_close (
         .clk_i(aclk), .rst_n_i(aresetn),
         .in_mosi_i(axi_mosi_ram[0]),
         .in_miso_o(axi_miso_ram[0])
     );
 
-    axi_ram ram_far (
+    axi_ram #(
+        .ADDR_WIDTH(12)
+    ) ram_far (
         .clk_i(aclk), .rst_n_i(aresetn),
         .in_mosi_i(axi_mosi_demux[1]),
         .in_miso_o(axi_miso_demux[1])

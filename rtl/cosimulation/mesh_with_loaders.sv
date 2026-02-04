@@ -26,9 +26,9 @@ module mesh_with_loaders # (
     input  logic        aresetn,
 
     input  logic [4:0]  pmu_addr_i   [N],
-    output logic [63:0] pmu_data_o   [N],
+    output logic [31:0] pmu_data_o   [N],
 
-    input  logic [7:0]  req_depth_i,
+    input  logic        resp_wait_i  [N],
     input  logic [4:0]  id_i         [N],
     input  logic        write_i      [N],
     input  logic [7:0]  axlen_i      [N],
@@ -79,7 +79,7 @@ module mesh_with_loaders # (
                 .ADDR_WIDTH(ADDR_WIDTH),
                 .ID_W_WIDTH(ID_W_WIDTH),
                 .ID_R_WIDTH(ID_R_WIDTH),
-                .MAX_ID_WIDTH(MAX_ID_WIDTH)
+                .FIFO_DEPTH(64)
                 `ifdef TID_PRESENT
                 ,
                 .ID_WIDTH(ID_WIDTH)
@@ -92,10 +92,12 @@ module mesh_with_loaders # (
                 ,
                 .USER_WIDTH(USER_WIDTH)
                 `endif
+                ,
+                .LOADER_ID(i)
             ) loader (
                 .clk_i       (aclk),
                 .arstn_i     (aresetn),
-                .req_depth_i (req_depth_i),
+                .resp_wait_i (resp_wait_i[i]),
                 .id_i        (id_i[i]),
                 .write_i     (write_i[i]),
                 .axlen_i     (axlen_i[i]),
@@ -123,7 +125,7 @@ module mesh_with_loaders # (
 
     axi_ram #(
         .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-        .BYTE_WIDTH(AXI_DATA_WIDTH/8 + (AXI_DATA_WIDTH%8 != 0)),
+        .BYTE_WIDTH(8),
         .ADDR_WIDTH(ADDR_WIDTH),
         .ID_W_WIDTH(ID_W_WIDTH),
         .ID_R_WIDTH(ID_R_WIDTH)

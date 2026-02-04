@@ -32,7 +32,7 @@ RESULTS_DIR ?= ${LOGS_DIR}/results
 SIM ?= questa-qisqrun
 BUILD_ARGS ?=
 SIM_ARGS ?=
-SIM_ARGS += -suppress 12110 -autofindloop -suppress 12130
+SIM_ARGS += -suppress 12110 -autofindloop -suppress 12130 -suppress 13314
 
 ifndef GENERAL_TOPLEVEL
 COCOTB_TOPLEVEL     ?= tb_uart_loop
@@ -53,8 +53,7 @@ test: $(VENV_DIR)
 	make -f $(CCTB_MAKEFILE) run CACHE_DIR=$(CACHE_DIR) \
 	VENV_DIR=$(VENV_DIR) INCLUDE_DIRS="$(INCLUDE_DIRS)" \
 	COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES) \
-	COCOTB_TOPLEVEL=$(COCOTB_TOPLEVEL) \
-	SIM=$(SIM)
+	COCOTB_TOPLEVEL=$(COCOTB_TOPLEVEL)
 
 wave: $(VENV_DIR)
 	make -f $(CCTB_MAKEFILE) wave CACHE_DIR=$(CACHE_DIR) \

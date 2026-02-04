@@ -2,7 +2,7 @@ module tb_arbiter;
 
     logic ACLK, ARESETn;
     logic [4:0] valid_i, ready_o;
-    logic [15:0] data_o;
+    logic [11:0] data_o;
     logic valid_o, ready_i;
 
     logic finished = '0;

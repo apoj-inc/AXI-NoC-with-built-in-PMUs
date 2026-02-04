@@ -4,7 +4,7 @@ module XY_mesh_dual #(
     parameter ADDR_WIDTH = 16,
     parameter ID_W_WIDTH = 5,
     parameter ID_R_WIDTH = 5,
-    parameter AXI_DATA_WIDTH = 8
+    parameter AXI_DATA_WIDTH = 32
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4

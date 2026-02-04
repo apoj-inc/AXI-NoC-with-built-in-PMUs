@@ -5,7 +5,7 @@ module tb_bridge (
     output logic a_awready,
     input  logic a_awvalid,
     input  logic [3:0] a_awid,
-    input  logic [15:0] a_awaddr,
+    input  logic [11:0] a_awaddr,
     input  logic [7:0] a_awlen,
     input  logic [2:0] a_awsize,
     input  logic [1:0] a_awburst,
@@ -23,7 +23,7 @@ module tb_bridge (
     output logic a_arready,
     input  logic a_arvalid,
     input  logic [3:0] a_arid,
-    input  logic [15:0] a_araddr,
+    input  logic [11:0] a_araddr,
     input  logic [7:0] a_arlen,
     input  logic [2:0] a_arsize,
     input  logic [1:0] a_arburst,
@@ -38,7 +38,7 @@ module tb_bridge (
     output logic b_awready,
     input  logic b_awvalid,
     input  logic [3:0] b_awid,
-    input  logic [15:0] b_awaddr,
+    input  logic [11:0] b_awaddr,
     input  logic [7:0] b_awlen,
     input  logic [2:0] b_awsize,
     input  logic [1:0] b_awburst,
@@ -56,7 +56,7 @@ module tb_bridge (
     output logic b_arready,
     input  logic b_arvalid,
     input  logic [3:0] b_arid,
-    input  logic [15:0] b_araddr,
+    input  logic [11:0] b_araddr,
     input  logic [7:0] b_arlen,
     input  logic [2:0] b_arsize,
     input  logic [1:0] b_arburst,
@@ -69,7 +69,7 @@ module tb_bridge (
 );
 
     parameter AXI_DATA_WIDTH = 32;
-    parameter ADDR_WIDTH = 16;
+    parameter ADDR_WIDTH = 12;
     parameter ID_W_WIDTH = 5;
     parameter ID_R_WIDTH = 5;
     parameter AXIS_DATA_WIDTH = 40;

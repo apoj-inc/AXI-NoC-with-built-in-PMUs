@@ -28,7 +28,6 @@ rtl/axi/axi2ram.sv
 rtl/axi/axis_if_demux.sv
 rtl/axi/axis_if_mux.sv
 rtl/axi/axis_if.sv
-rtl/axi/ram_if.sv
 rtl/axi/ram.sv
 rtl/axi/stream_arbiter.sv
 rtl/axi/stream_fifo.sv

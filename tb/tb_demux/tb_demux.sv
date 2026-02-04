@@ -6,7 +6,7 @@ module tb_demux (
     output logic AWREADY,
     input  logic AWVALID,
     input  logic [3:0] AWID,
-    input  logic [15:0] AWADDR,
+    input  logic [11:0] AWADDR,
     input  logic [7:0] AWLEN,
     input  logic [2:0] AWSIZE,
     input  logic [1:0] AWBURST,
@@ -24,7 +24,7 @@ module tb_demux (
     output logic ARREADY,
     input  logic ARVALID,
     input  logic [3:0] ARID,
-    input  logic [15:0] ARADDR,
+    input  logic [11:0] ARADDR,
     input  logic [7:0] ARLEN,
     input  logic [2:0] ARSIZE,
     input  logic [1:0] ARBURST,
@@ -78,9 +78,10 @@ module tb_demux (
     end
 
     axi_demux #(
+        .ADDR_WIDTH(12),
         .OUTPUT_NUM(3),
         .ID_ROUTING('{0, 0, 0, 0})
-        ) dut (
+    ) dut (
         .ACLK(ACLK),
         .ARESETn(ARESETn),
 
@@ -91,7 +92,9 @@ module tb_demux (
         .m_axi_o(axi_mosi_slave)
     );
 
-    axi_ram ram[3] (
+    axi_ram #(
+        .ADDR_WIDTH(12)
+    ) ram[3] (
         .clk_i(ACLK), .rst_n_i(ARESETn),
         .in_mosi_i(axi_mosi_slave),
         .in_miso_o(axi_miso_slave)

@@ -26,17 +26,11 @@ module axi2ram
 (
 	input clk_i, rst_n_i,
 
-    // Port a 
-    output logic [ADDR_WIDTH-1:0] addr_a,
-    output logic [AXI_DATA_WIDTH-1:0] write_a,
-    output logic [BATCH_WIDTH-1:0] byte_en_a,
-    input  logic [AXI_DATA_WIDTH-1:0] data_a,
-
-    // Port b 
-    output logic [ADDR_WIDTH-1:0] addr_b,
-    output logic [AXI_DATA_WIDTH-1:0] write_b,
-    output logic [BATCH_WIDTH-1:0] byte_en_b,
-    input  logic [AXI_DATA_WIDTH-1:0] data_b,
+    
+    output logic [ADDR_WIDTH-1:0] waddr, raddr,
+    output logic [AXI_DATA_WIDTH-1:0] wdata,
+    output logic [BATCH_WIDTH-1:0] be,
+    input  logic [AXI_DATA_WIDTH-1:0] rdata,
 
     //AXI
     input  axi_mosi_t in_mosi_i,
@@ -45,8 +39,6 @@ module axi2ram
 );
 
     `include "axi_type.svh"
-
-    localparam WSRTB_W = AXI_DATA_WIDTH/BYTE_WIDTH;
 
     enum { READING_ADDRESS, REQUESTING_DATA, RESPONDING }
     r_state, r_state_next,
@@ -84,12 +76,10 @@ module axi2ram
         in_miso_o.data.r.RLAST = 1'b0;
         in_miso_o.data.r.RID = ARID;
 
-        addr_a = r_state == RESPONDING ? (ARBURST == 2'b01) ? ARADDR + in_mosi_i.RREADY : 
+        raddr = r_state == RESPONDING ? (ARBURST == 2'b01) ? ARADDR + in_mosi_i.RREADY : 
                     (ARBURST == 2'b10) ? (ARADDR + in_mosi_i.RREADY > 2**ADDR_WIDTH-1 ? '0 : ARADDR + in_mosi_i.RREADY) : ARADDR
                     : ARADDR;
-        byte_en_a = '0;
-        write_a = '0;
-        in_miso_o.data.r.RDATA = data_a;
+        in_miso_o.data.r.RDATA = rdata;
 
                 
         case (r_state)
@@ -120,9 +110,9 @@ module axi2ram
         in_miso_o.data.b.BID = AWID;
         in_miso_o.BVALID = 1'b0;
 
-        byte_en_b = 1'b0;
-        addr_b = AWADDR;
-        write_b = in_mosi_i.data.w.WDATA;
+        be = 1'b0;
+        waddr = AWADDR;
+        wdata = in_mosi_i.data.w.WDATA;
 
         case (w_state)
             READING_ADDRESS: begin
@@ -136,7 +126,7 @@ module axi2ram
                 in_miso_o.WREADY = 1'b1;
                 w_state_next = REQUESTING_DATA;
 
-                byte_en_b = in_mosi_i.data.w.WSTRB;
+                be = in_mosi_i.data.w.WSTRB;
 
                 if(in_mosi_i.WVALID) begin
                     if(AWLEN == 1'b0 || in_mosi_i.data.w.WLAST) begin
