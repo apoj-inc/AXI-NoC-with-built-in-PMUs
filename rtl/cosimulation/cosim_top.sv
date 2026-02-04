@@ -2,7 +2,8 @@ module cosim_top #(
     parameter CORE_COUNT    = 16,
     parameter AXI_ID_WIDTH  = 5,
     parameter BAUD_RATE     = 10_000_000,
-    parameter CLK_FREQ      = 50_000_000
+    parameter CLK_FREQ      = 50_000_000,
+    parameter ADDR_WIDTH    = 16
 ) (
     input  logic clk_i,
     input  logic arstn_i,
@@ -33,7 +34,9 @@ module cosim_top #(
         end
     end
 
-    mesh_with_loaders mesh_with_loaders (
+    mesh_with_loaders #(
+        .ADDR_WIDTH  (ADDR_WIDTH)
+    ) mesh_with_loaders (
         .aclk        (clk_i),
         .aresetn     (rstn_noc ),
 

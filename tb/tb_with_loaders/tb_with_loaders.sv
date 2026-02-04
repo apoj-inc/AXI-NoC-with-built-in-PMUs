@@ -2,7 +2,7 @@ module tb_with_loaders #(
     parameter ID_W_WIDTH = 5,
     parameter ID_R_WIDTH = 5,
     parameter MAX_ID_WIDTH = 4,
-    parameter ADDR_WIDTH = 16,
+    parameter ADDR_WIDTH = 12,
 
     parameter N = (ID_W_WIDTH-1)*(ID_R_WIDTH-1),
 

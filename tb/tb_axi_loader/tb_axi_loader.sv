@@ -5,7 +5,7 @@ module tb_axi_loader (
     input  logic        awready,
     output logic        awvalid,
     output logic [4:0]  awid,
-    output logic [15:0] awaddr,
+    output logic [11:0] awaddr,
     output logic [7:0]  awlen,
     output logic [2:0]  awsize,
     output logic [1:0]  awburst,
@@ -23,7 +23,7 @@ module tb_axi_loader (
     input  logic        arready,
     output logic        arvalid,
     output logic [4:0]  arid,
-    output logic [15:0] araddr,
+    output logic [11:0] araddr,
     output logic [7:0]  arlen,
     output logic [2:0]  arsize,
     output logic [1:0]  arburst,
@@ -83,7 +83,7 @@ module tb_axi_loader (
 
     axi_master_loader #(
         .AXI_DATA_WIDTH(8),
-        .ADDR_WIDTH(16),
+        .ADDR_WIDTH(12),
         .ID_W_WIDTH(5),
         .ID_R_WIDTH(5),
         .FIFO_DEPTH(32),
