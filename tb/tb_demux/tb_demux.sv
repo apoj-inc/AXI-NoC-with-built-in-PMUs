@@ -78,9 +78,10 @@ module tb_demux (
     end
 
     axi_demux #(
+        .ADDR_WIDTH(12),
         .OUTPUT_NUM(3),
         .ID_ROUTING('{0, 0, 0, 0})
-        ) dut (
+    ) dut (
         .ACLK(ACLK),
         .ARESETn(ARESETn),
 
@@ -91,7 +92,9 @@ module tb_demux (
         .m_axi_o(axi_mosi_slave)
     );
 
-    axi_ram ram[3] (
+    axi_ram #(
+        .ADDR_WIDTH(12)
+    ) ram[3] (
         .clk_i(ACLK), .rst_n_i(ARESETn),
         .in_mosi_i(axi_mosi_slave),
         .in_miso_o(axi_miso_slave)

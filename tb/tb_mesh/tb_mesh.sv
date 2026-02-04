@@ -92,7 +92,9 @@ module tb_mesh (
         end
     endgenerate
 
-    XY_mesh_dual dut (
+    XY_mesh_dual #(
+        .ADDR_WIDTH(12)
+    ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
 
@@ -107,7 +109,8 @@ module tb_mesh (
     axi_ram #(
         .ID_W_WIDTH(5),
         .ID_R_WIDTH(5),
-        .AXI_DATA_WIDTH(8)
+        .AXI_DATA_WIDTH(32),
+        .ADDR_WIDTH(12)
     ) ram[16] (
         .clk_i({16{aclk}}),
         .rst_n_i({16{aresetn}}),

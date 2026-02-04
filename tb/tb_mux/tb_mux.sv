@@ -209,8 +209,9 @@ module tb_mux (
     end
 
     axi_mux  #(
-        .INPUT_NUM(3)
-        ) dut (
+        .INPUT_NUM(3),
+        .ADDR_WIDTH(12)
+    ) dut (
         .ACLK(ACLK),
         .ARESETn(ARESETn),
 
@@ -221,7 +222,9 @@ module tb_mux (
         .m_axi_o(axi_mosi_slave)
     );
 
-    axi_ram ram (
+    axi_ram #(
+        .ADDR_WIDTH(12)
+    ) ram (
         .clk_i(ACLK), .rst_n_i(ARESETn),
         .in_mosi_i(axi_mosi_slave),
         .in_miso_o(axi_miso_slave)

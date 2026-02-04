@@ -35,7 +35,9 @@ module tb_with_loaders #(
     output logic        idle_o       [N]
 );
 
-    mesh_with_loaders ct (
+    mesh_with_loaders #(
+        .ADDR_WIDTH(ADDR_WIDTH)
+    ) ct (
         .aclk(aclk),
         .aresetn(aresetn),
         .pmu_addr_i(pmu_addr_i),

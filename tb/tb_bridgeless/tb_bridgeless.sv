@@ -151,6 +151,7 @@ module tb_bridgeless (
     end
 
     axi_demux #(
+        .ADDR_WIDTH(12),
         .OUTPUT_NUM(2),
         .ID_ROUTING('{0, 0})
     ) axi_demux (
@@ -165,6 +166,7 @@ module tb_bridgeless (
     );
 
     axi_mux #(
+        .ADDR_WIDTH(12),
         .INPUT_NUM(2),
         .ID_ROUTING('{0, 0})
     ) axi_mux (
@@ -178,13 +180,17 @@ module tb_bridgeless (
         .m_axi_o(axi_mosi_ram[0])
     );
 
-    axi_ram ram_close (
+    axi_ram #(
+        .ADDR_WIDTH(12)
+    ) ram_close (
         .clk_i(aclk), .rst_n_i(aresetn),
         .in_mosi_i(axi_mosi_ram[0]),
         .in_miso_o(axi_miso_ram[0])
     );
 
-    axi_ram ram_far (
+    axi_ram #(
+        .ADDR_WIDTH(12)
+    ) ram_far (
         .clk_i(aclk), .rst_n_i(aresetn),
         .in_mosi_i(axi_mosi_demux[1]),
         .in_miso_o(axi_miso_demux[1])

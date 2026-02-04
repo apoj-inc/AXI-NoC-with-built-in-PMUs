@@ -17,12 +17,14 @@ module tb_axi_memory;
 
     always #10 ACLK = ~ACLK;
 
-    axi_ram axi_r (
+    axi_ram #(
+        .ADDR_WIDTH(ADDR_WIDTH)
+    ) axi_r (
         .clk_i(ACLK),
         .rst_n_i(ARESETn),
         .in_mosi_i(axi_i_mosi),
         .in_miso_o(axi_i_miso)
-        );
+    );
 
     task am_write(
         // AW channel 

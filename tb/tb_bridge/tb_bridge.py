@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge, Combine
+from cocotb.triggers import RisingEdge, Combine, Timer, First
 from cocotb.clock import Clock
 from cocotbext.axi import AxiMaster, AxiBus
 from cocotb.handle import Force
@@ -28,7 +28,14 @@ async def test(dut):
     dut.aresetn.value = 1
     await RisingEdge(dut.aclk)
 
-    await Combine (
-        cocotb.start_soon(axi_read_write(dut, axi_master_1, b'12345678', 1, 0)),
-        cocotb.start_soon(axi_read_write(dut, axi_master_2, b'87654321', 2, 1))
+    timeout = Timer(200_000, unit='ns')
+
+    result = await First(
+        timeout,
+        Combine (
+            cocotb.start_soon(axi_read_write(dut, axi_master_1, b'12345678', 1, 0)),
+            cocotb.start_soon(axi_read_write(dut, axi_master_2, b'87654321', 2, 1))
+        )
     )
+
+    assert result is not timeout, "Design has hung!"

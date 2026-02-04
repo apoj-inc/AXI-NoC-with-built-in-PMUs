@@ -73,7 +73,9 @@ module tb_axi_ram (
         axi_mosi_master.RREADY = rready;
     end
 
-    axi_ram ram (
+    axi_ram #(
+        .ADDR_WIDTH(12)
+    ) ram (
         .clk_i(aclk), .rst_n_i(rst_n),
 
         .in_mosi_i(axi_mosi_master),
