@@ -22,6 +22,7 @@ module cosim_top #(
     logic                    idle       [CORE_COUNT];
 
     logic                    rstn_noc;
+    logic                    pmu_enable;
 
     logic [2:0]              rx_sync;
 
@@ -35,21 +36,22 @@ module cosim_top #(
     end
 
     mesh_with_loaders #(
-        .ADDR_WIDTH  (ADDR_WIDTH)
+        .ADDR_WIDTH   (ADDR_WIDTH)
     ) mesh_with_loaders (
-        .aclk        (clk_i),
-        .aresetn     (rstn_noc ),
-
-        .pmu_addr_i  (pmu_addr ),
-        .pmu_data_o  (pmu_data ),
-
-        .resp_wait_i (resp_wait),
-        .id_i        (id       ),
-        .write_i     (write    ),
-        .axlen_i     (axlen    ),
-        .fifo_push_i (fifo_push),
-        .start_i     (start    ),
-        .idle_o      (idle     )
+        .aclk         (clk_i),
+        .aresetn      (rstn_noc ),
+ 
+        .pmu_enable_i (pmu_enable),
+        .pmu_addr_i   (pmu_addr ),
+        .pmu_data_o   (pmu_data ),
+ 
+        .resp_wait_i  (resp_wait),
+        .id_i         (id       ),
+        .write_i      (write    ),
+        .axlen_i      (axlen    ),
+        .fifo_push_i  (fifo_push),
+        .start_i      (start    ),
+        .idle_o       (idle     )
     );
 
     uart_control #(
@@ -74,7 +76,8 @@ module cosim_top #(
         .start_o      (start    ),
         .idle_i       (idle     ),
         
-        .rstn_o      (rstn_noc )
+        .rstn_o       (rstn_noc ),
+        .pmu_enable_o (pmu_enable)
     );
     
 endmodule

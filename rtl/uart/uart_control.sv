@@ -23,7 +23,8 @@ module uart_control #(
     output logic                    start_o,
     input  logic                    idle_i       [CORE_COUNT],
 
-    output logic                    rstn_o
+    output logic                    rstn_o,
+    output logic                    pmu_enable_o
 );
 
     typedef enum logic [3:0] {
@@ -35,7 +36,8 @@ module uart_control #(
         AXI_START,        // rx_i <- 0x05.
         READ_PMU_DATA,    // rx_i <- 0x06;  rx_i <- core ID (LSB to MSB);               rx_i <- PMU metric;                tx_o -> PMU data.
         READ_CTRL_STATUS, // rx_i <- 0x07;  tx_o -> uart_control current state.
-        RESET             // rx_i <- 0x08;  rx_i <- reset_value.
+        RESET,            // rx_i <- 0x08;  rx_i <- reset_value.
+        PMU_ENABLE        // rx_i <- 0x09;  rx_i <- PMU enable value.
     } commands_t;
 
     commands_t state, state_next;
@@ -61,6 +63,7 @@ module uart_control #(
     logic [CORE_COUNT-1:0] idle_reg, idle_reg_next;
     logic [63:0] pmu_data_reg, pmu_data_reg_next;
     logic pmu_to_reg, pmu_to_reg_next;
+    logic pmu_enable_next;
 
     generate
         genvar i;
@@ -113,6 +116,7 @@ module uart_control #(
             pmu_data_reg <= '0;
             pmu_to_reg <= '0;
             rstn_o <= '0;
+            pmu_enable_o <= '0;
         end
         else begin
             state <= state_next;
@@ -129,6 +133,7 @@ module uart_control #(
             pmu_data_reg <= pmu_data_reg_next;
             pmu_to_reg <= pmu_to_reg_next;
             rstn_o <= rstn_next;
+            pmu_enable_o <= pmu_enable_next;
         end
     end
 
@@ -147,6 +152,7 @@ module uart_control #(
                         READ_PMU_DATA:    state_next = READ_PMU_DATA;
                         READ_CTRL_STATUS: state_next = READ_CTRL_STATUS;
                         RESET:            state_next = RESET;
+                        PMU_ENABLE:       state_next = PMU_ENABLE;
                         default:          state_next = IDLE;
                     endcase
                 end
@@ -209,6 +215,14 @@ module uart_control #(
                     state_next = state;
                 end
             end
+            PMU_ENABLE: begin
+                if (trans_counter == 1) begin
+                    state_next = IDLE;
+                end
+                else begin
+                    state_next = state;
+                end
+            end
         endcase
     end
     
@@ -233,6 +247,7 @@ module uart_control #(
         pmu_data_reg_next = pmu_data_reg;
 
         rstn_next = rstn_o;
+        pmu_enable_next = pmu_enable_o;
 
         case (state)
             IDLE: begin
@@ -336,6 +351,12 @@ module uart_control #(
                 if (rx_data_valid) begin
                     trans_counter_next = trans_counter + 1;
                     rstn_next = rx_data[0];
+                end
+            end
+            PMU_ENABLE: begin
+                if (rx_data_valid) begin
+                    trans_counter_next = trans_counter + 1;
+                    pmu_enable_next = rx_data[0];
                 end
             end
         endcase

@@ -9,6 +9,7 @@ async def test(dut):
     cocotb.start_soon(Clock(dut.aclk, 1, units="ns").start())
 
     dut.aresetn.value = 0
+    dut.pmu_enable_i.value = 1
     for i in range(16):
         dut.pmu_addr_i[i].value = 0
         dut.resp_wait_i[i].value = 0

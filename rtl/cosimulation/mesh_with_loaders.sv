@@ -25,6 +25,7 @@ module mesh_with_loaders # (
     input  logic        aclk,
     input  logic        aresetn,
 
+    input  logic        pmu_enable_i,
     input  logic [4:0]  pmu_addr_i   [N],
     output logic [31:0] pmu_data_o   [N],
 
@@ -67,12 +68,13 @@ module mesh_with_loaders # (
                 .USER_WIDTH(USER_WIDTH)
                 `endif
             ) pmu (
-                .aclk    (aclk),
-                .aresetn (aresetn),
+                .aclk         (aclk),
+                .aresetn      (aresetn),
+                .enable       (pmu_enable_i),
                 .mon_axi_miso (axi_miso[i]),
                 .mon_axi_mosi (axi_mosi[i]),
-                .addr_i  (pmu_addr_i[i]),
-                .data_o  (pmu_data_o[i])
+                .addr_i       (pmu_addr_i[i]),
+                .data_o       (pmu_data_o[i])
             );
 
             axi_master_loader #(

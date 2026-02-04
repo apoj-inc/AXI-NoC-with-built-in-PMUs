@@ -38,6 +38,11 @@ async def test(dut):
     await source.write(int.to_bytes(1, 1, 'little'))
     await source.wait()
 
+    await source.write(int.to_bytes(9, 1, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(1, 1, 'little'))
+    await source.wait()
+
     for i in range(64):
         dest = random.randint(1, 16)
 
@@ -73,6 +78,11 @@ async def test(dut):
 
         idle = int.from_bytes(await sink.read(), 'little')
         idle += (int.from_bytes(await sink.read(), 'little') << 8)
+
+    await source.write(int.to_bytes(9, 1, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(0, 1, 'little'))
+    await source.wait()
 
     for i in range(19):
         await source.write(int.to_bytes(6, 1, 'little'))

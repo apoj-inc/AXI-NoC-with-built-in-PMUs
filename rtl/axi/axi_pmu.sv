@@ -20,11 +20,12 @@ module axi_pmu # (
     parameter USER_WIDTH = 4
     `endif
 ) (
-    input  logic aclk,
-    input  logic aresetn,
+    input  logic        aclk,
+    input  logic        aresetn,
+    input  logic        enable,
 
-    input axi_miso_t mon_axi_miso,
-    input axi_mosi_t mon_axi_mosi,
+    input  axi_miso_t   mon_axi_miso,
+    input  axi_mosi_t   mon_axi_mosi,
 
     input  logic [4:0]  addr_i,
     output logic [31:0] data_o
@@ -91,7 +92,9 @@ module axi_pmu # (
             clock_counter <= 0;
         end
         else begin
-            clock_counter <= clock_counter + 1;
+            if (enable) begin
+                clock_counter <= clock_counter + 1;
+            end
         end
     end
 
@@ -100,43 +103,45 @@ module axi_pmu # (
             rc <= '0;
         end
         else begin
-            if (!mon_axi_mosi.ARVALID && (rc.outstanding == 0)) begin
-                rc.idle <= rc.idle + 1;
-            end
-
-            if (mon_axi_mosi.ARVALID && mon_axi_miso.ARREADY) begin
-                if (!(mon_axi_miso.RVALID && mon_axi_mosi.RREADY && mon_axi_miso.data.r.RLAST)) begin
-                    rc.outstanding <= rc.outstanding + 1;
+            if (enable) begin
+                if (!mon_axi_mosi.ARVALID && (rc.outstanding == 0)) begin
+                    rc.idle <= rc.idle + 1;
                 end
-            end
-            else begin
-                if (mon_axi_miso.RVALID && mon_axi_mosi.RREADY && mon_axi_miso.data.r.RLAST) begin
-                    rc.outstanding <= rc.outstanding - 1;
+
+                if (mon_axi_mosi.ARVALID && mon_axi_miso.ARREADY) begin
+                    if (!(mon_axi_miso.RVALID && mon_axi_mosi.RREADY && mon_axi_miso.data.r.RLAST)) begin
+                        rc.outstanding <= rc.outstanding + 1;
+                    end
                 end
-            end
+                else begin
+                    if (mon_axi_miso.RVALID && mon_axi_mosi.RREADY && mon_axi_miso.data.r.RLAST) begin
+                        rc.outstanding <= rc.outstanding - 1;
+                    end
+                end
 
 
-            // --- //
-            if (mon_axi_mosi.ARVALID && !mon_axi_miso.ARREADY) begin
-                rc.ar_stall <= rc.ar_stall + 1;
-            end
+                // --- //
+                if (mon_axi_mosi.ARVALID && !mon_axi_miso.ARREADY) begin
+                    rc.ar_stall <= rc.ar_stall + 1;
+                end
 
-            if (mon_axi_mosi.ARVALID && mon_axi_miso.ARREADY) begin
-                rc.ar_handshake <= rc.ar_handshake + 1;
-            end
+                if (mon_axi_mosi.ARVALID && mon_axi_miso.ARREADY) begin
+                    rc.ar_handshake <= rc.ar_handshake + 1;
+                end
 
 
-            // --- //
-            if ((rc.outstanding != 0) && !mon_axi_miso.RVALID) begin
-                rc.rvalid_stall <= rc.rvalid_stall + 1;
-            end
-            
-            if (mon_axi_miso.RVALID && !mon_axi_mosi.RREADY) begin
-                rc.rready_stall <= rc.rready_stall + 1;
-            end
+                // --- //
+                if ((rc.outstanding != 0) && !mon_axi_miso.RVALID) begin
+                    rc.rvalid_stall <= rc.rvalid_stall + 1;
+                end
+                
+                if (mon_axi_miso.RVALID && !mon_axi_mosi.RREADY) begin
+                    rc.rready_stall <= rc.rready_stall + 1;
+                end
 
-            if (mon_axi_miso.RVALID && mon_axi_mosi.RREADY) begin
-                rc.r_handshake <= rc.r_handshake + 1;
+                if (mon_axi_miso.RVALID && mon_axi_mosi.RREADY) begin
+                    rc.r_handshake <= rc.r_handshake + 1;
+                end
             end
         end
     end
@@ -146,68 +151,70 @@ module axi_pmu # (
             wc <= '0;
         end
         else begin
-            if (!mon_axi_mosi.AWVALID && (wc.outstanding == 0)) begin
-                wc.idle <= wc.idle + 1;
-            end
-
-            if (mon_axi_mosi.AWVALID && mon_axi_miso.AWREADY) begin
-                if (!(mon_axi_miso.BVALID && mon_axi_mosi.BREADY)) begin
-                    wc.outstanding <= wc.outstanding + 1;
+            if (enable) begin
+                if (!mon_axi_mosi.AWVALID && (wc.outstanding == 0)) begin
+                    wc.idle <= wc.idle + 1;
                 end
-            end
-            else begin
+
+                if (mon_axi_mosi.AWVALID && mon_axi_miso.AWREADY) begin
+                    if (!(mon_axi_miso.BVALID && mon_axi_mosi.BREADY)) begin
+                        wc.outstanding <= wc.outstanding + 1;
+                    end
+                end
+                else begin
+                    if (mon_axi_miso.BVALID && mon_axi_mosi.BREADY) begin
+                        wc.outstanding <= wc.outstanding - 1;
+                    end
+                end
+
+                if (mon_axi_miso.BVALID && mon_axi_miso.BVALID) begin
+                    if (!(mon_axi_mosi.WVALID && mon_axi_miso.WREADY && mon_axi_mosi.data.w.WLAST)) begin
+                        wc.responding <= wc.responding - 1;
+                    end
+                end
+                else begin
+                    if (mon_axi_mosi.WVALID && mon_axi_miso.WREADY && mon_axi_mosi.data.w.WLAST) begin
+                        wc.responding <= wc.responding + 1;
+                    end
+                end
+
+
+                // --- //
+                if (mon_axi_mosi.AWVALID && !mon_axi_miso.AWREADY) begin
+                    wc.aw_stall <= wc.aw_stall + 1;
+                end
+
+                if (mon_axi_mosi.AWVALID && mon_axi_miso.AWREADY) begin
+                    wc.aw_handshake <= wc.aw_handshake + 1;
+                end
+
+
+                // --- //
+                if ((wc.outstanding != 0) && (wc.outstanding != wc.responding) && !mon_axi_mosi.WVALID) begin
+                    wc.wvalid_stall <= wc.wvalid_stall + 1;
+                end
+
+                if (mon_axi_mosi.WVALID && !mon_axi_miso.WREADY) begin
+                    wc.wready_stall <= wc.wready_stall + 1;
+                end
+                
+                if (mon_axi_mosi.WVALID && mon_axi_miso.WREADY) begin
+                    wc.w_handshake <= wc.w_handshake + 1;
+                end
+
+
+                // --- //
+                if ((wc.responding != 0) && !mon_axi_miso.BVALID) begin
+                    wc.bvalid_stall <= wc.bvalid_stall + 1;
+                end
+
+                if (mon_axi_miso.BVALID && !mon_axi_mosi.BREADY) begin
+                    wc.bready_stall <= wc.bready_stall + 1;
+                end
+                
                 if (mon_axi_miso.BVALID && mon_axi_mosi.BREADY) begin
-                    wc.outstanding <= wc.outstanding - 1;
+                    wc.b_handshake <= wc.b_handshake + 1;
                 end
-            end
-
-            if (mon_axi_miso.BVALID && mon_axi_miso.BVALID) begin
-                if (!(mon_axi_mosi.WVALID && mon_axi_miso.WREADY && mon_axi_mosi.data.w.WLAST)) begin
-                    wc.responding <= wc.responding - 1;
-                end
-            end
-            else begin
-                if (mon_axi_mosi.WVALID && mon_axi_miso.WREADY && mon_axi_mosi.data.w.WLAST) begin
-                    wc.responding <= wc.responding + 1;
-                end
-            end
-
-
-            // --- //
-            if (mon_axi_mosi.AWVALID && !mon_axi_miso.AWREADY) begin
-                wc.aw_stall <= wc.aw_stall + 1;
-            end
-
-            if (mon_axi_mosi.AWVALID && mon_axi_miso.AWREADY) begin
-                wc.aw_handshake <= wc.aw_handshake + 1;
-            end
-
-
-            // --- //
-            if ((wc.outstanding != 0) && (wc.outstanding != wc.responding) && !mon_axi_mosi.WVALID) begin
-                wc.wvalid_stall <= wc.wvalid_stall + 1;
-            end
-
-            if (mon_axi_mosi.WVALID && !mon_axi_miso.WREADY) begin
-                wc.wready_stall <= wc.wready_stall + 1;
-            end
-            
-            if (mon_axi_mosi.WVALID && mon_axi_miso.WREADY) begin
-                wc.w_handshake <= wc.w_handshake + 1;
-            end
-
-
-            // --- //
-            if ((wc.responding != 0) && !mon_axi_miso.BVALID) begin
-                wc.bvalid_stall <= wc.bvalid_stall + 1;
-            end
-
-            if (mon_axi_miso.BVALID && !mon_axi_mosi.BREADY) begin
-                wc.bready_stall <= wc.bready_stall + 1;
-            end
-            
-            if (mon_axi_miso.BVALID && mon_axi_mosi.BREADY) begin
-                wc.b_handshake <= wc.b_handshake + 1;
             end
         end
     end
