@@ -71,7 +71,7 @@ module axi_master_loader #(
     assign m_axi_o.data.aw.AWSIZE  = $clog2(AXI_DATA_WIDTH/8);
     assign m_axi_o.data.aw.AWBURST = 2'b01;
 
-    assign m_axi_o.data.w.WDATA   = 'h30 + LOADER_ID;
+    assign m_axi_o.data.w.WDATA   = 'h30 + LOADER_ID + w_hand_counter;
     assign m_axi_o.data.w.WSTRB   = '1;
 
     assign m_axi_o.BREADY  = 1'b1;
