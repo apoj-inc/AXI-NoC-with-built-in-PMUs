@@ -1,9 +1,11 @@
 module cosim_top #(
-    parameter CORE_COUNT    = 16,
-    parameter AXI_ID_WIDTH  = 5,
-    parameter BAUD_RATE     = 10_000_000,
-    parameter CLK_FREQ      = 50_000_000,
-    parameter ADDR_WIDTH    = 16
+    parameter CORE_COUNT     = 16,
+    parameter AXI_ID_WIDTH   = 5,
+    parameter BAUD_RATE      = 10_000_000,
+    parameter CLK_FREQ       = 50_000_000,
+    parameter ADDR_WIDTH     = 16,
+    parameter AXI_DATA_WIDTH = 32,
+    parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
 ) (
     input  logic clk_i,
     input  logic arstn_i,
@@ -11,15 +13,19 @@ module cosim_top #(
     output logic tx_o
 );
 
-    logic [4:0]              pmu_addr   [CORE_COUNT];
-    logic [31:0]             pmu_data   [CORE_COUNT];
-    logic                    resp_wait  [CORE_COUNT];
-    logic [AXI_ID_WIDTH-1:0] id         [CORE_COUNT];
-    logic                    write      [CORE_COUNT];
-    logic [7:0]              axlen      [CORE_COUNT];
-    logic                    fifo_push  [CORE_COUNT];
-    logic                    start                  ;
-    logic                    idle       [CORE_COUNT];
+    logic [4:0]                pmu_addr   [CORE_COUNT];
+    logic [31:0]               pmu_data   [CORE_COUNT];
+    logic                      resp_wait  [CORE_COUNT];
+    logic [AXI_ID_WIDTH-1:0]   id         [CORE_COUNT];
+    logic                      write      [CORE_COUNT];
+    logic [ADDR_WIDTH-1:0]     axaddr     [CORE_COUNT];
+    logic [7:0]                axlen      [CORE_COUNT];
+    logic [AXI_DATA_WIDTH-1:0] wdata      [CORE_COUNT];
+    logic [AXI_DATA_BYTES-1:0] wstrb      [CORE_COUNT];
+    logic                      fifo_push  [CORE_COUNT];
+    logic                      start                  ;
+    logic                      idle       [CORE_COUNT];
+    logic [AXI_DATA_WIDTH-1:0] rdata      [CORE_COUNT];
 
     logic                    rstn_noc;
     logic                    pmu_enable;
@@ -48,15 +54,20 @@ module cosim_top #(
         .resp_wait_i  (resp_wait),
         .id_i         (id       ),
         .write_i      (write    ),
+        .axaddr_i     (axaddr   ),
         .axlen_i      (axlen    ),
+        .wdata_i      (wdata    ),
+        .wstrb_i      (wstrb    ),
         .fifo_push_i  (fifo_push),
         .start_i      (start    ),
-        .idle_o       (idle     )
+        .idle_o       (idle     ),
+        .rdata_o      (rdata    )
     );
 
     uart_control #(
         .CORE_COUNT   (CORE_COUNT  ),
         .AXI_ID_WIDTH (AXI_ID_WIDTH),
+        .ADDR_WIDTH   (ADDR_WIDTH  ),
         .BAUD_RATE    (BAUD_RATE   ),
         .CLK_FREQ     (CLK_FREQ    )
     ) uart_control (
@@ -71,10 +82,14 @@ module cosim_top #(
         .resp_wait_o  (resp_wait),
         .id_o         (id       ),
         .write_o      (write    ),
+        .axaddr_o     (axaddr   ),
         .axlen_o      (axlen    ),
+        .wdata_o      (wdata    ),
+        .wstrb_o      (wstrb    ),
         .fifo_push_o  (fifo_push),
         .start_o      (start    ),
         .idle_i       (idle     ),
+        .rdata_i      (rdata[0] ),
         
         .rstn_o       (rstn_noc ),
         .pmu_enable_o (pmu_enable)
