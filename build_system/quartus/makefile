@@ -52,6 +52,8 @@ $(RELEASE_FILES):\
 	
 	@cd $(dir $@)package;\
 		tar -acf $@ .
+	
+	@rm -r $(dir $@)package
 
 
 clean:
