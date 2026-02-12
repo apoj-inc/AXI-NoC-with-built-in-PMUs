@@ -39,5 +39,6 @@ qrun.log
 modelsim.ini
 
 release/*/package
+release/*/*.tar
 
 __pycache__
