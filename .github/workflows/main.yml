@@ -94,7 +94,6 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         push: true
-        load: true
         outputs: type=docker,dest=${{ runner.temp }}/altera_tools.tar
 
     - name: Upload artifact
