@@ -29,6 +29,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
+          outputs: type=docker,dest=${{ runner.temp }}/altera_tools-dev.tar
         
       - name: Run docker image tests
         shell: bash
@@ -77,6 +78,7 @@ jobs:
         cache-to: type=gha,mode=max
         push: true
         load: true
+        outputs: type=docker,dest=${{ runner.temp }}/altera_tools.tar
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
