@@ -82,19 +82,6 @@ jobs:
     needs: build_docker_test_image
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Build test image
-      uses: docker/build-push-action@v6
-      with:
-        context: ".docker/altera_tools"
-        target: test
-        tags: |
-          altera_tools-dev:latest
-        cache-from: type=gha
-        load: true
       
     - name: Run pytest
       shell: bash
