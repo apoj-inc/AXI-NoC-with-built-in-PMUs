@@ -51,7 +51,10 @@ $(RELEASE_FILES):\
 		quartus_sh -t $(QUARTUS_BUILD_PATH)/package.tcl
 	
 	@cd $(dir $@)package;\
-		tar -a -c -f $@ .
+		tar -acf $@ .
+	
+	@rm -r $(dir $@)package
+
 
 clean:
 	rm -rf $(QUARTUS_BUILD_PATH)/$(TOPLEVEL)
