@@ -125,7 +125,7 @@ jobs:
       
     - name: Run pytest
       shell: bash
-      run: make clean
+      run: sudo make clean
   
   check_releases:
     runs-on: ubuntu-latest
@@ -145,5 +145,5 @@ jobs:
       
     - name: Run build release
       shell: bash
-      run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools:latest "make make_release"
+      run: sudo docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools:latest "make make_release"
       timeout-minutes: 60
