@@ -145,5 +145,5 @@ jobs:
       
     - name: Run build release
       shell: bash
-      run: sudo docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools:latest "make make_release"
+      run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools:latest "make make_release"
       timeout-minutes: 60
