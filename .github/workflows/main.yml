@@ -141,6 +141,7 @@ jobs:
 
     - name: Load image
       run: |
+        docker image ls -a
         docker load --input ${{ runner.temp }}/altera_tools.tar
       
     - name: Run build release
