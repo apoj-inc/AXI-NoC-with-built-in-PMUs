@@ -35,9 +35,6 @@ jobs:
         with:
           name: altera_tools-dev
           path: ${{ runner.temp }}/altera_tools-dev.tar
-    
-      - name: Remove unused Docker images
-        run: docker system prune -af
   
           
   test_docker_test_image:
@@ -108,14 +105,6 @@ jobs:
       with:
         name: altera_tools
         path: ${{ runner.temp }}/altera_tools.tar
-
-    - name: Run build release
-      shell: bash
-      run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools:latest "make make_release"
-      timeout-minutes: 60
-    
-    - name: Remove unused Docker images
-      run: docker system prune -af
     
   run_tests:
     runs-on: ubuntu-latest
