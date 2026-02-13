@@ -93,3 +93,4 @@ clean:
 	$(CURDIR)/qrun.log \
 	$(CURDIR)/modelsim.ini \
 	$(CURDIR)/transcript
+	@make -f $(QUARTUS_MAKEFILE) clean_releases

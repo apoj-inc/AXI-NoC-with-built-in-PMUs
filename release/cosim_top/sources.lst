@@ -1,3 +1,13 @@
+rtl/cosimulation/cosim_top.sv
+rtl/cosimulation/mesh_with_loaders.sv
+rtl/axi/axi_pmu.sv
+rtl/axi/axi_master_loader.sv
+rtl/uart/uart_control.sv
+rtl/uart/receiver.sv
+rtl/uart/transmitter.sv
+rtl/axi/axi_ram.sv
+rtl/axi/axi2ram.sv
+rtl/axi/ram.sv
 rtl/axi/XY_mesh/XY_mesh_dual_parallel.sv
 rtl/axi/axi2axis_XY.sv
 rtl/axi/cross_router_logic/algorithm_selector_XY.sv

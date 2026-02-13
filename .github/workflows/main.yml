@@ -28,8 +28,33 @@ jobs:
             altera_tools-dev:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          load: true
-        
+          outputs: type=docker,dest=${{ runner.temp }}/altera_tools-dev.tar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: altera_tools-dev
+          path: ${{ runner.temp }}/altera_tools-dev.tar
+  
+          
+  test_docker_test_image:
+    runs-on: ubuntu-latest
+    needs: build_docker_test_image
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: altera_tools-dev
+          path: ${{ runner.temp }}
+
+      - name: Load image
+        run: |
+          docker load --input ${{ runner.temp }}/altera_tools-dev.tar
+          sudo rm -rf ${{ runner.temp }}/altera_tools-dev.tar
+          
       - name: Run docker image tests
         shell: bash
         run: |
@@ -38,7 +63,7 @@ jobs:
           make test; \
           make run_pytest TESTS_DIRS=tb/tb_example"
         timeout-minutes: 15
-  
+
   build_altera_tools_and_push:
     runs-on: ubuntu-latest
     needs: build_docker_test_image
@@ -70,30 +95,13 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         push: true
-    
-  check_releases:
-    runs-on: ubuntu-latest
-    needs: build_altera_tools_and_push
-    steps:
-    - uses: actions/checkout@v4
+        outputs: type=docker,dest=${{ runner.temp }}/altera_tools.tar
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Build production image
-      uses: docker/build-push-action@v6
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
       with:
-        context: ".docker/altera_tools"
-        target: production
-        tags: |
-          altera_tools-prod:latest
-        cache-from: type=gha
-        load: true
-      
-    - name: Run build release
-      shell: bash
-      run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-prod:latest "make make_release"
-      timeout-minutes: 60
+        name: altera_tools
+        path: ${{ runner.temp }}/altera_tools.tar
     
   run_tests:
     runs-on: ubuntu-latest
@@ -101,20 +109,40 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Build test image
-      uses: docker/build-push-action@v6
+    - name: Download artifact
+      uses: actions/download-artifact@v4
       with:
-        context: ".docker/altera_tools"
-        target: test
-        tags: |
-          altera_tools-dev:latest
-        cache-from: type=gha
-        load: true
+        name: altera_tools-dev
+        path: ${{ runner.temp }}
+
+    - name: Load image
+      run: |
+        docker load --input ${{ runner.temp }}/altera_tools-dev.tar
+        sudo rm -rf ${{ runner.temp }}/altera_tools-dev.tar
       
     - name: Run pytest
       shell: bash
       run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "make run_pytest"
+      timeout-minutes: 60
+  
+  check_releases:
+    runs-on: ubuntu-latest
+    needs: build_altera_tools_and_push
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: altera_tools
+        path: ${{ runner.temp }}
+
+    - name: Load image
+      run: |
+        docker load --input ${{ runner.temp }}/altera_tools.tar
+        sudo rm -rf ${{ runner.temp }}/altera_tools.tar
+      
+    - name: Run build release
+      shell: bash
+      run: docker run ${{env.ALTERA_TOOLS_ARGS}} ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest "make make_release"
       timeout-minutes: 60
