@@ -132,6 +132,9 @@ jobs:
     - name: Run pytest
       shell: bash
       run: sudo make clean
+      
+    - name: Remove unused Docker images
+      run: docker system prune -af
   
   check_releases:
     runs-on: ubuntu-latest
@@ -153,3 +156,6 @@ jobs:
       shell: bash
       run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools:latest "make make_release"
       timeout-minutes: 60
+    
+    - name: Remove unused Docker images
+      run: docker system prune -af
