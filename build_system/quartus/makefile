@@ -11,7 +11,7 @@ RELEASE_DIR 	?= $(CURDIR)/release
 RELEASE_DIRS 	?= $(wildcard $(RELEASE_DIR)/*/) 
 RELEASE_FILES	?= $(foreach directory,$(RELEASE_DIRS), $(directory)$(shell basename $(directory)).tar)
 
-.PHONY: all compile fmax create_releases
+.PHONY: all compile fmax create_releases clean_releases
 
 all: compile
 
@@ -55,6 +55,8 @@ $(RELEASE_FILES):\
 	
 	@rm -rf $(dir $@)package
 
+clean_releases:
+	@rm -f $(wildcard $(RELEASE_DIR)/*/*.tar)
 
 clean:
-	rm -rf $(QUARTUS_BUILD_PATH)/$(TOPLEVEL)
+	@rm -rf $(QUARTUS_BUILD_PATH)/$(TOPLEVEL)
