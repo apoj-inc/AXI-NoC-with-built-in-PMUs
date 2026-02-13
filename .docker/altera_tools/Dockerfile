@@ -14,9 +14,9 @@ RUN wget https://downloads.intel.com/akdlm/software/acdsinst/24.1std/1077/ib_ins
 
 COPY .qsim_license .qsim_license
 
-ENV LM_LICENSE_FILE=/home/main/.qsim_license/LR-253982_License.dat
-ENV MODELSIM_BIN_DIR=/home/altera/24.1std/questa_fse/bin
-ENV PATH=${PATH}:${MODELSIM_BIN_DIR}
+ENV LM_LICENSE_FILE=/home/main/.qsim_license/LR-253982_License.dat\
+    MODELSIM_BIN_DIR=/home/altera/24.1std/questa_fse/bin\
+    PATH=${PATH}:${MODELSIM_BIN_DIR}
 
 RUN echo "LM_LICENSE_FILE=\"${LM_LICENSE_FILE}\"" >> /etc/environment;\
     echo "SALT_LICENSE_SERVER=\"${LM_LICENSE_FILE}\"" >> /etc/environment
@@ -39,8 +39,7 @@ RUN wget https://downloads.intel.com/akdlm/software/acdsinst/25.1std/1129/qinst/
     --install-dir /home/altera/25.1std --download-dir /tmp/quartus_download;\
     rm -r qinst-lite-linux-25.1std-1129.run /tmp/quartus_download
 
-ENV QUARTUS_BIN_DIR=/home/altera/25.1std/quartus/bin
-
-ENV PATH=${PATH}:${QUARTUS_BIN_DIR}
+ENV QUARTUS_BIN_DIR=/home/altera/25.1std/quartus/bin\
+    PATH=${PATH}:${QUARTUS_BIN_DIR}
 
 CMD ["echo Tools are ready!"]
