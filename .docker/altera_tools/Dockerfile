@@ -1,11 +1,12 @@
 FROM ubuntu:22.04 AS build
-RUN apt-get update
 
 ENV MAIN=/home/main
 
 WORKDIR ${MAIN}
 
-RUN apt install wget libxext-dev libxft2 build-essential python3.10 python3.10-venv libpython3.10 -y
+RUN apt-get update && apt install wget libxext-dev libxft2 build-essential python3.10 python3.10-venv libpython3.10 -y\
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 RUN wget https://downloads.intel.com/akdlm/software/acdsinst/24.1std/1077/ib_installers/QuestaSetup-24.1std.0.1077-linux.run 2> /dev/null;\
     chmod +x ./QuestaSetup-24.1std.0.1077-linux.run;\
     ./QuestaSetup-24.1std.0.1077-linux.run --accept_eula 1 --mode unattended --installdir /home/altera/24.1std;\
@@ -27,9 +28,8 @@ CMD ["echo Test ready!"]
 
 FROM build AS production
 
-RUN apt update && apt install libglib2.0-dev -y
-
-ENV QUARTUS_BIN_DIR=/home/altera/25.1std/quartus/bin
+RUN apt update && apt install libglib2.0-dev -y\
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://downloads.intel.com/akdlm/software/acdsinst/25.1std/1129/qinst/qinst-lite-linux-25.1std-1129.run 2> /dev/null;\
     chmod +x ./qinst-lite-linux-25.1std-1129.run;\
@@ -38,6 +38,8 @@ RUN wget https://downloads.intel.com/akdlm/software/acdsinst/25.1std/1129/qinst/
     --component quartus,cyclonev,max10\
     --install-dir /home/altera/25.1std --download-dir /tmp/quartus_download;\
     rm -r qinst-lite-linux-25.1std-1129.run /tmp/quartus_download
+
+ENV QUARTUS_BIN_DIR=/home/altera/25.1std/quartus/bin
 
 ENV PATH=${PATH}:${QUARTUS_BIN_DIR}
 
