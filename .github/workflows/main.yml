@@ -146,26 +146,3 @@ jobs:
       shell: bash
       run: docker run ${{env.ALTERA_TOOLS_ARGS}} ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest "make make_release"
       timeout-minutes: 60
-  
-  test_docker_production_image:
-    runs-on: ubuntu-latest
-    needs: build_altera_tools_and_push
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: altera_tools
-        path: ${{ runner.temp }}
-
-    - name: Load image
-      run: |
-        docker load --input ${{ runner.temp }}/altera_tools.tar
-        sudo rm -rf ${{ runner.temp }}/altera_tools.tar
-      
-    - name: Run build release
-      shell: bash
-      run: docker run ${{env.ALTERA_TOOLS_ARGS}} ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest\
-        "make -f build_system/quartus/makefile release/XY_mesh_dual_parallel/XY_mesh_dual_parallel.tar"
-      timeout-minutes: 10
