@@ -35,6 +35,9 @@ jobs:
         with:
           name: altera_tools-dev
           path: ${{ runner.temp }}/altera_tools-dev.tar
+    
+      - name: Remove unused Docker images
+        run: docker system prune -af
   
           
   test_docker_test_image:
@@ -102,6 +105,9 @@ jobs:
         name: altera_tools
         path: ${{ runner.temp }}/altera_tools.tar
     
+    - name: Remove unused Docker images
+      run: docker system prune -af
+    
   run_tests:
     runs-on: ubuntu-latest
     needs: build_docker_test_image
@@ -141,7 +147,6 @@ jobs:
 
     - name: Load image
       run: |
-        docker image ls -a
         docker load --input ${{ runner.temp }}/altera_tools.tar
       
     - name: Run build release
