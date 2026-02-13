@@ -166,5 +166,6 @@ jobs:
       
     - name: Run build release
       shell: bash
-      run: docker run ${{env.ALTERA_TOOLS_ARGS}} ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest "make release/XY_mesh_dual_parallel/XY_mesh_dual_parallel.tar"
+      run: docker run ${{env.ALTERA_TOOLS_ARGS}} ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest\
+        "make -f build_system/quartus/makefile release/XY_mesh_dual_parallel/XY_mesh_dual_parallel.tar"
       timeout-minutes: 10
