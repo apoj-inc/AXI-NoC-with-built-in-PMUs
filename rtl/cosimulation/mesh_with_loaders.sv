@@ -4,8 +4,17 @@ module mesh_with_loaders # (
     parameter ID_W_WIDTH = 5,
     parameter ID_R_WIDTH = 5,
     parameter ADDR_WIDTH = 16,
+    
+    parameter AXI_MASTER_LOADER_FIFO_DEPTH = 64,
 
-    parameter N = (ID_W_WIDTH-1)*(ID_R_WIDTH-1),
+    parameter MAX_ROUTERS_X = 4,
+    parameter MAX_ROUTERS_X_WIDTH
+    = $clog2(MAX_ROUTERS_X),
+    parameter MAX_ROUTERS_Y = 4,
+    parameter MAX_ROUTERS_Y_WIDTH
+    = $clog2(MAX_ROUTERS_Y),
+
+    parameter N = MAX_ROUTERS_X*MAX_ROUTERS_Y,
     parameter MAX_ID_WIDTH = (ID_W_WIDTH > ID_R_WIDTH) ? ID_W_WIDTH : ID_R_WIDTH,
 
     parameter AXI_DATA_WIDTH = 32,
@@ -86,7 +95,7 @@ module mesh_with_loaders # (
                 .ADDR_WIDTH(ADDR_WIDTH),
                 .ID_W_WIDTH(ID_W_WIDTH),
                 .ID_R_WIDTH(ID_R_WIDTH),
-                .FIFO_DEPTH(64)
+                .FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH)
                 `ifdef TID_PRESENT
                 ,
                 .ID_WIDTH(ID_WIDTH)
@@ -122,7 +131,27 @@ module mesh_with_loaders # (
     endgenerate
 
     XY_mesh_dual_parallel #(
-        .ADDR_WIDTH(ADDR_WIDTH)
+        .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .ID_W_WIDTH(ID_W_WIDTH),
+        .ID_R_WIDTH(ID_R_WIDTH)
+        `ifdef TID_PRESENT
+        ,
+        .ID_WIDTH(ID_WIDTH)
+        `endif
+        `ifdef TDEST_PRESENT
+        ,
+        .DEST_WIDTH(DEST_WIDTH)
+        `endif
+        `ifdef TUSER_PRESENT
+        ,
+        .USER_WIDTH(USER_WIDTH)
+        `endif
+        ,
+        .MAX_ROUTERS_X(MAX_ROUTERS_X),
+        .MAX_ROUTERS_X_WIDTH(MAX_ROUTERS_X_WIDTH),
+        .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
+        .MAX_ROUTERS_Y_WIDTH(MAX_ROUTERS_Y_WIDTH)
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
