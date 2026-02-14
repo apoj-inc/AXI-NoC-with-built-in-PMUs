@@ -4,7 +4,8 @@ module axi_master_loader #(
     parameter ADDR_WIDTH   = 16,
     parameter ID_W_WIDTH   = 5,
     parameter ID_R_WIDTH   = 5,
-    parameter AXI_DATA_WIDTH = 32
+    parameter AXI_DATA_WIDTH = 32,
+    parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -22,20 +23,25 @@ module axi_master_loader #(
 
     parameter MAX_ID_WIDTH = (ID_W_WIDTH > ID_R_WIDTH) ? ID_W_WIDTH : ID_R_WIDTH
 ) (
-    input  logic                    clk_i,
-    input  logic                    arstn_i,
+    input  logic                      clk_i,
+    input  logic                      arstn_i,
 
-    input  logic                    resp_wait_i,
-    input  logic [MAX_ID_WIDTH-1:0] id_i,
-    input  logic                    write_i,
-    input  logic [7:0]              axlen_i,
-    input  logic                    fifo_push_i,
+    input  logic                      resp_wait_i,
+    input  logic [MAX_ID_WIDTH-1:0]   id_i,
+    input  logic                      write_i,
+    input  logic [ADDR_WIDTH-1:0]     axaddr_i,
+    input  logic [7:0]                axlen_i,
+    input  logic [AXI_DATA_WIDTH-1:0] wdata_i,
+    input  logic [AXI_DATA_BYTES-1:0] wstrb_i,
+    input  logic                      fifo_push_i,
 
-    input  logic                    start_i,
-    output logic                    idle_o,
+    input  logic                      start_i,
+    output logic                      idle_o,
 
-    input  axi_miso_t               m_axi_i,    
-    output axi_mosi_t               m_axi_o
+    output logic [AXI_DATA_WIDTH-1:0] rdata_o,
+
+    input  axi_miso_t                 m_axi_i,    
+    output axi_mosi_t                 m_axi_o
 );
 
     `include "axi_type.svh"
@@ -49,7 +55,9 @@ module axi_master_loader #(
     states_t state_w, state_w_next;
     states_t state_r, state_r_next;
 
-
+    logic [AXI_DATA_WIDTH-1:0] wdata_rd;
+    logic [AXI_DATA_BYTES-1:0] wstrb_rd;
+    logic [ADDR_WIDTH-1:0] awaddr_rd, araddr_rd;
     logic [MAX_ID_WIDTH-1:0] awid_rd, arid_rd;
     logic [7:0] awlen_rd, arlen_rd;
     logic w_resp_wait_rd, r_resp_wait_rd;
@@ -66,18 +74,18 @@ module axi_master_loader #(
 
 
     assign m_axi_o.data.aw.AWID    = awid_rd;
-    assign m_axi_o.data.aw.AWADDR  = LOADER_ID << 2;
+    assign m_axi_o.data.aw.AWADDR  = awaddr_rd;
     assign m_axi_o.data.aw.AWLEN   = awlen_rd;
     assign m_axi_o.data.aw.AWSIZE  = $clog2(AXI_DATA_WIDTH/8);
     assign m_axi_o.data.aw.AWBURST = 2'b01;
 
-    assign m_axi_o.data.w.WDATA   = 'h30 + LOADER_ID + w_hand_counter;
-    assign m_axi_o.data.w.WSTRB   = '1;
+    assign m_axi_o.data.w.WDATA   = wdata_rd;
+    assign m_axi_o.data.w.WSTRB   = wstrb_rd;
 
     assign m_axi_o.BREADY  = 1'b1;
 
     assign m_axi_o.data.ar.ARID    = arid_rd;
-    assign m_axi_o.data.ar.ARADDR  = LOADER_ID << 2;
+    assign m_axi_o.data.ar.ARADDR  = araddr_rd;
     assign m_axi_o.data.ar.ARLEN   = arlen_rd;
     assign m_axi_o.data.ar.ARSIZE  = $clog2(AXI_DATA_WIDTH/8);
     assign m_axi_o.data.ar.ARBURST = 2'b01;
@@ -86,21 +94,31 @@ module axi_master_loader #(
 
     assign idle_o = w_idle & r_idle;
 
+    always_ff @(posedge clk_i or negedge arstn_i) begin
+        if (!arstn_i) begin
+            rdata_o <= '0;
+        end
+        else begin
+            if (m_axi_i.RVALID) begin
+                rdata_o = m_axi_i.data.r.RDATA;
+            end
+        end
+    end
 
     /* --- W SECTION --- */
 
     stream_fifo #(
-        .DATA_WIDTH (MAX_ID_WIDTH + 1 + 8),
+        .DATA_WIDTH (ADDR_WIDTH + MAX_ID_WIDTH + 1 + 8),
         .FIFO_LEN   (FIFO_DEPTH)
     ) u_stream_fifo_w (
         .ACLK    (clk_i),
         .ARESETn (arstn_i),
 
-        .data_i  ({resp_wait_i, axlen_i, id_i}),
+        .data_i  ({resp_wait_i, axaddr_i, axlen_i, id_i}),
         .valid_i (fifo_push_i & write_i),
         .ready_o (), // NC
 
-        .data_o  ({w_resp_wait_rd, awlen_rd, awid_rd}),
+        .data_o  ({w_resp_wait_rd, awaddr_rd, awlen_rd, awid_rd}),
         .valid_o (w_fifo_valid_rd),
         .ready_i (w_fifo_ready_rd)
     );
@@ -182,17 +200,17 @@ module axi_master_loader #(
     end
 
     stream_fifo #(
-        .DATA_WIDTH (1 + 8),
+        .DATA_WIDTH (1 + 8 + AXI_DATA_WIDTH + AXI_DATA_BYTES),
         .FIFO_LEN   (FIFO_DEPTH)
     ) u_stream_fifo_awlen (
         .ACLK    (clk_i),
         .ARESETn (arstn_i),
 
-        .data_i  ({resp_wait_i, axlen_i}),
+        .data_i  ({resp_wait_i, axlen_i, wdata_i, wstrb_i}),
         .valid_i (fifo_push_i & write_i),
         .ready_o (), // NC
 
-        .data_o  ({awlen_resp_wait_rd, awlen_current}),
+        .data_o  ({awlen_resp_wait_rd, awlen_current, wdata_rd, wstrb_rd}),
         .valid_o (awlen_fifo_valid_rd),
         .ready_i (awlen_fifo_ready_rd)
     );
@@ -224,17 +242,17 @@ module axi_master_loader #(
     /* --- R SECTION --- */
 
     stream_fifo #(
-        .DATA_WIDTH (MAX_ID_WIDTH + 1 + 8),
+        .DATA_WIDTH (ADDR_WIDTH + MAX_ID_WIDTH + 1 + 8),
         .FIFO_LEN   (FIFO_DEPTH)
     ) u_stream_fifo_r (
         .ACLK    (clk_i),
         .ARESETn (arstn_i),
 
-        .data_i  ({resp_wait_i, axlen_i, id_i}),
+        .data_i  ({resp_wait_i, axaddr_i, axlen_i, id_i}),
         .valid_i (fifo_push_i & ~write_i),
         .ready_o (), // NC
 
-        .data_o  ({r_resp_wait_rd, arlen_rd, arid_rd}),
+        .data_o  ({r_resp_wait_rd, araddr_rd, arlen_rd, arid_rd}),
         .valid_o (r_fifo_valid_rd),
         .ready_i (r_fifo_ready_rd)
     );

@@ -37,10 +37,14 @@ module tb_axi_loader (
     input  logic        resp_wait_i,
     input  logic [4:0]  id_i,
     input  logic        write_i,
+    input  logic [11:0] axaddr_i,
     input  logic [7:0]  axlen_i,
+    input  logic [31:0] wdata_i,
+    input  logic [3:0]  wstrb_i,
     input  logic        fifo_push_i,
     input  logic        start_i,
-    output logic        idle_o
+    output logic        idle_o,
+    output logic [31:0] rdata_o
 );
 
 
@@ -95,11 +99,16 @@ module tb_axi_loader (
         .resp_wait_i (resp_wait_i ),
         .id_i        (id_i        ),
         .write_i     (write_i     ),
+        .axaddr_i    (axaddr_i    ),
         .axlen_i     (axlen_i     ),
+        .wdata_i     (wdata_i     ),
+        .wstrb_i     (wstrb_i     ),
         .fifo_push_i (fifo_push_i ),
 
         .start_i     (start_i     ),
         .idle_o      (idle_o      ),
+
+        .rdata_o     (rdata_o     ),
 
         .m_axi_i     (axi_miso    ),
         .m_axi_o     (axi_mosi    )

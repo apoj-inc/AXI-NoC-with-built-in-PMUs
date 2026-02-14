@@ -23,6 +23,9 @@ async def test(dut):
 
     await sink.read()
 
+    
+    # Test quick AXIs
+
     await source.write(int.to_bytes(8, 1, 'little'))
     await source.wait()
     await source.write(int.to_bytes(1, 1, 'little'))
@@ -38,7 +41,13 @@ async def test(dut):
     await source.write(int.to_bytes(1, 1, 'little'))
     await source.wait()
 
-    for i in range(64):
+    await source.write(int.to_bytes(9, 1, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(1, 1, 'little'))
+    await source.wait()
+
+    dest = 0
+    for i in range(8):
         dest = random.randint(1, 16)
 
         await source.write(int.to_bytes(3, 1, 'little'))
@@ -58,11 +67,10 @@ async def test(dut):
         await source.wait()
         await source.write(int.to_bytes(dest, 1, 'little'))
         await source.wait()
-        await source.write(int.to_bytes(1, 1, 'little'))
+        await source.write(int.to_bytes(3, 1, 'little'))
         await source.wait()
         await source.write(int.to_bytes(0, 1, 'little'))
         await source.wait()
-
     await source.write(int.to_bytes(5, 1, 'little'))
     await source.wait()
 
@@ -74,6 +82,11 @@ async def test(dut):
         idle = int.from_bytes(await sink.read(), 'little')
         idle += (int.from_bytes(await sink.read(), 'little') << 8)
 
+    await source.write(int.to_bytes(9, 1, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(0, 1, 'little'))
+    await source.wait()
+
     for i in range(19):
         await source.write(int.to_bytes(6, 1, 'little'))
         await source.wait()
@@ -84,3 +97,114 @@ async def test(dut):
 
         for i in range(4):
             await sink.read()
+
+
+    # Test full AXIs
+
+    await source.write(int.to_bytes(8, 1, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(1, 1, 'little'))
+    await source.wait()
+
+    await source.write(int.to_bytes(8, 1, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(0, 1, 'little'))
+    await source.wait()
+
+    await source.write(int.to_bytes(8, 1, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(1, 1, 'little'))
+    await source.wait()
+
+    await source.write(int.to_bytes(9, 1, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(1, 1, 'little'))
+    await source.wait()
+
+    dest = 0
+    for i in range(8):
+        dest = random.randint(1, 16)
+        print("Write 0")
+        await source.write(int.to_bytes(0xC, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(2, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(i*4, 2, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(dest, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(3, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(0, 4, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(0xF, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(0, 1, 'little'))
+        await source.wait()
+
+        print("Write anything")
+        await source.write(int.to_bytes(0xC, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(2, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(i*4, 2, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(dest, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(3, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(random.randint(0, 2**32-1), 4, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(random.randint(0, 15), 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(0, 1, 'little'))
+        await source.wait()
+
+        print("Read")
+        await source.write(int.to_bytes(0xB, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(2, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(i*4, 2, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(dest, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(3, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(0, 1, 'little'))
+        await source.wait()
+    await source.write(int.to_bytes(5, 1, 'little'))
+    await source.wait()
+
+    idle = 0
+    while idle != 0xFFFF:
+        await source.write(int.to_bytes(4, 1, 'little'))
+        await source.wait()
+
+        idle = int.from_bytes(await sink.read(), 'little')
+        idle += (int.from_bytes(await sink.read(), 'little') << 8)
+
+    await source.write(int.to_bytes(9, 1, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(0, 1, 'little'))
+    await source.wait()
+
+    for i in range(19):
+        await source.write(int.to_bytes(6, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(2, 1, 'little'))
+        await source.wait()
+        await source.write(int.to_bytes(i, 1, 'little'))
+        await source.wait()
+
+        for i in range(4):
+            await sink.read()
+
+    await source.write(int.to_bytes(0xA, 1, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(7*4, 2, 'little'))
+    await source.wait()
+    await source.write(int.to_bytes(dest, 1, 'little'))
+    await source.wait()
+    for i in range(4):
+        await sink.read()

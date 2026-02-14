@@ -3,12 +3,13 @@
 module mesh_with_loaders # (
     parameter ID_W_WIDTH = 5,
     parameter ID_R_WIDTH = 5,
-    parameter MAX_ID_WIDTH = 4,
     parameter ADDR_WIDTH = 16,
 
     parameter N = (ID_W_WIDTH-1)*(ID_R_WIDTH-1),
+    parameter MAX_ID_WIDTH = (ID_W_WIDTH > ID_R_WIDTH) ? ID_W_WIDTH : ID_R_WIDTH,
 
-    parameter AXI_DATA_WIDTH = 32
+    parameter AXI_DATA_WIDTH = 32,
+    parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
     `ifdef TID_PRESENT
     ,
     parameter ID_WIDTH = 4
@@ -22,19 +23,24 @@ module mesh_with_loaders # (
     parameter USER_WIDTH = 4
     `endif
 ) (
-    input  logic        aclk,
-    input  logic        aresetn,
+    input  logic                      aclk,
+    input  logic                      aresetn,
 
-    input  logic [4:0]  pmu_addr_i   [N],
-    output logic [31:0] pmu_data_o   [N],
+    input  logic                      pmu_enable_i,
+    input  logic [4:0]                pmu_addr_i   [N],
+    output logic [31:0]               pmu_data_o   [N],
 
-    input  logic        resp_wait_i  [N],
-    input  logic [4:0]  id_i         [N],
-    input  logic        write_i      [N],
-    input  logic [7:0]  axlen_i      [N],
-    input  logic        fifo_push_i  [N],
-    input  logic        start_i,
-    output logic        idle_o       [N]
+    input  logic                      resp_wait_i  [N],
+    input  logic [MAX_ID_WIDTH-1:0]   id_i         [N],
+    input  logic                      write_i      [N],
+    input  logic [ADDR_WIDTH-1:0]     axaddr_i     [N],
+    input  logic [7:0]                axlen_i      [N],
+    input  logic [AXI_DATA_WIDTH-1:0] wdata_i      [N],
+    input  logic [AXI_DATA_BYTES-1:0] wstrb_i      [N],
+    input  logic                      fifo_push_i  [N],
+    input  logic                      start_i,
+    output logic                      idle_o       [N],
+    output logic [AXI_DATA_WIDTH-1:0] rdata_o      [N]
 );
 
     `include "axi_type.svh"
@@ -67,12 +73,13 @@ module mesh_with_loaders # (
                 .USER_WIDTH(USER_WIDTH)
                 `endif
             ) pmu (
-                .aclk    (aclk),
-                .aresetn (aresetn),
+                .aclk         (aclk),
+                .aresetn      (aresetn),
+                .enable       (pmu_enable_i),
                 .mon_axi_miso (axi_miso[i]),
                 .mon_axi_mosi (axi_mosi[i]),
-                .addr_i  (pmu_addr_i[i]),
-                .data_o  (pmu_data_o[i])
+                .addr_i       (pmu_addr_i[i]),
+                .data_o       (pmu_data_o[i])
             );
 
             axi_master_loader #(
@@ -100,10 +107,14 @@ module mesh_with_loaders # (
                 .resp_wait_i (resp_wait_i[i]),
                 .id_i        (id_i[i]),
                 .write_i     (write_i[i]),
+                .axaddr_i    (axaddr_i[i]),
                 .axlen_i     (axlen_i[i]),
+                .wdata_i     (wdata_i[i]),
+                .wstrb_i     (wstrb_i[i]),
                 .fifo_push_i (fifo_push_i[i]),
                 .start_i     (start_i),
                 .idle_o      (idle_o[i]),
+                .rdata_o     (rdata_o[i]),
                 .m_axi_i     (axi_miso[i]),
                 .m_axi_o     (axi_mosi[i])
             );
