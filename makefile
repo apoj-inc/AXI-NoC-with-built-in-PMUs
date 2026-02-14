@@ -43,6 +43,8 @@ COCOTB_TEST_MODULES ?= $(GENERAL_TOPLEVEL)
 endif
 
 TOPLEVEL ?= toplevel
+DEVICE_FAMILY ?= "Cyclone V"
+DEVICE_PART ?= "5CGXFC9E7F35C8"
 
 ARGS ?=
 
@@ -76,7 +78,7 @@ run_pytest: $(VENV_DIR)
 	python3 -m pytest --junit-xml=${RESULTS_DIR}/all.xml $(ARGS)
 
 run_quartus:
-	make -f $(QUARTUS_MAKEFILE) compile TOPLEVEL=$(TOPLEVEL)
+	make -f $(QUARTUS_MAKEFILE) compile TOPLEVEL=$(TOPLEVEL) PREFERRED_DEVICE=$(PREFERRED_DEVICE)
 
 $(VENV_DIR) : $(CURDIR)/requirements.txt
 	python3 -m venv $(VENV_DIR)
@@ -84,7 +86,7 @@ $(VENV_DIR) : $(CURDIR)/requirements.txt
 	pip install -r $(CURDIR)/requirements.txt
 
 make_release:
-	make -f $(QUARTUS_MAKEFILE) create_releases
+	make -f $(QUARTUS_MAKEFILE) create_releases DEVICE_FAMILY=$(DEVICE_FAMILY) DEVICE_PART=$(DEVICE_PART)
 
 clean:
 	@rm -rf $(CURDIR)/.cache \
