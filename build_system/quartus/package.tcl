@@ -10,6 +10,9 @@ foreach rtl $RTL_FILES {
 
 set_global_assignment -name SEARCH_PATH $INCDIR
 
+set_global_assignment -name FAMILY $DEVICE_FAMILY
+set_global_assignment -name DEVICE $DEVICE_PART
+
 load_package flow
 execute_flow -analysis_and_elaboration
 

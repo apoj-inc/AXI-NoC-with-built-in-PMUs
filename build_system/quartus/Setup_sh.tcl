@@ -16,6 +16,9 @@ project_new NoC -overwrite
 
 set_global_assignment -name TOP_LEVEL_ENTITY $TOPLEVEL
 
+set_global_assignment -name FAMILY $DEVICE_FAMILY
+set_global_assignment -name DEVICE $DEVICE_PART
+
 source $CUSTOM_ASSIGNMENTS_PATH
 
 foreach rtl $FILES_RTL_LIST {
