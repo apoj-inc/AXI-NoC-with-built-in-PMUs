@@ -19,6 +19,10 @@ async def test(dut):
     dut.write_i.value = 0
     dut.fifo_push_i.value = 0
     dut.start_i.value = 0
+    dut.axaddr_i.value = 17
+    dut.wdata_i.value = 17
+    dut.wstrb_i.value = 15
+
 
     await RisingEdge(dut.clk_i)
     dut.arstn_i.value = 1
