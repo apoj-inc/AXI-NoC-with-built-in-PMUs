@@ -233,6 +233,4 @@ module XY_mesh_dual_parallel #(
         end
     endgenerate
 
-
-
 endmodule
