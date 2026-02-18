@@ -81,6 +81,12 @@ if {[catch {execute_flow -compile} err]} {
 }
 
 puts "Compile finished successfully."
+
+puts "Extracting database."
+
+set_global_assignment -name VER_COMPATIBLE_DB_DIR db_export
+execute_flow -flow export_database
+
+puts "Extracted database successfully."
 project_close
 exit 0
-
