@@ -17,6 +17,10 @@ module algorithm #(
     parameter CHANNEL_NUMBER = 5,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
+    parameter TARGET_LEN     = 0,
+
+    // Algorithm and topology specific parameters
+    // Mesh and Torus
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
     = $clog2(MAX_ROUTERS_X),
@@ -24,7 +28,10 @@ module algorithm #(
     parameter MAX_ROUTERS_Y_WIDTH
     = $clog2(MAX_ROUTERS_Y),
     parameter ROUTER_X = 0,
-    parameter ROUTER_Y = 0
+    parameter ROUTER_Y = 0,
+    
+    // Circulant
+    parameter N = 0
 ) (
     input clk_i, rst_n_i,
     
@@ -33,9 +40,15 @@ module algorithm #(
     output axis_mosi_t out_mosi_o [CHANNEL_NUMBER],
     input  axis_miso_t out_miso_i [CHANNEL_NUMBER],
 
-    input logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i,
-    input logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i
+    input logic [TARGET_LEN-1:0] target_i
 );
+
+    logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i;
+    assign target_y_i =
+        target_i[MAX_ROUTERS_Y_WIDTH-1:0];
+    logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
+    assign target_x_i =
+        target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
 
     `include "axis_type.svh"
 
@@ -45,7 +58,7 @@ module algorithm #(
     logic [CHANNEL_NUMBER-1:0] busy;
     logic [CHANNEL_NUMBER-1:0] busy_next;
 
-    algorithm_selector_XY #(
+    algorithm_selector_mesh_XY #(
        .MAX_ROUTERS_X(MAX_ROUTERS_X), 
        .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
        .ROUTER_X(ROUTER_X),

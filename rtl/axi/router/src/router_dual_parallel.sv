@@ -18,6 +18,15 @@ module router_dual_parallel #(
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
     parameter BUFFER_LENGTH = 16,
+    parameter MAXIMUM_PACKAGES_NUMBER = 5,
+    parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
+    = $clog2(MAXIMUM_PACKAGES_NUMBER - 1),
+
+    parameter USE_X_Y_COORDINATES = 0,
+    parameter USE_N_COORDINATES   = 0,
+    
+    // Algorithm and topology specific parameters
+    // Mesh and Torus
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
     = $clog2(MAX_ROUTERS_X),
@@ -27,9 +36,9 @@ module router_dual_parallel #(
     parameter MAX_PACKAGES = 4,
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
-    parameter MAXIMUM_PACKAGES_NUMBER = 5,
-    parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
-    = $clog2(MAXIMUM_PACKAGES_NUMBER - 1)
+    
+    // Circulant
+    parameter N = 0
 )(
     input clk_i, rst_n_i,
     input  axis_mosi_t in_mosi_i  [CHANNEL_NUMBER],
@@ -37,6 +46,12 @@ module router_dual_parallel #(
     output axis_mosi_t out_mosi_o [CHANNEL_NUMBER],
     input  axis_miso_t out_miso_i [CHANNEL_NUMBER]
 );
+
+    localparam TARGET_LEN = USE_X_Y_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
+                            USE_N_COORDINATES   ?   $clog2(N)                                   :
+                                                    0                                           ;
+
+    initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
 
     `include "axis_type.svh"
 
@@ -59,8 +74,7 @@ module router_dual_parallel #(
     axis_miso_t alg_resp_axis_o_miso [CHANNEL_NUMBER/2];
     
     logic [$clog2(CHANNEL_NUMBER/2)-1:0] current_grant_req, current_grant_resp;
-    logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_req, target_x_resp;
-    logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_req, target_y_resp;
+    logic [TARGET_LEN-1:0] target_resp, target_req;
 
     axis_fifo_buffer #(
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
@@ -120,9 +134,9 @@ module router_dual_parallel #(
         .USER_WIDTH(USER_WIDTH)
         `endif,
         .CHANNEL_NUMBER(CHANNEL_NUMBER/2),
-        .MAX_ROUTERS_X(MAX_ROUTERS_X),
-        .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-        .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER)
+        .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER),
+
+        .TARGET_LEN(TARGET_LEN)
     ) arb_req (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
@@ -132,8 +146,8 @@ module router_dual_parallel #(
         .out_mosi_o(arbiter_o_req_mosi),
         .out_miso_i(arbiter_o_req_miso),
 
-        .target_x_o(target_x_req),
-        .target_y_o(target_y_req)
+        // Mesh and Torus
+        .target_o(target_req)
     ), arb_resp (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
@@ -143,8 +157,7 @@ module router_dual_parallel #(
         .out_mosi_o(arbiter_o_resp_mosi),
         .out_miso_i(arbiter_o_resp_miso),
 
-        .target_x_o(target_x_resp),
-        .target_y_o(target_y_resp)
+        .target_o(target_resp)
     );
 
     algorithm #(
@@ -162,10 +175,18 @@ module router_dual_parallel #(
         .USER_WIDTH(USER_WIDTH)
         `endif,
         .CHANNEL_NUMBER(CHANNEL_NUMBER/2),
+
+        .TARGET_LEN(TARGET_LEN),
+
+        // Algorithm and topology specific parameters
+        // Mesh and Torus
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
         .ROUTER_X(ROUTER_X),
-        .ROUTER_Y(ROUTER_Y)
+        .ROUTER_Y(ROUTER_Y),
+        
+        // Circulant
+        .N(N)
     ) alg_req (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
@@ -175,8 +196,7 @@ module router_dual_parallel #(
         .out_mosi_o(alg_req_axis_o_mosi),
         .out_miso_i(alg_req_axis_o_miso),
 
-        .target_x_i(target_x_req),
-        .target_y_i(target_y_req)
+        .target_i(target_req)
     ), alg_resp (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
@@ -186,8 +206,7 @@ module router_dual_parallel #(
         .out_mosi_o(alg_resp_axis_o_mosi),
         .out_miso_i(alg_resp_axis_o_miso),
 
-        .target_x_i(target_x_resp),
-        .target_y_i(target_y_resp)
+        .target_i(target_resp)
     );
 
     

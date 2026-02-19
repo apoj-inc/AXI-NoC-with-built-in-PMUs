@@ -16,6 +16,15 @@ module router #(
     `endif,
     parameter CHANNEL_NUMBER = 5,
     parameter BUFFER_LENGTH = 16,
+    parameter MAXIMUM_PACKAGES_NUMBER = 5,
+    parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
+    = $clog2(MAXIMUM_PACKAGES_NUMBER - 1),
+
+    parameter USE_X_Y_COORDINATES = 0,
+    parameter USE_N_COORDINATES   = 0,
+    
+    // Algorithm and topology specific parameters
+    // Mesh and Torus
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
     = $clog2(MAX_ROUTERS_X),
@@ -25,9 +34,9 @@ module router #(
     parameter MAX_PACKAGES = 4,
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
-    parameter MAXIMUM_PACKAGES_NUMBER = 5,
-    parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
-    = $clog2(MAXIMUM_PACKAGES_NUMBER - 1)
+    
+    // Circulant
+    parameter N = 0
 )(
     input  clk_i, rst_n_i,
     input  axis_mosi_t in_mosi_i  [CHANNEL_NUMBER],
@@ -35,6 +44,12 @@ module router #(
     output axis_mosi_t out_mosi_o [CHANNEL_NUMBER],
     input  axis_miso_t out_miso_i [CHANNEL_NUMBER]
 );
+
+    localparam TARGET_LEN = USE_X_Y_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
+                            USE_N_COORDINATES   ?   $clog2(N)                                   :
+                                                    0                                           ;
+
+    initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
 
     `include "axis_type.svh"
 
@@ -44,8 +59,7 @@ module router #(
     axis_mosi_t arbiter_o_mosi;
     axis_miso_t arbiter_o_miso;
 
-    logic [MAX_ROUTERS_X_WIDTH-1:0] target_x;
-    logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y;
+    logic [TARGET_LEN-1:0] target;
 
     axis_fifo_buffer #(
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
@@ -88,9 +102,9 @@ module router #(
         .USER_WIDTH(USER_WIDTH)
         `endif,
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
-        .MAX_ROUTERS_X(MAX_ROUTERS_X),
-        .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-        .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER)
+        .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER),
+
+        .TARGET_LEN(TARGET_LEN)
     ) arb (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
@@ -100,8 +114,7 @@ module router #(
         .out_mosi_o(arbiter_o_mosi),
         .out_miso_i(arbiter_o_miso),
 
-        .target_x_o(target_x),
-        .target_y_o(target_y)
+        .target_o(target)
     );
 
     algorithm #(
@@ -119,10 +132,18 @@ module router #(
         .USER_WIDTH(USER_WIDTH)
         `endif,
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
+
+        .TARGET_LEN(TARGET_LEN),
+
+        // Algorithm and topology specific parameters
+        // Mesh and Torus
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
         .ROUTER_X(ROUTER_X),
-        .ROUTER_Y(ROUTER_Y)
+        .ROUTER_Y(ROUTER_Y),
+        
+        // Circulant
+        .N(N)
     ) alg (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
@@ -132,8 +153,7 @@ module router #(
         .out_mosi_o(out_mosi_o),
         .out_miso_i(out_miso_i),
 
-        .target_x_i(target_x),
-        .target_y_i(target_y)
+        .target_i(target)
     );
 
     
