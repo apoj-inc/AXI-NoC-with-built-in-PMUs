@@ -17,6 +17,10 @@ module algorithm_dual #(
     parameter CHANNEL_NUMBER = 10,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
+    parameter TARGET_LEN     = 0,
+
+    // Algorithm and topology specific parameters
+    // Mesh
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
     = $clog2(MAX_ROUTERS_X),
@@ -24,7 +28,10 @@ module algorithm_dual #(
     parameter MAX_ROUTERS_Y_WIDTH
     = $clog2(MAX_ROUTERS_Y),
     parameter ROUTER_X = 0,
-    parameter ROUTER_Y = 0
+    parameter ROUTER_Y = 0,
+    
+    // Circulant
+    parameter N = 0
 ) (
     input clk_i, rst_n_i,
     
@@ -35,32 +42,44 @@ module algorithm_dual #(
 
     input logic [CHANNEL_NUMBER_WIDTH-1:0] current_grant_i,
 
-    input logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i,
-    input logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i
+    input logic [TARGET_LEN-1:0] target_i
 );
+
+    logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i;
+    assign target_y_i =
+        target_i[MAX_ROUTERS_Y_WIDTH-1:0];
+    logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
+    assign target_x_i =
+        target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
 
     `include "axis_type.svh"
 
     logic [CHANNEL_NUMBER_WIDTH-1:0] ctrl;
     logic [CHANNEL_NUMBER-1:0] selector;
 
+    logic [CHANNEL_NUMBER/2-1:0] selector_count;
+
     logic [CHANNEL_NUMBER-1:0] busy;
     logic [CHANNEL_NUMBER-1:0] busy_next;
 
-    assign selector[0] = ((target_x_i == ROUTER_X) && (target_y_i == ROUTER_Y));
-    assign selector[1] = ((target_x_i == ROUTER_X) && (target_y_i == ROUTER_Y));
+    always_comb begin
+        for (int i = 0; i < CHANNEL_NUMBER/2; i = i + 1) begin : selector_copier
+            selector[i*2]   = selector_count[i];
+            selector[i*2+1] = selector_count[i];
+        end
+    end
 
-    assign selector[2] = (target_y_i < ROUTER_Y);
-    assign selector[3] = (target_y_i < ROUTER_Y);
-
-    assign selector[4] = (target_x_i > ROUTER_X);
-    assign selector[5] = (target_x_i > ROUTER_X);
-
-    assign selector[6] = (target_y_i > ROUTER_Y);
-    assign selector[7] = (target_y_i > ROUTER_Y);
-
-    assign selector[8] = (target_x_i < ROUTER_X);
-    assign selector[9] = (target_x_i < ROUTER_X);
+    algorithm_selector_mesh_XY #(
+       .MAX_ROUTERS_X(MAX_ROUTERS_X), 
+       .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
+       .ROUTER_X(ROUTER_X),
+       .ROUTER_Y(ROUTER_Y),
+       .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+    ) algorithm_selector (
+        .target_x_i(target_x_i),
+        .target_y_i(target_y_i),
+        .selector_o(selector_count)
+    );
 
     always_comb begin
         ctrl = '0;

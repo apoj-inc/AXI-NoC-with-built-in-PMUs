@@ -18,6 +18,15 @@ module router_dual #(
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
     parameter BUFFER_LENGTH = 16,
+    parameter MAXIMUM_PACKAGES_NUMBER = 5,
+    parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
+    = $clog2(MAXIMUM_PACKAGES_NUMBER - 1),
+
+    parameter USE_X_Y_COORDINATES = 0,
+    parameter USE_N_COORDINATES   = 0,
+
+    // Algorithm and topology specific parameters
+    // Mesh and Torus
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
     = $clog2(MAX_ROUTERS_X),
@@ -27,9 +36,9 @@ module router_dual #(
     parameter MAX_PACKAGES = 4,
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
-    parameter MAXIMUM_PACKAGES_NUMBER = 5,
-    parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
-    = $clog2(MAXIMUM_PACKAGES_NUMBER - 1)
+    
+    // Circulant
+    parameter N = 0
 )(
     input  clk_i, rst_n_i,
     input  axis_mosi_t in_mosi_i  [CHANNEL_NUMBER],
@@ -37,6 +46,12 @@ module router_dual #(
     output axis_mosi_t out_mosi_o [CHANNEL_NUMBER],
     input  axis_miso_t out_miso_i [CHANNEL_NUMBER]
 );
+
+    localparam TARGET_LEN = USE_X_Y_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
+                            USE_N_COORDINATES   ?   $clog2(N)                                   :
+                                                    0                                           ;
+
+    initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
 
     `include "axis_type.svh"
 
@@ -47,8 +62,7 @@ module router_dual #(
     axis_miso_t arbiter_o_miso;
     
     logic [CHANNEL_NUMBER_WIDTH-1:0] current_grant;
-    logic [MAX_ROUTERS_X_WIDTH-1:0] target_x;
-    logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y;
+    logic [TARGET_LEN-1:0] target;
 
     axis_fifo_buffer #(
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
@@ -91,9 +105,9 @@ module router_dual #(
         .USER_WIDTH(USER_WIDTH)
         `endif,
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
-        .MAX_ROUTERS_X(MAX_ROUTERS_X),
-        .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-        .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER)
+        .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER),
+
+        .TARGET_LEN(TARGET_LEN)
     ) arb (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
@@ -105,8 +119,7 @@ module router_dual #(
 
         .current_grant_o(current_grant),
 
-        .target_x_o(target_x),
-        .target_y_o(target_y)
+        .target_o(target)
     );
 
     algorithm_dual #(
@@ -124,10 +137,18 @@ module router_dual #(
         .USER_WIDTH(USER_WIDTH)
         `endif,
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
+
+        .TARGET_LEN(TARGET_LEN),
+
+        // Algorithm and topology specific parameters
+        // Mesh and Torus
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
         .ROUTER_X(ROUTER_X),
-        .ROUTER_Y(ROUTER_Y)
+        .ROUTER_Y(ROUTER_Y),
+        
+        // Circulant
+        .N(N)
     ) alg (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
@@ -139,8 +160,7 @@ module router_dual #(
 
         .current_grant_i(current_grant),
 
-        .target_x_i(target_x),
-        .target_y_i(target_y)
+        .target_i(target)
     );
     
 endmodule

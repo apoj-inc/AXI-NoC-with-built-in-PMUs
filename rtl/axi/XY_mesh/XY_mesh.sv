@@ -120,7 +120,7 @@ module XY_mesh #(
                 );
 
                 router #(
-                    .DATA_WIDTH(40),
+                    .USE_X_Y_COORDINATES(1),
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
                     .ROUTER_Y(i),

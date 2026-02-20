@@ -204,6 +204,7 @@ module XY_mesh_dual #(
                 assign router_if_miso[i+1][j][EAST_RESP] = router_i_miso[i][j][9];
                 
                 router_dual #(
+                    .USE_X_Y_COORDINATES(1),
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
                     .ROUTER_Y(i),
