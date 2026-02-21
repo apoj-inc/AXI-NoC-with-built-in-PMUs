@@ -1,8 +1,8 @@
 `timescale 1ps/1ps
 
-module tb_mux
-import axi_type::*;
-(
+import axi_type_pkg::*;
+
+module tb_mux (
 
     input  logic ACLK,
     input  logic ARESETn,

@@ -1,8 +1,8 @@
 `include "defines.svh"
 
-module router
-import axis_type::*;
-#(
+import axis_type_pkg::*;
+
+module router #(
     parameter CHANNEL_NUMBER = 5,
     parameter BUFFER_LENGTH = 16,
     parameter MAXIMUM_PACKAGES_NUMBER = 5,

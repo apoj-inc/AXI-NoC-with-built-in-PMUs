@@ -1,8 +1,8 @@
 `timescale 1ps/1ps
 
-module tb_queue
-import axis_type::*;
-(
+import axis_type_pkg::*;
+
+module tb_queue (
     input clk,
     input rst_n,
     input m_tvalid,

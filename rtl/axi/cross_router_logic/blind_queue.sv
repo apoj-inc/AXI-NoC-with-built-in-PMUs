@@ -1,8 +1,9 @@
+
 `include "defines.svh"
 
-module queue
-import axis_type::*;
-#(
+import axis_type_pkg::*;
+
+module queue #(
     parameter BUFFER_LENGTH = 16
 ) (
     input  clk_i, rst_n_i,

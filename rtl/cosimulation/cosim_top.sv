@@ -1,22 +1,12 @@
 `include "defines.svh"
 
-module cosim_top
-import axi_type::*;
-#(
+import axi2axis_XY_pkg::*;
+import axi_type_pkg::*;
+
+module cosim_top #(
     parameter BAUD_RATE      = 10_000_000,
     parameter CLK_FREQ       = 50_000_000,
-    
-    parameter AXI_MASTER_LOADER_FIFO_DEPTH = 64,
-
-    parameter MAX_ROUTERS_X = 4,
-    parameter MAX_ROUTERS_X_WIDTH
-    = $clog2(MAX_ROUTERS_X),
-    parameter MAX_ROUTERS_Y = 4,
-    parameter MAX_ROUTERS_Y_WIDTH
-    = $clog2(MAX_ROUTERS_Y),
-
-    parameter N = MAX_ROUTERS_X*MAX_ROUTERS_Y,
-    parameter CORE_COUNT = N
+    parameter AXI_MASTER_LOADER_FIFO_DEPTH = 64
 ) (
     input  logic clk_i,
     input  logic arstn_i,
@@ -53,11 +43,6 @@ import axi_type::*;
     end
 
     mesh_with_loaders #(
-        .MAX_ROUTERS_X(MAX_ROUTERS_X),
-        .MAX_ROUTERS_X_WIDTH(MAX_ROUTERS_X_WIDTH),
-        .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-        .MAX_ROUTERS_Y_WIDTH(MAX_ROUTERS_Y_WIDTH),
-
         .AXI_MASTER_LOADER_FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH)
     ) mesh_with_loaders (
         .aclk         (clk_i),
@@ -81,7 +66,6 @@ import axi_type::*;
     );
 
     uart_control #(
-        .CORE_COUNT   (CORE_COUNT  ),
         .BAUD_RATE    (BAUD_RATE   ),
         .CLK_FREQ     (CLK_FREQ    )
     ) uart_control (

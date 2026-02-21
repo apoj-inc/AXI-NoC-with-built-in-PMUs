@@ -1,8 +1,8 @@
 `timescale 1ps/1ps
 
-module tb_demux
-import axi_type::*;
-(
+import axi_type_pkg::*;
+
+module tb_demux (
 
     input  logic ACLK,
     input  logic ARESETn,

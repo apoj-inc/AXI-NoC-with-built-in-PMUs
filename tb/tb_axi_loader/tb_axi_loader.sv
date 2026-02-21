@@ -1,8 +1,8 @@
 `timescale 1ps/1ps
 
-module tb_axi_loader
-import axi_type::*;
-(
+import axi_type_pkg::*;
+
+module tb_axi_loader (
     input  logic        clk_i,
     input  logic        arstn_i,
 

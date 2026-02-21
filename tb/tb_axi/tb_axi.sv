@@ -1,7 +1,7 @@
 `timescale 1ps/1ps
 
 module tb_axi
-import axi_type::*;
+import axi_type_pkg::*;
 ;
 
     logic ACLK, ARESETn;

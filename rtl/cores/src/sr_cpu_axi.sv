@@ -1,8 +1,8 @@
 `include "defines.svh"
 
-module sr_cpu_axi
-import axi_type::*;
-(
+import axi_type_pkg::*;
+
+module sr_cpu_axi (
     input   logic         clk,  
     input   logic         rst_n,
 

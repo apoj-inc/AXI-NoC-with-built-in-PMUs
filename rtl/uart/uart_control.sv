@@ -1,7 +1,7 @@
-module uart_control
-import axi_type::*;
-#(
-    parameter CORE_COUNT       = 16,
+import axi2axis_XY_pkg::*;
+import axi_type_pkg::*;
+
+module uart_control #(
     parameter BAUD_RATE        = 100_000_000,
     parameter CLK_FREQ         = 1_000_000_000,
 

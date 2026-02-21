@@ -1,8 +1,8 @@
 `include "defines.svh"
 
-module axis_fifo_buffer
-import axis_type::*;
-#(
+import axis_type_pkg::*;
+
+module axis_fifo_buffer #(
     parameter CHANNEL_NUMBER = 8,
     parameter BUFFER_LENGTH = 8
 ) (

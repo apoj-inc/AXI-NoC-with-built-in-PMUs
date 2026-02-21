@@ -1,4 +1,4 @@
-package axi_type;
+package axi_type_pkg;
     
     parameter AXI_DATA_WIDTH = 32;
     parameter ADDR_WIDTH = 12;

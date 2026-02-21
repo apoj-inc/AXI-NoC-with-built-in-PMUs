@@ -1,6 +1,6 @@
-module axi_mux
-import axi_type::*;
-#(
+import axi_type_pkg::*;
+
+module axi_mux #(
     parameter INPUT_NUM = 3,
     parameter integer ID_ROUTING [(INPUT_NUM-1) * 2] = '{0, 0, 1, 1},
 

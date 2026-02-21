@@ -1,9 +1,9 @@
 `include "defines.svh"
-`include "axi2axis_typedef.svh"
 
-module arbiter
-import axis_type::*;
-#(
+import axi2axis_XY_pkg::*;
+import axis_type_pkg::*;
+
+module arbiter #(
     parameter CHANNEL_NUMBER = 5,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),

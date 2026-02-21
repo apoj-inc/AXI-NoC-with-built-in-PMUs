@@ -1,8 +1,8 @@
 `include "defines.svh"
 
-module router_dual
-import axis_type::*;
-#(
+import axis_type_pkg::*;
+
+module router_dual #(
     parameter CHANNEL_NUMBER = 10,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),

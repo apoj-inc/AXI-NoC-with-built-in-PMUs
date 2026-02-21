@@ -1,6 +1,6 @@
 `include "defines.svh"
 
-package axis_type;
+package axis_type_pkg;
 
     parameter AXIS_DATA_WIDTH = 40;
     `ifdef TID_PRESENT

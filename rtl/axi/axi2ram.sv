@@ -1,8 +1,8 @@
 `include "defines.svh"
 
-module axi2ram
-import axi_type::*;
-#(    
+import axi_type_pkg::*;
+
+module axi2ram #(    
     parameter BYTE_WIDTH = 8,
     parameter BATCH_WIDTH = AXI_DATA_WIDTH/BYTE_WIDTH
 ) (

@@ -1,9 +1,9 @@
 `timescale 1ps/1ps
 
-module tb_bridge
-import axis_type::*;
-import axi_type::*;
-(
+import axis_type_pkg::*;
+import axi_type_pkg::*;
+
+module tb_bridge (
     input  logic aclk,
     input  logic aresetn,
 

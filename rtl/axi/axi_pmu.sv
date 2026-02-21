@@ -1,8 +1,8 @@
 `include "defines.svh"
 
-module axi_pmu
-import axi_type::*;
-(
+import axi_type_pkg::*;
+
+module axi_pmu (
     input  logic        aclk,
     input  logic        aresetn,
     input  logic        enable,

@@ -1,9 +1,9 @@
 `include "defines.svh"
 
-module XY_mesh
-import axis_type::*;
-import axi_type::*;
-#(
+import axis_type_pkg::*;
+import axi_type_pkg::*;
+
+module XY_mesh #(
     parameter MAX_ROUTERS_X = 3,
     parameter MAX_ROUTERS_Y = 3,
 

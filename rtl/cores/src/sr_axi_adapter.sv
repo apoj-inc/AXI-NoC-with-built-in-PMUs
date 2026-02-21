@@ -1,8 +1,8 @@
 `include "defines.svh"
 
-module sr_axi_adapter
-import axi_type::*;
-(
+import axi_type_pkg::*;
+
+module sr_axi_adapter (
     input   logic         clk,        // clock
     input   logic         rst_n,      // reset
 

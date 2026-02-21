@@ -1,8 +1,8 @@
 `timescale 1ps/1ps
 
-module tb_axi_ram
-import axi_type::*;
-(
+import axi_type_pkg::*;
+
+module tb_axi_ram (
 
     input  logic aclk,
     input  logic aresetn,

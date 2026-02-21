@@ -1,8 +1,8 @@
 `timescale 1ps/1ps
 
-module tb_bridgeless
-import axi_type::*;
-(
+import axi_type_pkg::*;
+
+module tb_bridgeless (
 
     input  logic aclk,
     input  logic aresetn,

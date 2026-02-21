@@ -1,5 +1,6 @@
-rtl/axi/axis_type.sv
-rtl/axi/axi_type.sv
+rtl/axi/axis_type_pkg.sv
+rtl/axi/axi_type_pkg.sv
+rtl/axi/axi2axis_XY_pkg.sv
 rtl/cores/src/sm_register.v 
 rtl/cores/src/sm_rom.v 
 rtl/cores/src/sr_cpu.v

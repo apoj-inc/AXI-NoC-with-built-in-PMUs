@@ -52,7 +52,7 @@ TOPLEVEL_LIBRARY ?= work
 
 run: $(VENV_DIR) $(VERILOG_SOURCES)
 	@mkdir -p $(SIM_BUILD)
-	@rm .cache/cctb/runsim.do
+	@rm -f .cache/cctb/runsim.do
 	@cp -r $(TB_DIR)/$(COCOTB_TEST_MODULES) $(SIM_BUILD)/..
 	source $(VENV_DIR)/bin/activate; \
 	cd $(SIM_BUILD); \

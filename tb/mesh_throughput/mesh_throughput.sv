@@ -1,8 +1,8 @@
 `timescale 1ns/1ps
 
-module mesh_throughput
-import axi_type::*;
-(
+import axi_type_pkg::*;
+
+module mesh_throughput (
     input aresetn,
 
     output logic awready[16],

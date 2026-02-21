@@ -2,7 +2,7 @@
 `timescale 1ps/1ps
 
 module tb_axi_memory
-import axi_type::*;
+import axi_type_pkg::*;
 ;
 
     parameter BYTE_WIDTH = 8;

@@ -1,8 +1,8 @@
 `include "defines.svh"
 
-module axi_ram
-import axi_type::*;
-#(
+import axi_type_pkg::*;
+
+module axi_ram #(
     parameter BYTE_WIDTH = 8
 ) (
 	input logic clk_i, rst_n_i,

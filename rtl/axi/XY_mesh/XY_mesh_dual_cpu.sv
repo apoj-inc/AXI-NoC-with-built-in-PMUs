@@ -1,8 +1,8 @@
 `include "defines.svh"
 
-module XY_mesh_dual_cpu
-import axi_type::*;
-#(
+import axi_type_pkg::*;
+
+module XY_mesh_dual_cpu #(
     parameter MAX_ROUTERS_X = 3,
     parameter MAX_ROUTERS_Y = 3,
 

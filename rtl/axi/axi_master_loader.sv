@@ -1,8 +1,8 @@
 `include "defines.svh"
 
-module axi_master_loader
-import axi_type::*;
-#(
+import axi_type_pkg::*;
+
+module axi_master_loader #(
     parameter FIFO_DEPTH   = 64,
     parameter LOADER_ID    = 0,
 

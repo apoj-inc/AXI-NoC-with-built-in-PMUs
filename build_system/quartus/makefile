@@ -20,7 +20,7 @@ all: compile
 compile: $(QUARTUS_BUILD_PATH)/$(TOPLEVEL)/NoC.qpf
 
 $(QUARTUS_BUILD_PATH)/$(TOPLEVEL)/NoC.qpf: $(shell find $(CURDIR)/rtl -type f | tr '\n' ' ')
-	@mkdir -p $(QUARTUS_BUILD_PATH)/$(TOPLEVEL) $(VARS_TCL_PATH)
+	@mkdir -p $(VARS_TCL_PATH)/$(TOPLEVEL) $(VARS_TCL_PATH)
 
 	@echo set TOPLEVEL $(TOPLEVEL) > $(VARS_TCL)
 	@echo set RTL_PATH $(RTL_PATH)/.. >> $(VARS_TCL)
@@ -30,7 +30,7 @@ $(QUARTUS_BUILD_PATH)/$(TOPLEVEL)/NoC.qpf: $(shell find $(CURDIR)/rtl -type f | 
 	@echo set DEVICE_FAMILY \"$(DEVICE_FAMILY)\" >> $(VARS_TCL)
 	@echo set DEVICE_PART $(DEVICE_PART) >> $(VARS_TCL)
 
-	@cd $(QUARTUS_BUILD_PATH)/$(TOPLEVEL);\
+	@cd $(VARS_TCL_PATH)/$(TOPLEVEL);\
 	quartus_sh -t $(QUARTUS_BUILD_PATH)/Setup_sh.tcl
 
 create_releases: $(RELEASE_FILES)

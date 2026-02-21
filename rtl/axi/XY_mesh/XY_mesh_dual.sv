@@ -1,9 +1,9 @@
 `include "defines.svh"
 
-module XY_mesh_dual
-import axis_type::*;
-import axi_type::*;
-#(
+import axis_type_pkg::*;
+import axi_type_pkg::*;
+
+module XY_mesh_dual #(
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
     = $clog2(MAX_ROUTERS_X),

@@ -2,9 +2,9 @@
 
 `timescale 1ps/1ps
 
-module tb_cpu
-import axi_type::*;
-(
+import axi_type_pkg::*;
+
+module tb_cpu (
     input  logic        rst_n
 );
 

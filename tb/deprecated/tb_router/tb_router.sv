@@ -1,12 +1,12 @@
 `include "defines.svh"
-`include "axi2axis_typedef.svh"
 
 `timescale 1ps/1ps
 
-module tb_router
-import axis_type::*;
-import axi_type::*;
-(
+import axi2axis_XY_pkg::*;
+import axis_type_pkg::*;
+import axi_type_pkg::*;
+
+module tb_router (
     input aclk,
     input aresetn,
 
