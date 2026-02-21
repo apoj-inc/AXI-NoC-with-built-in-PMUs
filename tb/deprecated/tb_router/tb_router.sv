@@ -1,6 +1,8 @@
 `include "defines.svh"
 `include "axi2axis_typedef.svh"
 
+`timescale 1ps/1ps
+
 module tb_router
 import axis_type::*;
 import axi_type::*;

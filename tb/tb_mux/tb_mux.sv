@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_mux
 import axi_type::*;
 (
@@ -211,8 +213,7 @@ import axi_type::*;
     end
 
     axi_mux  #(
-        .INPUT_NUM(3),
-        .ADDR_WIDTH(12)
+        .INPUT_NUM(3)
     ) dut (
         .ACLK(ACLK),
         .ARESETn(ARESETn),
@@ -224,9 +225,7 @@ import axi_type::*;
         .m_axi_o(axi_mosi_slave)
     );
 
-    axi_ram #(
-        .ADDR_WIDTH(12)
-    ) ram (
+    axi_ram ram (
         .clk_i(ACLK), .rst_n_i(ARESETn),
         .in_mosi_i(axi_mosi_slave),
         .in_miso_o(axi_miso_slave)

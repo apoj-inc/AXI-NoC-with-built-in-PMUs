@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_arbiter;
 
     logic ACLK, ARESETn;

@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_queue
 import axis_type::*;
 (
@@ -38,10 +40,10 @@ import axis_type::*;
     
     stream_fifo #(
         .DATA_WIDTH(32)
-        ) stream_fifo (
-        clk, rst_n,
-        m_tdata, m_tvalid, m_tready_alt,
-        s_tdata_alt, s_tvalid_alt, s_tready
-        );
+    ) stream_fifo (
+    clk, rst_n,
+    m_tdata, m_tvalid, m_tready_alt,
+    s_tdata_alt, s_tvalid_alt, s_tready
+    );
 
 endmodule

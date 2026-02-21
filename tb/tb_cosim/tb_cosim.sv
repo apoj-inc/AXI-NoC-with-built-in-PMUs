@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_cosim (
     input  logic clk_i,
     input  logic arstn_i,

@@ -4,12 +4,6 @@ import axi_type::*;
     parameter INPUT_NUM = 3,
     parameter integer ID_ROUTING [(INPUT_NUM-1) * 2] = '{0, 0, 1, 1},
 
-    parameter AXI_DATA_WIDTH = 32,
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter ADDR_WIDTH = 16,
-    
-
     parameter Ax_FIFO_LEN = 4
 ) (
     input logic ACLK,

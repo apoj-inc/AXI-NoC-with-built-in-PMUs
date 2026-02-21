@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_uart_reciever #(
     parameter CLK_FREQ          = 1_000_000_000,
     parameter BAUD_RATE         = 100_000_000,

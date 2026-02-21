@@ -53,20 +53,7 @@ import axis_type::*;
 
     axis_fifo_buffer #(
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
-        .BUFFER_LENGTH(BUFFER_LENGTH),
-        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
+        .BUFFER_LENGTH(BUFFER_LENGTH)
     ) q (
         .ACLK(clk_i),
         .ARESETn(rst_n_i),
@@ -78,22 +65,7 @@ import axis_type::*;
     );
 
     arbiter #(
-        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif,
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
-        .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER),
-
         .TARGET_LEN(TARGET_LEN)
     ) arb (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
@@ -110,21 +82,6 @@ import axis_type::*;
     );
 
     algorithm_dual #(
-        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif,
-        .CHANNEL_NUMBER(CHANNEL_NUMBER),
-
         .TARGET_LEN(TARGET_LEN),
 
         // Algorithm and topology specific parameters

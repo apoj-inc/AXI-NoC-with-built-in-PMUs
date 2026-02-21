@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_axi_loader
 import axi_type::*;
 (
@@ -14,8 +16,8 @@ import axi_type::*;
 
     input  logic        wready,
     output logic        wvalid,
-    output logic [7:0]  wdata,
-    output logic        wstrb,
+    output logic [31:0] wdata,
+    output logic [3:0]  wstrb,
     output logic        wlast,
 
     input  logic        bvalid,
@@ -32,7 +34,7 @@ import axi_type::*;
 
     input  logic        rvalid,
     input  logic [4:0]  rid,
-    input  logic [7:0]  rdata,
+    input  logic [31:0] rdata,
     input  logic        rlast,
     output logic        rready,
 
@@ -88,10 +90,6 @@ import axi_type::*;
     end
 
     axi_master_loader #(
-        .AXI_DATA_WIDTH(8),
-        .ADDR_WIDTH(12),
-        .ID_W_WIDTH(5),
-        .ID_R_WIDTH(5),
         .FIFO_DEPTH(32),
         .LOADER_ID(1)
     ) dut (

@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_uart_loop
 #(
 	parameter CLK_FRE = 50,      //clock frequency(Mhz)

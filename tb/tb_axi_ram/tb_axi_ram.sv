@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_axi_ram
 import axi_type::*;
 (
@@ -75,9 +77,7 @@ import axi_type::*;
         axi_mosi_master.RREADY = rready;
     end
 
-    axi_ram #(
-        .ADDR_WIDTH(12)
-    ) ram (
+    axi_ram ram (
         .clk_i(aclk), .rst_n_i(rst_n),
 
         .in_mosi_i(axi_mosi_master),

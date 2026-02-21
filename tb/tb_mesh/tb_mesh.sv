@@ -94,9 +94,7 @@ import axi_type::*;
         end
     endgenerate
 
-    XY_mesh_dual #(
-        .ADDR_WIDTH(12)
-    ) dut (
+    XY_mesh_dual dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
 
@@ -108,12 +106,7 @@ import axi_type::*;
 
     );
 
-    axi_ram #(
-        .ID_W_WIDTH(5),
-        .ID_R_WIDTH(5),
-        .AXI_DATA_WIDTH(32),
-        .ADDR_WIDTH(12)
-    ) ram[16] (
+    axi_ram ram[16] (
         .clk_i({16{aclk}}),
         .rst_n_i({16{aresetn}}),
 

@@ -1,4 +1,6 @@
 `timescale 1ps/1ps
+`timescale 1ps/1ps
+
 module tb_axi_memory
 import axi_type::*;
 ;
@@ -15,9 +17,7 @@ import axi_type::*;
 
     always #10 ACLK = ~ACLK;
 
-    axi_ram #(
-        .ADDR_WIDTH(ADDR_WIDTH)
-    ) axi_r (
+    axi_ram axi_r (
         .clk_i(ACLK),
         .rst_n_i(ARESETn),
         .in_mosi_i(axi_i_mosi),

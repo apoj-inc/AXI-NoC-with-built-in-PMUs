@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_mesh_cpu;
 
 logic clk;

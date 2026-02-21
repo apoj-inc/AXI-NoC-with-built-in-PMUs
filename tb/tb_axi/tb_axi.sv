@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_axi
 import axi_type::*;
 ;
@@ -16,7 +18,6 @@ import axi_type::*;
     axi_mosi_t axi_mosi_slave[3];
 
     axi_demux #(
-        .ADDR_WIDTH(12),
         .OUTPUT_NUM(3),
         .ID_ROUTING('{0, 1, 2, 3})
     ) ad (

@@ -172,22 +172,7 @@ import axi_type::*;
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
                     .ROUTER_Y(i),
-                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-
-                    .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-                    `ifdef TID_PRESENT
-                    ,
-                    .ID_WIDTH(ID_WIDTH)
-                    `endif
-                    `ifdef TDEST_PRESENT
-                    ,
-                    .DEST_WIDTH(DEST_WIDTH)
-                    `endif
-                    `ifdef TUSER_PRESENT
-                    ,
-                    .USER_WIDTH(USER_WIDTH)
-                    `endif
-
+                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y)
                 ) router (
                     .clk_i(ACLK),
                     .rst_n_i(ARESETn),

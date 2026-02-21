@@ -7,7 +7,7 @@ import axis_type::*;
     parameter CHANNEL_NUMBER = 5,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
-    parameter TARGET_LEN          = 0
+    parameter TARGET_LEN     = 0
 ) (
     input clk_i, rst_n_i,
 

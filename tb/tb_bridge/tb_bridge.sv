@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_bridge
 import axis_type::*;
 import axi_type::*;
@@ -70,15 +72,6 @@ import axi_type::*;
     output logic b_rlast,
     input  logic b_rready
 );
-
-    parameter AXI_DATA_WIDTH = 32;
-    parameter ADDR_WIDTH = 12;
-    parameter ID_W_WIDTH = 5;
-    parameter ID_R_WIDTH = 5;
-    parameter AXIS_DATA_WIDTH = 40;
-    parameter ID_WIDTH = 4;
-    parameter DEST_WIDTH = 4;
-    parameter USER_WIDTH = 4;
 
     axi_miso_t axi_miso[2], axi_ram_miso[2];
     axi_mosi_t axi_mosi[2], axi_ram_mosi[2];
@@ -154,26 +147,7 @@ import axi_type::*;
         axi_mosi[1].RREADY = b_rready;
     end
 
-    axi2axis_XY #(
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH),
-
-        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-        `ifdef TID_PRESENT
-        ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-        ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-        ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    ) dut_left (
+    axi2axis_XY dut_left (
         .ACLK(aclk),
         .ARESETn(aresetn),
         
@@ -217,24 +191,7 @@ import axi_type::*;
         .m_axis_resp_o(axis_mosi[3])
     );
 
-    axi_ram #(
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    )   ram_left (
+    axi_ram ram_left (
         .clk_i(aclk),
         .rst_n_i(aresetn),
 

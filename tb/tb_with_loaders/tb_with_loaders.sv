@@ -1,24 +1,7 @@
+`timescale 1ps/1ps
+
 module tb_with_loaders #(
-    parameter ID_W_WIDTH = 5,
-    parameter ID_R_WIDTH = 5,
-    parameter MAX_ID_WIDTH = 4,
-    parameter ADDR_WIDTH = 12,
-
-    parameter N = (ID_W_WIDTH-1)*(ID_R_WIDTH-1),
-
-    parameter AXI_DATA_WIDTH = 32
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
+    parameter N = 16
 ) (
     input  logic        aclk,
     input  logic        aresetn,
@@ -36,9 +19,7 @@ module tb_with_loaders #(
     output logic        idle_o       [N]
 );
 
-    mesh_with_loaders #(
-        .ADDR_WIDTH(ADDR_WIDTH)
-    ) ct (
+    mesh_with_loaders ct (
         .aclk         (aclk),
         .aresetn      (aresetn),
  

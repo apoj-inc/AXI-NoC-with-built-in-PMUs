@@ -5,7 +5,7 @@ from cocotbext.uart import UartSource
 
 @cocotb.test
 async def test_uart_rec(dut):
-    cocotb.start_soon(Clock(dut.clk_i, 1, 'ns').start())
+    cocotb.start_soon(Clock(dut.clk_i, 1, unit='ns').start())
 
     source = UartSource(dut.rx_i, baud=100_000_000, bits=8)
 

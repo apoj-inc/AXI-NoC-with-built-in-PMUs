@@ -14,6 +14,7 @@ LOGS_DIR          = environ['LOGS_DIR']
 RESULTS_DIR       = environ['RESULTS_DIR']
 BUILD_ARGS        = environ['BUILD_ARGS'].strip().split(' ')
 SIM_ARGS          = environ['SIM_ARGS'].strip().split(' ')
+COMPILE_ARGS      = environ['COMPILE_ARGS'].strip().split(' ')
 
 def _have_questa() -> bool:
     return shutil.which('vsim') is not None or shutil.which('qrun') is not None
@@ -36,7 +37,7 @@ def test_cocotb(cocotb_test_dir) -> None:
 
     runner.build(
         hdl_library='work',
-        build_args=['-mfcu'] + VERILOG_SOURCES,
+        build_args=['-mfcu'] + VERILOG_SOURCES + COMPILE_ARGS,
         sources=[VERILOG_SOURCES[0]],
         includes=INCLUDE_DIRS,
         hdl_toplevel=hdl_toplevel,
