@@ -1,4 +1,6 @@
-module tb_axi_loader (
+module tb_axi_loader
+import axi_type::*;
+(
     input  logic        clk_i,
     input  logic        arstn_i,
 

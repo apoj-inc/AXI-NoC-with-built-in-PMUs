@@ -1,25 +1,8 @@
 `include "defines.svh"
 
-module axi_pmu # (
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter MAX_ID_WIDTH = 4,
-    parameter ADDR_WIDTH = 16,
-
-    parameter AXI_DATA_WIDTH = 32
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
-) (
+module axi_pmu
+import axi_type::*;
+(
     input  logic        aclk,
     input  logic        aresetn,
     input  logic        enable,
@@ -30,8 +13,6 @@ module axi_pmu # (
     input  logic [4:0]  addr_i,
     output logic [31:0] data_o
 );
-
-    `include "axi_type.svh"
 
     typedef struct packed {
         logic [31:0] idle;

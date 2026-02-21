@@ -1,19 +1,8 @@
 `include "defines.svh"
 
-module router #(
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+module router
+import axis_type::*;
+#(
     parameter CHANNEL_NUMBER = 5,
     parameter BUFFER_LENGTH = 16,
     parameter MAXIMUM_PACKAGES_NUMBER = 5,
@@ -50,9 +39,7 @@ module router #(
                                                     0                                           ;
 
     initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
-
-    `include "axis_type.svh"
-
+    
     axis_mosi_t queue_o_mosi [CHANNEL_NUMBER];
     axis_miso_t queue_o_miso [CHANNEL_NUMBER];
 

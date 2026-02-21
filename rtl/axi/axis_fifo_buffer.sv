@@ -1,21 +1,10 @@
 `include "defines.svh"
 
-module axis_fifo_buffer #(
+module axis_fifo_buffer
+import axis_type::*;
+#(
     parameter CHANNEL_NUMBER = 8,
-    parameter BUFFER_LENGTH = 8,
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
+    parameter BUFFER_LENGTH = 8
 ) (
     input  ACLK, ARESETn,
     input  axis_mosi_t in_mosi_i  [CHANNEL_NUMBER],
@@ -23,8 +12,6 @@ module axis_fifo_buffer #(
     output axis_mosi_t out_mosi_o [CHANNEL_NUMBER],
     input  axis_miso_t out_miso_i [CHANNEL_NUMBER]
 );
-
-    `include "axis_type.svh"
 
     generate
         genvar i;

@@ -1,19 +1,8 @@
 `include "defines.svh"
 
-module router_dual #(
-    parameter AXIS_DATA_WIDTH = 32
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+module router_dual
+import axis_type::*;
+#(
     parameter CHANNEL_NUMBER = 10,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
@@ -52,8 +41,6 @@ module router_dual #(
                                                     0                                           ;
 
     initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
-
-    `include "axis_type.svh"
 
     axis_mosi_t queue_o_mosi [CHANNEL_NUMBER];
     axis_miso_t queue_o_miso [CHANNEL_NUMBER];

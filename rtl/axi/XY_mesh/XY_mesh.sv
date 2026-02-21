@@ -1,25 +1,9 @@
 `include "defines.svh"
 
-module XY_mesh #(
-    parameter AXI_DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 16,
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter MAX_ID_WIDTH = 4,
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
-
+module XY_mesh
+import axis_type::*;
+import axi_type::*;
+#(
     parameter MAX_ROUTERS_X = 3,
     parameter MAX_ROUTERS_Y = 3,
 
@@ -34,9 +18,6 @@ module XY_mesh #(
     input  axi_miso_t m_axi_i[MAX_ROUTERS_X*MAX_ROUTERS_Y],
     output axi_mosi_t m_axi_o[MAX_ROUTERS_X*MAX_ROUTERS_Y]
 );
-
-    `include "axi_type.svh"
-    `include "axis_type.svh"
 
     typedef enum logic [2:0] {
         HOME,
@@ -78,25 +59,6 @@ module XY_mesh #(
             for (j = 0; j < MAX_ROUTERS_X; j++) begin : X
                 
                 axi2axis_XY #(
-                    .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-                    .ADDR_WIDTH(ADDR_WIDTH),
-                    .ID_W_WIDTH(ID_W_WIDTH),
-                    .ID_R_WIDTH(ID_R_WIDTH),
-
-                    .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-                    `ifdef TID_PRESENT
-                    ,
-                    .ID_WIDTH(ID_WIDTH)
-                    `endif
-                    `ifdef TDEST_PRESENT
-                    ,
-                    .DEST_WIDTH(DEST_WIDTH)
-                    `endif
-                    `ifdef TUSER_PRESENT
-                    ,
-                    .USER_WIDTH(USER_WIDTH)
-                    `endif,
-
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
                     .ROUTER_Y(i),

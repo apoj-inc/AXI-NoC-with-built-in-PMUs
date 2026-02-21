@@ -1,24 +1,8 @@
 `include "defines.svh"
 
-module XY_mesh_dual_cpu #(
-    parameter AXI_DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 12,
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter MAX_ID_WIDTH = 4
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
-
+module XY_mesh_dual_cpu
+import axi_type::*;
+#(
     parameter MAX_ROUTERS_X = 3,
     parameter MAX_ROUTERS_Y = 3,
 
@@ -29,8 +13,6 @@ module XY_mesh_dual_cpu #(
     input logic rst_n
 );
 
-    `include "axi_type.svh"
-
     localparam CPUS_NUMBER = MAX_ROUTERS_X*MAX_ROUTERS_Y;
 
     axi_mosi_t s_axi_i[CPUS_NUMBER];
@@ -39,25 +21,7 @@ module XY_mesh_dual_cpu #(
     axi_miso_t m_axi_i[CPUS_NUMBER];
     axi_mosi_t m_axi_o[CPUS_NUMBER];
 
-    sr_cpu_axi #(
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH),
-        .MAX_ID_WIDTH(MAX_ID_WIDTH),
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    ) cpu[CPUS_NUMBER] (
+    sr_cpu_axi cpu[CPUS_NUMBER] (
         .clk   ({CPUS_NUMBER{clk}}),  
         .rst_n ({CPUS_NUMBER{rst_n}}),
 
@@ -65,24 +29,7 @@ module XY_mesh_dual_cpu #(
         .in_mosi_o(m_axi_o)
     );
 
-    axi_ram #(
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    ) ram[CPUS_NUMBER] (
+    axi_ram ram[CPUS_NUMBER] (
         .clk   ({CPUS_NUMBER{clk}}),
         .rst_n ({CPUS_NUMBER{rst_n}}),
 
@@ -91,28 +38,11 @@ module XY_mesh_dual_cpu #(
     );
 
     XY_mesh_dual #(
-    .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-    .ADDR_WIDTH(ADDR_WIDTH),
-    .ID_W_WIDTH(ID_W_WIDTH),
-    .ID_R_WIDTH(ID_R_WIDTH)
-    `ifdef TID_PRESENT
-    ,
-    .ID_WIDTH(ID_WIDTH)
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    .DEST_WIDTH(DEST_WIDTH)
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    .USER_WIDTH(USER_WIDTH)
-    `endif,
+        .MAX_ROUTERS_X(MAX_ROUTERS_X),
+        .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
 
-    .MAX_ROUTERS_X(MAX_ROUTERS_X),
-    .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-
-    .Ax_FIFO_LEN(Ax_FIFO_LEN),
-    .W_FIFO_LEN(W_FIFO_LEN)
+        .Ax_FIFO_LEN(Ax_FIFO_LEN),
+        .W_FIFO_LEN(W_FIFO_LEN)
 
     ) mesh (
         .ACLK      (clk),

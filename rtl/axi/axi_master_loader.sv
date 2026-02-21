@@ -1,23 +1,8 @@
 `include "defines.svh"
 
-module axi_master_loader #(
-    parameter ADDR_WIDTH   = 16,
-    parameter ID_W_WIDTH   = 5,
-    parameter ID_R_WIDTH   = 5,
-    parameter AXI_DATA_WIDTH = 32,
-    parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+module axi_master_loader
+import axi_type::*;
+#(
     parameter FIFO_DEPTH   = 64,
     parameter LOADER_ID    = 0,
 
@@ -43,8 +28,6 @@ module axi_master_loader #(
     input  axi_miso_t                 m_axi_i,    
     output axi_mosi_t                 m_axi_o
 );
-
-    `include "axi_type.svh"
 
     typedef enum logic[1:0] {
         IDLE,

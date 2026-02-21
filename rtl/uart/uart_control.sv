@@ -1,15 +1,13 @@
-module uart_control #(
+module uart_control
+import axi_type::*;
+#(
     parameter CORE_COUNT       = 16,
-    parameter AXI_ID_WIDTH     = 5,
     parameter BAUD_RATE        = 100_000_000,
     parameter CLK_FREQ         = 1_000_000_000,
-    parameter ADDR_WIDTH       = 16,
-    parameter AXI_DATA_WIDTH   = 32,
 
     parameter CORE_COUNT_BYTES = $clog2(CORE_COUNT) / 8 + ($clog2(CORE_COUNT) % 8 != 0),
-    parameter AXI_ID_BYTES     = AXI_ID_WIDTH / 8 + (AXI_ID_WIDTH % 8 != 0),
+    parameter MAX_ID_BYTES     = MAX_ID_WIDTH / 8 + (MAX_ID_WIDTH % 8 != 0),
     parameter ADDR_WIDTH_BYTES = ADDR_WIDTH / 8 + (ADDR_WIDTH % 8 != 0),
-    parameter AXI_DATA_BYTES   = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0),
     parameter WSTRB_BYTES      = AXI_DATA_BYTES / 8 + (AXI_DATA_BYTES % 8 != 0)
 ) (
     input  logic                      clk_i,
@@ -21,7 +19,7 @@ module uart_control #(
     input  logic [31:0]               pmu_data_i   [CORE_COUNT],
 
     output logic                      resp_wait_o  [CORE_COUNT],
-    output logic [AXI_ID_WIDTH-1:0]   id_o         [CORE_COUNT],
+    output logic [MAX_ID_WIDTH-1:0]   id_o         [CORE_COUNT],
     output logic                      write_o      [CORE_COUNT],
     output logic [ADDR_WIDTH-1:0]     axaddr_o     [CORE_COUNT],
     output logic [7:0]                axlen_o      [CORE_COUNT],
@@ -66,7 +64,7 @@ module uart_control #(
     logic [4:0]                pmu_addr_next   [CORE_COUNT];
 
     logic                      resp_wait_next  [CORE_COUNT];
-    logic [AXI_ID_WIDTH-1:0]   id_next         [CORE_COUNT];
+    logic [MAX_ID_WIDTH-1:0]   id_next         [CORE_COUNT];
     logic [ADDR_WIDTH-1:0]     axaddr_next     [CORE_COUNT];
     logic [7:0]                axlen_next      [CORE_COUNT];
     logic [AXI_DATA_WIDTH-1:0] wdata_next      [CORE_COUNT];
@@ -257,7 +255,7 @@ module uart_control #(
                 end
             end
             READ_MEMORY: begin
-                if (trans_counter == (ADDR_WIDTH_BYTES + AXI_ID_BYTES + AXI_DATA_BYTES + 3) && tx_data_ready) begin
+                if (trans_counter == (ADDR_WIDTH_BYTES + MAX_ID_BYTES + AXI_DATA_BYTES + 3) && tx_data_ready) begin
                     state_next = IDLE;
                 end
                 else begin
@@ -319,7 +317,7 @@ module uart_control #(
             end
             CREATE_QUICK_AXI_READ, CREATE_QUICK_AXI_WRITE: begin
                 write_o[core_select] = (state == CREATE_QUICK_AXI_WRITE);
-                fifo_push_o[core_select] = trans_counter > (CORE_COUNT_BYTES + AXI_ID_BYTES + 1);
+                fifo_push_o[core_select] = trans_counter > (CORE_COUNT_BYTES + MAX_ID_BYTES + 1);
 
                 wdata_next[core_select] = 'h30 + core_select;
                 axaddr_next[core_select] = core_select << 5;
@@ -329,10 +327,10 @@ module uart_control #(
                     if (trans_counter < CORE_COUNT_BYTES) begin
                         core_select_next[trans_counter*8 +: 8] = rx_data;
                     end
-                    else if (trans_counter < (CORE_COUNT_BYTES + AXI_ID_BYTES)) begin
+                    else if (trans_counter < (CORE_COUNT_BYTES + MAX_ID_BYTES)) begin
                         id_next[core_select][(trans_counter - CORE_COUNT_BYTES)*8 +: 8] = rx_data;
                     end
-                    else if (trans_counter < (CORE_COUNT_BYTES + AXI_ID_BYTES + 1)) begin
+                    else if (trans_counter < (CORE_COUNT_BYTES + MAX_ID_BYTES + 1)) begin
                         axlen_next[core_select] = rx_data;
                         trans_counter_next = trans_counter + 1;
                     end
@@ -345,10 +343,10 @@ module uart_control #(
                 write_o[core_select] = (state == CREATE_AXI_WRITE);
 
                 if (state == CREATE_AXI_WRITE) begin
-                    fifo_push_o[core_select] = trans_counter > (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + AXI_ID_BYTES + 1 + AXI_DATA_BYTES + WSTRB_BYTES);
+                    fifo_push_o[core_select] = trans_counter > (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + MAX_ID_BYTES + 1 + AXI_DATA_BYTES + WSTRB_BYTES);
                 end
                 else begin
-                    fifo_push_o[core_select] = trans_counter > (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + AXI_ID_BYTES + 1);
+                    fifo_push_o[core_select] = trans_counter > (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + MAX_ID_BYTES + 1);
                 end
 
                 if (rx_data_valid) begin
@@ -359,17 +357,17 @@ module uart_control #(
                     else if (trans_counter < (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES)) begin
                         axaddr_next[core_select][(trans_counter - CORE_COUNT_BYTES)*8 +: 8] = rx_data;
                     end
-                    else if (trans_counter < (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + AXI_ID_BYTES)) begin
+                    else if (trans_counter < (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + MAX_ID_BYTES)) begin
                         id_next[core_select][(trans_counter - CORE_COUNT_BYTES - ADDR_WIDTH_BYTES)*8 +: 8] = rx_data;
                     end
-                    else if (trans_counter < (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + AXI_ID_BYTES + 1)) begin
+                    else if (trans_counter < (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + MAX_ID_BYTES + 1)) begin
                         axlen_next[core_select] = rx_data;
                     end
-                    else if ((state == CREATE_AXI_WRITE) && (trans_counter < (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + AXI_ID_BYTES + 1 + AXI_DATA_BYTES))) begin
-                        wdata_next[core_select][(trans_counter - CORE_COUNT_BYTES - ADDR_WIDTH_BYTES - 1 - AXI_ID_BYTES)*8 +: 8] = rx_data;
+                    else if ((state == CREATE_AXI_WRITE) && (trans_counter < (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + MAX_ID_BYTES + 1 + AXI_DATA_BYTES))) begin
+                        wdata_next[core_select][(trans_counter - CORE_COUNT_BYTES - ADDR_WIDTH_BYTES - 1 - MAX_ID_BYTES)*8 +: 8] = rx_data;
                     end
-                    else if ((state == CREATE_AXI_WRITE) && (trans_counter < (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + AXI_ID_BYTES + 1 + AXI_DATA_BYTES + WSTRB_BYTES))) begin
-                        wstrb_next[core_select][(trans_counter - CORE_COUNT_BYTES - ADDR_WIDTH_BYTES - 1 - AXI_ID_BYTES - AXI_DATA_BYTES)*8 +: 8] = rx_data;
+                    else if ((state == CREATE_AXI_WRITE) && (trans_counter < (CORE_COUNT_BYTES + ADDR_WIDTH_BYTES + MAX_ID_BYTES + 1 + AXI_DATA_BYTES + WSTRB_BYTES))) begin
+                        wstrb_next[core_select][(trans_counter - CORE_COUNT_BYTES - ADDR_WIDTH_BYTES - 1 - MAX_ID_BYTES - AXI_DATA_BYTES)*8 +: 8] = rx_data;
                     end
                     else begin
                         resp_wait_next[core_select] = rx_data[0];
@@ -443,8 +441,8 @@ module uart_control #(
             end
             READ_MEMORY: begin
                 write_o[0] = '0;
-                fifo_push_o[0] = (trans_counter == (ADDR_WIDTH_BYTES + AXI_ID_BYTES));
-                start_next = (trans_counter == (ADDR_WIDTH_BYTES + AXI_ID_BYTES + 1));
+                fifo_push_o[0] = (trans_counter == (ADDR_WIDTH_BYTES + MAX_ID_BYTES));
+                start_next = (trans_counter == (ADDR_WIDTH_BYTES + MAX_ID_BYTES + 1));
                 axlen_next[0] = '0;
 
                 if (rx_data_valid) begin
@@ -452,22 +450,22 @@ module uart_control #(
                     if (trans_counter < ADDR_WIDTH_BYTES) begin
                         axaddr_next[0][trans_counter*8 +: 8] = rx_data;
                     end
-                    else if (trans_counter < (ADDR_WIDTH_BYTES + AXI_ID_BYTES)) begin
+                    else if (trans_counter < (ADDR_WIDTH_BYTES + MAX_ID_BYTES)) begin
                         id_next[0][(trans_counter - ADDR_WIDTH_BYTES)*8 +: 8] = rx_data;
                     end
                 end
 
-                if ((trans_counter == (ADDR_WIDTH_BYTES + AXI_ID_BYTES + 1)) || (trans_counter == (ADDR_WIDTH_BYTES + AXI_ID_BYTES))) begin
+                if ((trans_counter == (ADDR_WIDTH_BYTES + MAX_ID_BYTES + 1)) || (trans_counter == (ADDR_WIDTH_BYTES + MAX_ID_BYTES))) begin
                     trans_counter_next = trans_counter + 1;
                 end
 
-                if (!idle_i[0] && (trans_counter == (ADDR_WIDTH_BYTES + AXI_ID_BYTES + 2))) begin
+                if (!idle_i[0] && (trans_counter == (ADDR_WIDTH_BYTES + MAX_ID_BYTES + 2))) begin
                     trans_counter_next = trans_counter + 1;
                 end
 
-                if (idle_i[0] && (trans_counter > (ADDR_WIDTH_BYTES + AXI_ID_BYTES + 2))) begin
-                    tx_data_next = rdata_i[(trans_counter - ADDR_WIDTH_BYTES - AXI_ID_BYTES - 3)*8 +: 8];
-                    tx_data_valid_next = (trans_counter < (ADDR_WIDTH_BYTES + AXI_ID_BYTES + AXI_DATA_BYTES + 3));
+                if (idle_i[0] && (trans_counter > (ADDR_WIDTH_BYTES + MAX_ID_BYTES + 2))) begin
+                    tx_data_next = rdata_i[(trans_counter - ADDR_WIDTH_BYTES - MAX_ID_BYTES - 3)*8 +: 8];
+                    tx_data_valid_next = (trans_counter < (ADDR_WIDTH_BYTES + MAX_ID_BYTES + AXI_DATA_BYTES + 3));
                     if (tx_data_valid && tx_data_ready) begin
                         trans_counter_next = trans_counter + 1;
                     end

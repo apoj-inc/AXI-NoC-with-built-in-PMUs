@@ -1,19 +1,8 @@
 `include "defines.svh"
 
-module queue #(
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+module queue
+import axis_type::*;
+#(
     parameter BUFFER_LENGTH = 16
 ) (
     input  clk_i, rst_n_i,
@@ -24,8 +13,6 @@ module queue #(
     input  axis_miso_t out_miso_i
 
 );
-
-    `include "axis_type.svh"
 
     axis_data_t queue_buffers [BUFFER_LENGTH];
     axis_data_t stored_axis_r, stored_axis_w;

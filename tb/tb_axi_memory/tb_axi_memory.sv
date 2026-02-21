@@ -1,10 +1,8 @@
 `timescale 1ps/1ps
-module tb_axi_memory;
+module tb_axi_memory
+import axi_type::*;
+;
 
-    parameter ID_W_WIDTH = 4;
-    parameter ID_R_WIDTH = 4;
-    parameter ADDR_WIDTH = 12;
-    parameter DATA_WIDTH = 32;
     parameter BYTE_WIDTH = 8;
 
     logic ACLK, ARESETn;
@@ -35,8 +33,8 @@ module tb_axi_memory;
         logic [1:0] AWBURST,
 
         // W channel
-        logic [DATA_WIDTH-1:0] WDATA [$],
-        logic [(DATA_WIDTH/8)-1:0] WSTRB [$]
+        logic [AXI_DATA_WIDTH-1:0] WDATA [$],
+        logic [AXI_DATA_BYTES-1:0] WSTRB [$]
 
     );
 

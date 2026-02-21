@@ -1,6 +1,5 @@
-rtl/axi/defines.svh
-rtl/axi/axi2axis_typedef.svh
-rtl/cores/src/sr_cpu.vh 
+rtl/axi/axis_type.sv
+rtl/axi/axi_type.sv
 rtl/cores/src/sm_register.v 
 rtl/cores/src/sm_rom.v 
 rtl/cores/src/sr_cpu.v

@@ -1,13 +1,9 @@
-module axi_demux #(
+module axi_demux
+import axi_type::*;
+#(
     parameter OUTPUT_NUM = 3,
     parameter integer ID_ROUTING [(OUTPUT_NUM-1) * 2] = '{0, 0, 1, 1},
-
-    parameter AXI_DATA_WIDTH = 32,
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter ADDR_WIDTH = 16,
     
-
     parameter Ax_FIFO_LEN = 4,
     parameter W_FIFO_LEN = 4,
     parameter B_FIFO_LEN = 4,
@@ -22,8 +18,6 @@ module axi_demux #(
     output axi_mosi_t m_axi_o[OUTPUT_NUM],
     input  axi_miso_t m_axi_i[OUTPUT_NUM]
 );
-
-    `include "axi_type.svh"
 
     parameter AW_HANDSHAKE = 0, W_HANDSHAKE = 1;
     parameter AR_HANDSHAKE = 0, R_HANDSHAKE = 1;

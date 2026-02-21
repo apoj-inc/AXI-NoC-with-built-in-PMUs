@@ -1,4 +1,6 @@
-module tb_axi;
+module tb_axi
+import axi_type::*;
+;
 
     logic ACLK, ARESETn;
 

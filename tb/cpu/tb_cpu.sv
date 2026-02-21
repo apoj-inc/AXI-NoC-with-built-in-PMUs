@@ -1,12 +1,12 @@
 `timescale 1ns/1ps
 
-module tb_cpu (
+module tb_cpu
+import axi_type::*;
+(
     input  logic        rst_n
 );
 
     logic clk;
-
-    `include "axi_type.svh"
 
     axi_miso_t axi_miso;
     axi_mosi_t axi_mosi;

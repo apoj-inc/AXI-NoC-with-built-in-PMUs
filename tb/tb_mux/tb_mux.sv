@@ -1,4 +1,6 @@
-module tb_mux (
+module tb_mux
+import axi_type::*;
+(
 
     input  logic ACLK,
     input  logic ARESETn,

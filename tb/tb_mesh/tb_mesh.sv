@@ -1,6 +1,8 @@
 `timescale 1ns/1ps
 
-module tb_mesh (
+module tb_mesh
+import axi_type::*;
+(
     input aresetn,
 
     output logic awready[16],

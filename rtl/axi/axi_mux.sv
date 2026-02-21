@@ -1,4 +1,6 @@
-module axi_mux #(
+module axi_mux
+import axi_type::*;
+#(
     parameter INPUT_NUM = 3,
     parameter integer ID_ROUTING [(INPUT_NUM-1) * 2] = '{0, 0, 1, 1},
 
@@ -20,8 +22,6 @@ module axi_mux #(
     input  axi_miso_t m_axi_i
 
 );
-
-    `include "axi_type.svh"
 
     enum { AW_HANDSHAKE, W_HANDSHAKE } w_state, w_next_state;
 

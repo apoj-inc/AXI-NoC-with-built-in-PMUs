@@ -1,4 +1,7 @@
-module tb_bridge (
+module tb_bridge
+import axis_type::*;
+import axi_type::*;
+(
     input  logic aclk,
     input  logic aresetn,
 
@@ -76,9 +79,6 @@ module tb_bridge (
     parameter ID_WIDTH = 4;
     parameter DEST_WIDTH = 4;
     parameter USER_WIDTH = 4;
-
-    `include "axi_type.svh"
-    `include "axis_type.svh"
 
     axi_miso_t axi_miso[2], axi_ram_miso[2];
     axi_mosi_t axi_mosi[2], axi_ram_mosi[2];

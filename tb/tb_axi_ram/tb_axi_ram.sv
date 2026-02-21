@@ -1,4 +1,6 @@
-module tb_axi_ram (
+module tb_axi_ram
+import axi_type::*;
+(
 
     input  logic aclk,
     input  logic aresetn,

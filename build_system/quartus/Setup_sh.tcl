@@ -35,7 +35,9 @@ foreach incdir $INCDIRS_LIST {
     set_global_assignment -name SEARCH_PATH $RTL_PATH/$incdir
 }
 
-load_package flow
+package require ::quartus::project
+package require ::quartus::flow
+
 execute_flow -compile
 
 project_close

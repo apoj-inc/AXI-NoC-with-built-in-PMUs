@@ -1,23 +1,9 @@
 `include "defines.svh"
 
-module XY_mesh_dual_parallel #(
-    parameter AXI_DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 16,
-    parameter ID_W_WIDTH = 5,
-    parameter ID_R_WIDTH = 5
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
-
+module XY_mesh_dual_parallel
+import axis_type::*;
+import axi_type::*;
+#(
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
     = $clog2(MAX_ROUTERS_X),
@@ -33,9 +19,6 @@ module XY_mesh_dual_parallel #(
     input  axi_miso_t m_axi_i[MAX_ROUTERS_X*MAX_ROUTERS_Y],
     output axi_mosi_t m_axi_o[MAX_ROUTERS_X*MAX_ROUTERS_Y]
 );
-
-    `include "axi_type.svh"
-    `include "axis_type.svh"
 
     localparam ROUTING_HEADER_EFFECTIVE = 8 + (MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH) * 2;
     localparam ROUTING_HEADER_WIDTH = (ROUTING_HEADER_EFFECTIVE / 8 + ((ROUTING_HEADER_EFFECTIVE % 8) != 0)) * 8;
@@ -118,25 +101,6 @@ module XY_mesh_dual_parallel #(
             for (j = 0; j < MAX_ROUTERS_X; j++) begin : X
                 
                 axi2axis_XY #(
-                    .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-                    .ADDR_WIDTH(ADDR_WIDTH),
-                    .ID_W_WIDTH(ID_W_WIDTH),
-                    .ID_R_WIDTH(ID_R_WIDTH),
-
-                    .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-                    `ifdef TID_PRESENT
-                    ,
-                    .ID_WIDTH(ID_WIDTH)
-                    `endif
-                    `ifdef TDEST_PRESENT
-                    ,
-                    .DEST_WIDTH(DEST_WIDTH)
-                    `endif
-                    `ifdef TUSER_PRESENT
-                    ,
-                    .USER_WIDTH(USER_WIDTH)
-                    `endif,
-
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
                     .ROUTER_Y(i),
@@ -204,21 +168,7 @@ module XY_mesh_dual_parallel #(
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
                     .ROUTER_Y(i),
-                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-
-                    .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-                    `ifdef TID_PRESENT
-                    ,
-                    .ID_WIDTH(ID_WIDTH)
-                    `endif
-                    `ifdef TDEST_PRESENT
-                    ,
-                    .DEST_WIDTH(DEST_WIDTH)
-                    `endif
-                    `ifdef TUSER_PRESENT
-                    ,
-                    .USER_WIDTH(USER_WIDTH)
-                    `endif
+                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y)
                 ) router (
                     .clk_i(ACLK),
                     .rst_n_i(ARESETn),

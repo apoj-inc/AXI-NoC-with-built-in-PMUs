@@ -1,10 +1,8 @@
 `include "defines.svh"
 
-module mesh_with_loaders # (
-    parameter ID_W_WIDTH = 5,
-    parameter ID_R_WIDTH = 5,
-    parameter ADDR_WIDTH = 16,
-    
+module mesh_with_loaders
+import axi_type::*;
+#(
     parameter AXI_MASTER_LOADER_FIFO_DEPTH = 64,
 
     parameter MAX_ROUTERS_X = 4,
@@ -15,22 +13,7 @@ module mesh_with_loaders # (
     = $clog2(MAX_ROUTERS_Y),
 
     parameter N = MAX_ROUTERS_X*MAX_ROUTERS_Y,
-    parameter MAX_ID_WIDTH = (ID_W_WIDTH > ID_R_WIDTH) ? ID_W_WIDTH : ID_R_WIDTH,
-
-    parameter AXI_DATA_WIDTH = 32,
-    parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
+    parameter MAX_ID_WIDTH = (ID_W_WIDTH > ID_R_WIDTH) ? ID_W_WIDTH : ID_R_WIDTH
 ) (
     input  logic                      aclk,
     input  logic                      aresetn,
@@ -52,8 +35,6 @@ module mesh_with_loaders # (
     output logic [AXI_DATA_WIDTH-1:0] rdata_o      [N]
 );
 
-    `include "axi_type.svh"
-
     axi_mosi_t axi_mosi[N];
     axi_miso_t axi_miso[N];
 
@@ -64,24 +45,7 @@ module mesh_with_loaders # (
         genvar i;
         for (i = 0; i < N; i++) begin : map_wires
 
-            axi_pmu #(
-                .ADDR_WIDTH(ADDR_WIDTH),
-                .ID_W_WIDTH(ID_W_WIDTH),
-                .ID_R_WIDTH(ID_R_WIDTH),
-                .MAX_ID_WIDTH(MAX_ID_WIDTH)
-                `ifdef TID_PRESENT
-                ,
-                .ID_WIDTH(ID_WIDTH)
-                `endif
-                `ifdef TDEST_PRESENT
-                ,
-                .DEST_WIDTH(DEST_WIDTH)
-                `endif
-                `ifdef TUSER_PRESENT
-                ,
-                .USER_WIDTH(USER_WIDTH)
-                `endif
-            ) pmu (
+            axi_pmu pmu (
                 .aclk         (aclk),
                 .aresetn      (aresetn),
                 .enable       (pmu_enable_i),
@@ -92,23 +56,7 @@ module mesh_with_loaders # (
             );
 
             axi_master_loader #(
-                .ADDR_WIDTH(ADDR_WIDTH),
-                .ID_W_WIDTH(ID_W_WIDTH),
-                .ID_R_WIDTH(ID_R_WIDTH),
-                .FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH)
-                `ifdef TID_PRESENT
-                ,
-                .ID_WIDTH(ID_WIDTH)
-                `endif
-                `ifdef TDEST_PRESENT
-                ,
-                .DEST_WIDTH(DEST_WIDTH)
-                `endif
-                `ifdef TUSER_PRESENT
-                ,
-                .USER_WIDTH(USER_WIDTH)
-                `endif
-                ,
+                .FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH),
                 .LOADER_ID(i)
             ) loader (
                 .clk_i       (aclk),
@@ -131,23 +79,6 @@ module mesh_with_loaders # (
     endgenerate
 
     XY_mesh_dual_parallel #(
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH)
-        `ifdef TID_PRESENT
-        ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-        ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-        ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-        ,
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
         .MAX_ROUTERS_X_WIDTH(MAX_ROUTERS_X_WIDTH),
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
@@ -164,11 +95,7 @@ module mesh_with_loaders # (
     );
 
     axi_ram #(
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-        .BYTE_WIDTH(8),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH)
+        .BYTE_WIDTH(8)
     ) ram[N] (
         .clk_i({N{aclk}}),
         .rst_n_i({N{aresetn}}),

@@ -1,25 +1,8 @@
 `include "defines.svh"
 
-module axi_ram 
+module axi_ram
+import axi_type::*;
 #(
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter ADDR_WIDTH = 16,
-
-    parameter AXI_DATA_WIDTH = 32
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
-
     parameter BYTE_WIDTH = 8
 ) (
 	input logic clk_i, rst_n_i,
@@ -28,8 +11,6 @@ module axi_ram
     output axi_miso_t in_miso_o
 
 );
-
-    `include "axi_type.svh"
 
     localparam WSRTB_W = AXI_DATA_WIDTH/BYTE_WIDTH;
     
@@ -40,26 +21,7 @@ module axi_ram
     logic [WSRTB_W-1:0]        be,    be_ff;
     logic we_ff;
 
-    axi2ram #(
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH),
-
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    
-    ) axi (
+    axi2ram  axi (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
         
         .waddr(waddr),

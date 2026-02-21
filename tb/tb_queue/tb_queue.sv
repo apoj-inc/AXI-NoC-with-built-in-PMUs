@@ -1,4 +1,6 @@
-module tb_queue(
+module tb_queue
+import axis_type::*;
+(
     input clk,
     input rst_n,
     input m_tvalid,

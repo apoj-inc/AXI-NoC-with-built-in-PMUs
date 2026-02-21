@@ -1,4 +1,6 @@
-module tb_demux (
+module tb_demux
+import axi_type::*;
+(
 
     input  logic ACLK,
     input  logic ARESETn,

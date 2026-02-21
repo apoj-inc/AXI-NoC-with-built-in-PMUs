@@ -1,7 +1,10 @@
 `include "defines.svh"
 `include "axi2axis_typedef.svh"
 
-module tb_router (
+module tb_router
+import axis_type::*;
+import axi_type::*;
+(
     input aclk,
     input aresetn,
 

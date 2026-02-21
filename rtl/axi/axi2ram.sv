@@ -1,29 +1,11 @@
 `include "defines.svh"
 
 module axi2ram
-#(
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter ADDR_WIDTH = 4,
-
-    parameter AXI_DATA_WIDTH = 32
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
-    
+import axi_type::*;
+#(    
     parameter BYTE_WIDTH = 8,
     parameter BATCH_WIDTH = AXI_DATA_WIDTH/BYTE_WIDTH
-)
-(
+) (
 	input clk_i, rst_n_i,
 
     
@@ -37,8 +19,6 @@ module axi2ram
     output axi_miso_t in_miso_o
 
 );
-
-    `include "axi_type.svh"
 
     enum { READING_ADDRESS, REQUESTING_DATA, RESPONDING }
     r_state, r_state_next,

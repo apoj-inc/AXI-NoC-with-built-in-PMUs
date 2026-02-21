@@ -1,4 +1,6 @@
-module tb_bridgeless (
+module tb_bridgeless
+import axi_type::*;
+(
 
     input  logic aclk,
     input  logic aresetn,

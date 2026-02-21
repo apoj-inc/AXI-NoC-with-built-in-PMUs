@@ -28,8 +28,6 @@ module queue #(
     output logic full_O
 );
 
-    `include "axis_type.svh"
-
     axis_data_t queue_buffers [BUFFER_LENGTH];
     axis_data_t stored_axis_r, stored_axis_w;
 

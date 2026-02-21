@@ -1,27 +1,12 @@
 `include "defines.svh"
 `include "axi2axis_typedef.svh"
 
-module arbiter #(
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+module arbiter
+import axis_type::*;
+#(
     parameter CHANNEL_NUMBER = 5,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
-    parameter MAXIMUM_PACKAGES_NUMBER = 5,
-    parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
-    = $clog2(MAXIMUM_PACKAGES_NUMBER - 1),
-    
     parameter TARGET_LEN          = 0
 ) (
     input clk_i, rst_n_i,
@@ -36,8 +21,6 @@ module arbiter #(
     output logic [TARGET_LEN-1:0] target_o
 );
 
-    `include "axis_type.svh"
-
     logic [TARGET_LEN-1:0] target_reg [CHANNEL_NUMBER];
    
     logic [CHANNEL_NUMBER_WIDTH-1:0] next_grant;
@@ -45,8 +28,7 @@ module arbiter #(
 
     logic [CHANNEL_NUMBER-1:0] valid_i;
     logic [CHANNEL_NUMBER*2 - 1:0] shifted_valid_i;
-    // logic [MAXIMUM_PACKAGES_NUMBER_WIDTH-1:0] packages_left;
-    logic [7:0] packages_left [CHANNEL_NUMBER];
+    logic [8:0] packages_left [CHANNEL_NUMBER];
     
     axis_data_t data [CHANNEL_NUMBER];
 

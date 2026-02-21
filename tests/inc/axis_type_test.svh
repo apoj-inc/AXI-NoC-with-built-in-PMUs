@@ -14,6 +14,6 @@ parameter DEST_WIDTH = 8;
 parameter USER_WIDTH   = 4;
 `endif
 
-`include "axis_type.svh"
+`
 
 `endif

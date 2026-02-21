@@ -1,19 +1,9 @@
 `include "defines.svh"
+`include "axi2axis_typedef.svh"
 
-module algorithm_dual #(
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+module algorithm_dual
+import axis_type::*;
+#(
     parameter CHANNEL_NUMBER = 10,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
@@ -51,8 +41,6 @@ module algorithm_dual #(
     logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
     assign target_x_i =
         target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
-
-    `include "axis_type.svh"
 
     logic [CHANNEL_NUMBER_WIDTH-1:0] ctrl;
     logic [CHANNEL_NUMBER-1:0] selector;

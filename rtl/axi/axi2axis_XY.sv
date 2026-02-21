@@ -1,26 +1,10 @@
 `include "defines.svh"
 `include "axi2axis_typedef.svh"
 
-module axi2axis_XY #(
-    parameter AXI_DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 16,
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
-
+module axi2axis_XY
+import axis_type::*;
+import axi_type::*;
+#(
     parameter ROUTER_X = 0,
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
@@ -51,9 +35,6 @@ module axi2axis_XY #(
     output axis_mosi_t m_axis_req_o
     
 );
-
-    `include "axi_type.svh"
-    `include "axis_type.svh"
 
     typedef struct packed {
         logic [AXIS_DATA_WIDTH - (8 + (MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH) * 2) - 1:0] RESERVED;
