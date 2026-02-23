@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axi2axis_typedef.svh"
 
 module algorithm #(
     parameter AXIS_DATA_WIDTH = 40,

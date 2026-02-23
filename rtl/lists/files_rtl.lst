@@ -1,5 +1,3 @@
-rtl/axi/defines.svh
-rtl/axi/axi2axis_typedef.svh
 rtl/cores/src/sr_cpu.vh 
 rtl/cores/src/sm_register.v 
 rtl/cores/src/sm_rom.v 
@@ -14,8 +12,10 @@ rtl/axi/router/src/router_dual.sv
 rtl/axi/router/src/router_dual_parallel.sv
 rtl/axi/XY_mesh/XY_mesh_dual.sv
 rtl/axi/XY_mesh/XY_mesh_dual_parallel.sv
+rtl/axi/axi_demux.sv
 rtl/axi/axi_if.sv
 rtl/axi/axi_master_loader.sv
+rtl/axi/axi_mux.sv
 rtl/axi/axi_ram.sv
 rtl/axi/axi2axis_XY.sv
 rtl/axi/axi2ram.sv
