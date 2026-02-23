@@ -36,50 +36,48 @@ module tb_axi_ram (
     input  logic rready
 );
 
-    axi_miso_t axi_miso_master;
-    axi_mosi_t axi_mosi_master;
+    axi_if axi_if();
 
     always_comb begin
-        axi_mosi_master.AWVALID = awvalid;
-        axi_mosi_master.data.aw.AWID    = awid;
-        axi_mosi_master.data.aw.AWADDR  = awaddr;
-        axi_mosi_master.data.aw.AWLEN   = awlen;
-        axi_mosi_master.data.aw.AWSIZE  = awsize;
-        axi_mosi_master.data.aw.AWBURST = awburst;
-        awready        = axi_miso_master.AWREADY;
+        axi_if.AWVALID = awvalid;
+        axi_if.AWID    = awid;
+        axi_if.AWADDR  = awaddr;
+        axi_if.AWLEN   = awlen;
+        axi_if.AWSIZE  = awsize;
+        axi_if.AWBURST = awburst;
+        awready        = axi_if.AWREADY;
 
-        axi_mosi_master.WVALID = wvalid;
-        axi_mosi_master.data.w.WDATA  = wdata;
-        axi_mosi_master.data.w.WSTRB  = kalstrb;
-        axi_mosi_master.data.w.WLAST  = wlast;
-        wready        = axi_miso_master.WREADY;
+        axi_if.WVALID = wvalid;
+        axi_if.WDATA  = wdata;
+        axi_if.WSTRB  = kalstrb;
+        axi_if.WLAST  = wlast;
+        wready        = axi_if.WREADY;
         
-        bvalid = axi_miso_master.BVALID;
-        bid    = axi_miso_master.data.b.BID;
-        axi_mosi_master.BREADY = bready;
+        bvalid = axi_if.BVALID;
+        bid    = axi_if.BID;
+        axi_if.BREADY = bready;
         
-        axi_mosi_master.ARVALID = arvalid;
-        axi_mosi_master.data.ar.ARID    = arid;
-        axi_mosi_master.data.ar.ARADDR  = araddr;
-        axi_mosi_master.data.ar.ARLEN   = arlen;
-        axi_mosi_master.data.ar.ARSIZE  = arsize;
-        axi_mosi_master.data.ar.ARBURST = arburst;
-        arready        = axi_miso_master.ARREADY;
+        axi_if.ARVALID = arvalid;
+        axi_if.ARID    = arid;
+        axi_if.ARADDR  = araddr;
+        axi_if.ARLEN   = arlen;
+        axi_if.ARSIZE  = arsize;
+        axi_if.ARBURST = arburst;
+        arready        = axi_if.ARREADY;
 
-        rvalid = axi_miso_master.RVALID;
-        rid    = axi_miso_master.data.r.RID;
-        rdata  = axi_miso_master.data.r.RDATA;
-        rlast  = axi_miso_master.data.r.RLAST;
-        axi_mosi_master.RREADY = rready;
+        rvalid = axi_if.RVALID;
+        rid    = axi_if.RID;
+        rdata  = axi_if.RDATA;
+        rlast  = axi_if.RLAST;
+        axi_if.RREADY = rready;
     end
 
     axi_ram #(
-        .ADDR_WIDTH(12)
+        .AXI_ADDR_WIDTH(12)
     ) ram (
         .clk_i(aclk), .rst_n_i(rst_n),
 
-        .in_mosi_i(axi_mosi_master),
-        .in_miso_o(axi_miso_master)
+        .s_axi_i(axi_if)
     );
     
 endmodule

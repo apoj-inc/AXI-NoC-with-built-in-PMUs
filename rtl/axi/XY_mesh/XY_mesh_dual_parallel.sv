@@ -1,33 +1,27 @@
 `include "defines.svh"
 
 module XY_mesh_dual_parallel #(
-    parameter AXI_DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 16,
-    parameter ID_W_WIDTH = 5,
-    parameter ID_R_WIDTH = 5,
+    parameter AXI_DATA_WIDTH  = 32,
+    parameter AXI_ADDR_WIDTH  = 16,
+    parameter AXI_ID_W_WIDTH  = 5,
+    parameter AXI_ID_R_WIDTH  = 5,
 
     parameter AXIS_DATA_WIDTH = 40,
-    parameter AXIS_ID_WIDTH = 4,
+    parameter AXIS_ID_WIDTH   = 4,
     parameter AXIS_DEST_WIDTH = 4,
     parameter AXIS_USER_WIDTH = 4,
 
-    parameter MAX_ROUTERS_X = 4,
-    parameter MAX_ROUTERS_X_WIDTH
-    = $clog2(MAX_ROUTERS_X),
-    parameter MAX_ROUTERS_Y = 4,
-    parameter MAX_ROUTERS_Y_WIDTH
-    = $clog2(MAX_ROUTERS_Y)
+    parameter MAX_ROUTERS_X   = 4,
+    parameter MAX_ROUTERS_Y   = 4,
+
+    parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
+    parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y)
 ) (
     input ACLK, ARESETn,
 
-    input  axi_mosi_t s_axi_i[MAX_ROUTERS_X*MAX_ROUTERS_Y],
-    output axi_miso_t s_axi_o[MAX_ROUTERS_X*MAX_ROUTERS_Y],
-
-    input  axi_miso_t m_axi_i[MAX_ROUTERS_X*MAX_ROUTERS_Y],
-    output axi_mosi_t m_axi_o[MAX_ROUTERS_X*MAX_ROUTERS_Y]
+    axi_if.s s_axi_i[MAX_ROUTERS_X*MAX_ROUTERS_Y],
+    axi_if.m m_axi_o[MAX_ROUTERS_X*MAX_ROUTERS_Y]
 );
-
-    `include "axi_type.svh"
 
     typedef enum logic [3:0] {
         HOME_REQ,
@@ -47,21 +41,9 @@ module XY_mesh_dual_parallel #(
         .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
         .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
         .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-    ) router_if[MAX_ROUTERS_Y+2][MAX_ROUTERS_X+2][10]();
-
-    axis_if #(
-        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
-        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
-        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
-        .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-    ) from_home[MAX_ROUTERS_Y][MAX_ROUTERS_X][2]();
-
-    axis_if #(
-        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
-        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
-        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
-        .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-    ) router_in[MAX_ROUTERS_Y][MAX_ROUTERS_X][10]();
+    )   router_if[MAX_ROUTERS_Y+2][MAX_ROUTERS_X+2][10](),
+        from_home[MAX_ROUTERS_Y][MAX_ROUTERS_X][2](),
+        router_in[MAX_ROUTERS_Y][MAX_ROUTERS_X][10]();
 
     generate
         genvar i;
@@ -98,9 +80,9 @@ module XY_mesh_dual_parallel #(
                 
                 axi2axis_XY #(
                     .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-                    .ADDR_WIDTH(ADDR_WIDTH),
-                    .ID_W_WIDTH(ID_W_WIDTH),
-                    .ID_R_WIDTH(ID_R_WIDTH),
+                    .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+                    .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
+                    .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH),
 
                     .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
                     .AXIS_ID_WIDTH(AXIS_ID_WIDTH),
@@ -115,10 +97,8 @@ module XY_mesh_dual_parallel #(
                     .ACLK(ACLK),
                     .ARESETn(ARESETn),
 
-                    .s_axi_i(s_axi_i[i * MAX_ROUTERS_X + j]),
-                    .s_axi_o(s_axi_o[i * MAX_ROUTERS_X + j]),
-                    .m_axi_i(m_axi_i[i * MAX_ROUTERS_X + j]),
-                    .m_axi_o(m_axi_o[i * MAX_ROUTERS_X + j]),
+                    .s_axi_if_i(s_axi_i[i * MAX_ROUTERS_X + j]),
+                    .m_axi_if_o(m_axi_o[i * MAX_ROUTERS_X + j]),
 
                     .s_axis_if_resp_i(router_if[i+1][j+1][HOME_RESP]),
                     .m_axis_if_resp_o(from_home[i][j][HOME_RESP]),

@@ -2,32 +2,28 @@
 `include "axi2axis_typedef.svh"
 
 module axi2axis_XY #(
-    parameter AXI_DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 16,
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
+    parameter AXI_DATA_WIDTH  = 32,
+    parameter AXI_ADDR_WIDTH  = 16,
+    parameter AXI_ID_W_WIDTH  = 4,
+    parameter AXI_ID_R_WIDTH  = 4,
     
     parameter AXIS_DATA_WIDTH = 40,
-    parameter AXIS_ID_WIDTH = 4,
+    parameter AXIS_ID_WIDTH   = 4,
     parameter AXIS_DEST_WIDTH = 4,
     parameter AXIS_USER_WIDTH = 4,
 
-    parameter ROUTER_X = 0,
+    parameter ROUTER_X      = 0,
+    parameter ROUTER_Y      = 0,
     parameter MAX_ROUTERS_X = 4,
-    parameter MAX_ROUTERS_X_WIDTH
-    = $clog2(MAX_ROUTERS_X),
-    parameter ROUTER_Y = 0,
     parameter MAX_ROUTERS_Y = 4,
-    parameter MAX_ROUTERS_Y_WIDTH
-    = $clog2(MAX_ROUTERS_Y)
+
+    parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
+    parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y)
 ) (
     input ACLK, ARESETn,
 
-    input  axi_mosi_t s_axi_i,
-    output axi_miso_t s_axi_o,
-
-    output axi_mosi_t m_axi_o,
-    input  axi_miso_t m_axi_i,
+    axi_if.s  s_axi_if_i,
+    axi_if.m  m_axi_if_o,
 
     axis_if.s s_axis_if_resp_i,
     axis_if.m m_axis_if_resp_o,
@@ -37,7 +33,13 @@ module axi2axis_XY #(
     
 );
 
-    `include "axi_type.svh"
+    `GENERATE_AXI_TYPEDEFS
+
+    axi_mosi_t s_axi_i, m_axi_o;
+    axi_miso_t s_axi_o, m_axi_i;
+    `AXI_INTERFACE_SLAVE2TYPEDEF(s_axi_if_i, s_axi_i, s_axi_o)
+    `AXI_INTERFACE_MASTER2TYPEDEF(m_axi_if_o, m_axi_o, m_axi_i)
+    
 
     `GENERATE_AXIS_TYPEDEFS
 
@@ -61,17 +63,17 @@ module axi2axis_XY #(
     } routing_header;
 
     typedef struct packed {
-        logic [AXIS_DATA_WIDTH - (ID_W_WIDTH + ADDR_WIDTH + 8 + 3 + 2) - 1:0] RESERVED;
-        logic [ID_W_WIDTH-1:0] ID;
-        logic [ADDR_WIDTH-1:0] ADDR;
+        logic [AXIS_DATA_WIDTH - (AXI_ID_W_WIDTH + AXI_ADDR_WIDTH + 8 + 3 + 2) - 1:0] RESERVED;
+        logic [AXI_ID_W_WIDTH-1:0] ID;
+        logic [AXI_ADDR_WIDTH-1:0] ADDR;
         logic [7:0] LEN;
         logic [2:0] SIZE;
         logic [1:0] BURST;
     } aw_subheader;
 
     typedef struct packed {
-        logic [AXIS_DATA_WIDTH - (ID_W_WIDTH) - 1:0] RESERVED;
-        logic [ID_W_WIDTH-1:0] ID;
+        logic [AXIS_DATA_WIDTH - (AXI_ID_W_WIDTH) - 1:0] RESERVED;
+        logic [AXI_ID_W_WIDTH-1:0] ID;
     } b_subheader;
 
     typedef struct packed {
@@ -80,17 +82,17 @@ module axi2axis_XY #(
     } w_data;
 
     typedef struct packed {
-        logic [AXIS_DATA_WIDTH - (ID_R_WIDTH + ADDR_WIDTH + 8 + 3 + 2) - 1:0] RESERVED;
-        logic [ID_R_WIDTH-1:0] ID;
-        logic [ADDR_WIDTH-1:0] ADDR;
+        logic [AXIS_DATA_WIDTH - (AXI_ID_R_WIDTH + AXI_ADDR_WIDTH + 8 + 3 + 2) - 1:0] RESERVED;
+        logic [AXI_ID_R_WIDTH-1:0] ID;
+        logic [AXI_ADDR_WIDTH-1:0] ADDR;
         logic [7:0] LEN;
         logic [2:0] SIZE;
         logic [1:0] BURST;
     } ar_subheader;
 
     typedef struct packed {
-        logic [AXIS_DATA_WIDTH - (ID_R_WIDTH + AXI_DATA_WIDTH) - 1:0] RESERVED;
-        logic [ID_R_WIDTH-1:0] ID;
+        logic [AXIS_DATA_WIDTH - (AXI_ID_R_WIDTH + AXI_DATA_WIDTH) - 1:0] RESERVED;
+        logic [AXI_ID_R_WIDTH-1:0] ID;
         logic [AXI_DATA_WIDTH-1:0] DATA;
     } r_data;
 

@@ -37,7 +37,7 @@ module tb_with_loaders #(
 );
 
     mesh_with_loaders #(
-        .ADDR_WIDTH(ADDR_WIDTH)
+        .AXI_ADDR_WIDTH(ADDR_WIDTH)
     ) ct (
         .aclk         (aclk),
         .aresetn      (aresetn),

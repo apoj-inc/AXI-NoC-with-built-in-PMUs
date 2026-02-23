@@ -43,7 +43,7 @@ module tb_router #(
     input  logic rready[5]
     
 );
-
+/*
     `GENERATE_AXIS_TYPEDEFS
 
     axi_mosi_t axi_mosi[5], axi_ram_mosi[5];
@@ -142,5 +142,5 @@ module tb_router #(
         .out_miso_i(axis_miso_from_q),
         .out_mosi_o(axis_mosi_from_q)
     );
-    
+    */
 endmodule

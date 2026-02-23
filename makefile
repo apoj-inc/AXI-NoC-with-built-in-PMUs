@@ -22,7 +22,7 @@ VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)),$(CURDIR)/$(file))
 
 TB_DIR ?= $(CURDIR)/tb
 TESTS_DIRS ?= $(sort $(dir $(wildcard $(TB_DIR)/tb_*/)))
-TB_FILES ?=  $(foreach file,$(shell find $(TB_DIR)/ -type f -name '*.sv'),$(file))
+TB_FILES ?=  $(foreach file,$(shell find $(TB_DIR)/tb_* -type f -name '*.sv'),$(file))
 
 BUILD_DIR   ?= $(COCOTB_DIR)
 TESTS_DIR   ?= $(BUILD_DIR)/tests
@@ -30,9 +30,8 @@ LOGS_DIR    ?= $(TESTS_DIR)/logs
 RESULTS_DIR ?= ${LOGS_DIR}/results
 
 SIM ?= questa-qisqrun
-BUILD_ARGS ?=
-SIM_ARGS ?=
-SIM_ARGS += -suppress 12110 -autofindloop -suppress 12130 -suppress 13314
+BUILD_ARGS ?= -suppress 13314
+SIM_ARGS ?= -suppress 12110 -autofindloop -suppress 12130
 
 ifndef GENERAL_TOPLEVEL
 COCOTB_TOPLEVEL     ?= tb_uart_loop
@@ -43,7 +42,7 @@ COCOTB_TEST_MODULES ?= $(GENERAL_TOPLEVEL)
 endif
 
 TOPLEVEL ?= toplevel
-DEVICE_FAMILY ?= "Cyclone V"
+DEVICE_FAMILY ?= \"Cyclone V\"
 DEVICE_PART ?= "5CGXFC9E7F35C8"
 
 ARGS ?=
@@ -67,7 +66,7 @@ wave: $(VENV_DIR)
 run_pytest: $(VENV_DIR)
 	@export TESTS_DIRS="$(TESTS_DIRS)"; \
 	export INCLUDE_DIRS="$(INCLUDE_DIRS)"; \
-	export VERILOG_SOURCES="$(CURDIR)/tests/test.svh $(VERILOG_SOURCES) $(TB_FILES)"; \
+	export VERILOG_SOURCES="$(VERILOG_SOURCES) $(TB_FILES)"; \
 	export LOGS_DIR=${LOGS_DIR}; \
 	export RESULTS_DIR=${RESULTS_DIR}; \
 	export TESTS_DIR=${TESTS_DIR}; \

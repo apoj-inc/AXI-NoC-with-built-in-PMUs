@@ -1,46 +1,46 @@
 interface axi_if #(
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter ADDR_WIDTH = 16,
-    parameter AXI_DATA_WIDTH = 32
+    parameter AXI_DATA_WIDTH = 32,
+    parameter AXI_ADDR_WIDTH = 16,
+    parameter AXI_ID_W_WIDTH = 5,
+    parameter AXI_ID_R_WIDTH = 5
 ) ();
 
     // AW channel 
-    logic AWVALID;
-    logic AWREADY;
-    logic [ID_W_WIDTH-1:0] AWID;
-    logic [ADDR_WIDTH-1:0] AWADDR;
-    logic [7:0] AWLEN;
-    logic [2:0] AWSIZE;
-    logic [1:0] AWBURST;
+    logic                          AWVALID ;
+    logic                          AWREADY ;
+    logic [AXI_ID_W_WIDTH-1:0]     AWID    ;
+    logic [AXI_ADDR_WIDTH-1:0]     AWADDR  ;
+    logic [7:0]                    AWLEN   ;
+    logic [2:0]                    AWSIZE  ;
+    logic [1:0]                    AWBURST ;
 
     // W channel
-    logic WVALID;
-    logic WREADY;
-    logic [AXI_DATA_WIDTH-1:0] WDATA;
-    logic [(AXI_DATA_WIDTH/8)-1:0] WSTRB;
-    logic WLAST;
+    logic                          WVALID  ;
+    logic                          WREADY  ;
+    logic [AXI_DATA_WIDTH-1:0]     WDATA   ;
+    logic [(AXI_DATA_WIDTH/8)-1:0] WSTRB   ;
+    logic                          WLAST   ;
 
     // B channel
-    logic BVALID;
-    logic BREADY;
-    logic [ID_W_WIDTH-1:0] BID;
+    logic                          BVALID  ;
+    logic                          BREADY  ;
+    logic [AXI_ID_W_WIDTH-1:0]     BID     ;
 
     // AR channel 
-    logic ARVALID;
-    logic ARREADY;
-    logic [ID_R_WIDTH-1:0] ARID;
-    logic [ADDR_WIDTH-1:0] ARADDR;
-    logic [7:0] ARLEN;
-    logic [2:0] ARSIZE;
-    logic [1:0] ARBURST;
+    logic                          ARVALID ;
+    logic                          ARREADY ;
+    logic [AXI_ID_R_WIDTH-1:0]     ARID    ;
+    logic [AXI_ADDR_WIDTH-1:0]     ARADDR  ;
+    logic [7:0]                    ARLEN   ;
+    logic [2:0]                    ARSIZE  ;
+    logic [1:0]                    ARBURST ;
 
     // R channel
-    logic RVALID;
-    logic RREADY;
-    logic [ID_R_WIDTH-1:0] RID;
-    logic [AXI_DATA_WIDTH-1:0] RDATA;
-    logic RLAST;
+    logic                          RVALID  ;
+    logic                          RREADY  ;
+    logic [AXI_ID_R_WIDTH-1:0]     RID     ;
+    logic [AXI_DATA_WIDTH-1:0]     RDATA   ;
+    logic                          RLAST   ;
 
     modport m (
         input AWREADY,

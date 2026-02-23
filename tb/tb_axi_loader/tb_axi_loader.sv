@@ -39,57 +39,57 @@ module tb_axi_loader (
     input  logic        write_i,
     input  logic [11:0] axaddr_i,
     input  logic [7:0]  axlen_i,
-    input  logic [31:0] wdata_i,
-    input  logic [3:0]  wstrb_i,
+    input  logic [8:0]  wdata_i,
+    input  logic        wstrb_i,
     input  logic        fifo_push_i,
     input  logic        start_i,
     output logic        idle_o,
-    output logic [31:0] rdata_o
+    output logic        rdata_o
 );
 
 
-    axi_miso_t axi_miso;
-    axi_mosi_t axi_mosi;
+
+    axi_if axi_if();
 
     always_comb begin
-        awvalid        = axi_mosi.AWVALID;
-        awid           = axi_mosi.data.aw.AWID;
-        awaddr         = axi_mosi.data.aw.AWADDR;
-        awlen          = axi_mosi.data.aw.AWLEN;
-        awsize         = axi_mosi.data.aw.AWSIZE;
-        awburst        = axi_mosi.data.aw.AWBURST;
-        axi_miso.AWREADY = awready;
+        awvalid        = axi_if.AWVALID;
+        awid           = axi_if.AWID;
+        awaddr         = axi_if.AWADDR;
+        awlen          = axi_if.AWLEN;
+        awsize         = axi_if.AWSIZE;
+        awburst        = axi_if.AWBURST;
+        axi_if.AWREADY = awready;
 
-        wvalid        = axi_mosi.WVALID;
-        wdata         = axi_mosi.data.w.WDATA;
-        wstrb         = axi_mosi.data.w.WSTRB;
-        wlast         = axi_mosi.data.w.WLAST;
-        axi_miso.WREADY = wready;
+        wvalid        = axi_if.WVALID;
+        wdata         = axi_if.WDATA;
+        wstrb         = axi_if.WSTRB;
+        wlast         = axi_if.WLAST;
+        axi_if.WREADY = wready;
         
-        axi_miso.BVALID = bvalid;
-        axi_miso.data.b.BID    = bid;
-        bready        = axi_mosi.BREADY;
+        axi_if.BVALID = bvalid;
+        axi_if.BID    = bid;
+        bready        = axi_if.BREADY;
         
-        arvalid        = axi_mosi.ARVALID;
-        arid           = axi_mosi.data.ar.ARID;
-        araddr         = axi_mosi.data.ar.ARADDR;
-        arlen          = axi_mosi.data.ar.ARLEN;
-        arsize         = axi_mosi.data.ar.ARSIZE;
-        arburst        = axi_mosi.data.ar.ARBURST;
-        axi_miso.ARREADY = arready;
+        arvalid        = axi_if.ARVALID;
+        arid           = axi_if.ARID;
+        araddr         = axi_if.ARADDR;
+        arlen          = axi_if.ARLEN;
+        arsize         = axi_if.ARSIZE;
+        arburst        = axi_if.ARBURST;
+        axi_if.ARREADY = arready;
 
-        axi_miso.RVALID = rvalid;
-        axi_miso.data.r.RID    = rid;
-        axi_miso.data.r.RDATA  = rdata;
-        axi_miso.data.r.RLAST  = rlast;
-        rready        = axi_mosi.RREADY;
+        axi_if.RVALID = rvalid;
+        axi_if.RID    = rid;
+        axi_if.RDATA  = rdata;
+        axi_if.RLAST  = rlast;
+        rready        = axi_if.RREADY;
     end
 
     axi_master_loader #(
         .AXI_DATA_WIDTH(8),
-        .ADDR_WIDTH(12),
-        .ID_W_WIDTH(5),
-        .ID_R_WIDTH(5),
+        .AXI_ADDR_WIDTH(12),
+        .AXI_ID_W_WIDTH(5),
+        .AXI_ID_R_WIDTH(5),
         .FIFO_DEPTH(32),
         .LOADER_ID(1)
     ) dut (
@@ -110,8 +110,7 @@ module tb_axi_loader (
 
         .rdata_o     (rdata_o     ),
 
-        .m_axi_i     (axi_miso    ),
-        .m_axi_o     (axi_mosi    )
+        .m_axi_if_o  (axi_if    )
     );
     
 endmodule

@@ -56,7 +56,6 @@ module router_dual_parallel #(
         alg_o_req_axis_if  [CHANNEL_NUMBER/2] (),
         alg_o_resp_axis_if [CHANNEL_NUMBER/2] ();
     
-    logic [$clog2(CHANNEL_NUMBER/2)-1:0] current_grant_req, current_grant_resp;
     logic [TARGET_LEN-1:0] target_resp, target_req;
 
     generate
@@ -91,7 +90,6 @@ module router_dual_parallel #(
         .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
         .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
         .CHANNEL_NUMBER(CHANNEL_NUMBER/2),
-        .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER),
 
         .TARGET_LEN(TARGET_LEN)
     ) arb_req (

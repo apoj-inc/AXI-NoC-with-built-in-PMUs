@@ -1,5 +1,3 @@
-`include "defines.svh"
-
 interface axis_if #(
     parameter AXIS_DATA_WIDTH = 40,
     parameter AXIS_ID_WIDTH   = 4,

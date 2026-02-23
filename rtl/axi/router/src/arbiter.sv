@@ -10,9 +10,6 @@ module arbiter #(
     parameter CHANNEL_NUMBER = 5,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
-    parameter MAXIMUM_PACKAGES_NUMBER = 5,
-    parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
-    = $clog2(MAXIMUM_PACKAGES_NUMBER - 1),
     
     parameter TARGET_LEN          = 0
 ) (
@@ -46,7 +43,6 @@ module arbiter #(
 
     logic [CHANNEL_NUMBER-1:0] valid_i;
     logic [CHANNEL_NUMBER*2 - 1:0] shifted_valid_i;
-    // logic [MAXIMUM_PACKAGES_NUMBER_WIDTH-1:0] packages_left;
     logic [7:0] packages_left [CHANNEL_NUMBER];
     
     axis_data_t data [CHANNEL_NUMBER];

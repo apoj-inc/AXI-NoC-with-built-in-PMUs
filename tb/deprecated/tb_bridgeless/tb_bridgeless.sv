@@ -67,7 +67,7 @@ module tb_bridgeless (
     output logic b_rlast,
     input  logic b_rready
 );
-
+/*
 
     axi_miso_t axi_miso_master[2];
     axi_mosi_t axi_mosi_master[2];
@@ -195,5 +195,5 @@ module tb_bridgeless (
         .in_mosi_i(axi_mosi_demux[1]),
         .in_miso_o(axi_miso_demux[1])
     );
-    
+    */
 endmodule
