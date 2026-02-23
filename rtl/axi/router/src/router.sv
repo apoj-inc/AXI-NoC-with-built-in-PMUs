@@ -1,19 +1,11 @@
 `include "defines.svh"
 
 module router #(
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+    parameter AXIS_DATA_WIDTH = 40,
+    parameter AXIS_ID_WIDTH = 4,
+    parameter AXIS_DEST_WIDTH = 4,
+    parameter AXIS_USER_WIDTH = 4,
+
     parameter CHANNEL_NUMBER = 5,
     parameter BUFFER_LENGTH = 16,
     parameter MAXIMUM_PACKAGES_NUMBER = 5,
@@ -39,19 +31,28 @@ module router #(
     parameter N = 0
 )(
     input  clk_i, rst_n_i,
-    input  axis_mosi_t in_mosi_i  [CHANNEL_NUMBER],
-    output axis_miso_t in_miso_o  [CHANNEL_NUMBER],
-    output axis_mosi_t out_mosi_o [CHANNEL_NUMBER],
-    input  axis_miso_t out_miso_i [CHANNEL_NUMBER]
+    axis_if.s s_axis_i [CHANNEL_NUMBER],
+    axis_if.m m_axis_o [CHANNEL_NUMBER]
+
 );
+
+    `GENERATE_AXIS_TYPEDEFS
+    axis_mosi_t in_mosi_i[CHANNEL_NUMBER], out_mosi_o[CHANNEL_NUMBER];
+    axis_miso_t in_miso_o[CHANNEL_NUMBER], out_miso_o[CHANNEL_NUMBER];
+
+    generate
+        genvar i;
+        for (i = 0; i < CHANNEL_NUMBER; i++) begin : typedef_to_interface
+            `AXIS_INTERFACE_SLAVE2TYPEDEF(s_axis_i[i], in_mosi_i[i], in_miso_o[i])
+            `AXIS_INTERFACE_MASTER2TYPEDEF(m_axis_o[i], out_mosi_o[i], out_miso_o[i])
+        end
+    endgenerate
 
     localparam TARGET_LEN = USE_X_Y_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
                             USE_N_COORDINATES   ?   $clog2(N)                                   :
                                                     0                                           ;
 
     initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
-
-    `include "axis_type.svh"
 
     axis_mosi_t queue_o_mosi [CHANNEL_NUMBER];
     axis_miso_t queue_o_miso [CHANNEL_NUMBER];

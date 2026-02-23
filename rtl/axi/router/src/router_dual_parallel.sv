@@ -1,19 +1,11 @@
 `include "defines.svh"
 
 module router_dual_parallel #(
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+    parameter AXIS_DATA_WIDTH = 40,
+    parameter AXIS_ID_WIDTH = 4,
+    parameter AXIS_DEST_WIDTH = 4,
+    parameter AXIS_USER_WIDTH = 4,
+
     parameter CHANNEL_NUMBER = 10,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
@@ -41,10 +33,8 @@ module router_dual_parallel #(
     parameter N = 0
 )(
     input clk_i, rst_n_i,
-    input  axis_mosi_t in_mosi_i  [CHANNEL_NUMBER],
-    output axis_miso_t in_miso_o  [CHANNEL_NUMBER],
-    output axis_mosi_t out_mosi_o [CHANNEL_NUMBER],
-    input  axis_miso_t out_miso_i [CHANNEL_NUMBER]
+    axis_if.s s_axis_i [CHANNEL_NUMBER],
+    axis_if.m m_axis_o [CHANNEL_NUMBER]
 );
 
     localparam TARGET_LEN = USE_X_Y_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
@@ -52,87 +42,54 @@ module router_dual_parallel #(
                                                     0                                           ;
 
     initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
-
-    `include "axis_type.svh"
-
-    axis_mosi_t queue_o_mosi [CHANNEL_NUMBER];
-    axis_miso_t queue_o_miso [CHANNEL_NUMBER];
-
-    axis_mosi_t arb_req_axis_i_mosi [CHANNEL_NUMBER/2];
-    axis_miso_t arb_req_axis_i_miso [CHANNEL_NUMBER/2];
-
-    axis_mosi_t arb_resp_axis_i_mosi [CHANNEL_NUMBER/2];
-    axis_miso_t arb_resp_axis_i_miso [CHANNEL_NUMBER/2];
-
-    axis_mosi_t arbiter_o_req_mosi, arbiter_o_resp_mosi;
-    axis_miso_t arbiter_o_req_miso, arbiter_o_resp_miso;
-
-    axis_mosi_t alg_req_axis_o_mosi [CHANNEL_NUMBER/2];
-    axis_miso_t alg_req_axis_o_miso [CHANNEL_NUMBER/2];
-
-    axis_mosi_t alg_resp_axis_o_mosi [CHANNEL_NUMBER/2];
-    axis_miso_t alg_resp_axis_o_miso [CHANNEL_NUMBER/2];
+    
+    axis_if #(
+        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+        .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+    )   queue_o_if         [CHANNEL_NUMBER  ] (),
+        arb_i_req_axis_if  [CHANNEL_NUMBER/2] (),
+        arb_i_resp_axis_if [CHANNEL_NUMBER/2] (),
+        arb_o_req_if                          (),
+        arb_o_resp_if                         (),
+        alg_o_req_axis_if  [CHANNEL_NUMBER/2] (),
+        alg_o_resp_axis_if [CHANNEL_NUMBER/2] ();
     
     logic [$clog2(CHANNEL_NUMBER/2)-1:0] current_grant_req, current_grant_resp;
     logic [TARGET_LEN-1:0] target_resp, target_req;
 
+    generate
+        genvar i;
+        for (i = 0; i < CHANNEL_NUMBER/2; i++) begin : interfaces_concat
+            `AXIS_INTERFACE2INTERFACE(queue_o_if[i*2], arb_i_req_axis_if[i])
+            `AXIS_INTERFACE2INTERFACE(queue_o_if[i*2+1], arb_i_resp_axis_if[i])
+
+            `AXIS_INTERFACE2INTERFACE(alg_o_req_axis_if[i], m_axis_o[i*2])
+            `AXIS_INTERFACE2INTERFACE(alg_o_resp_axis_if[i], m_axis_o[i*2+1])
+        end
+    endgenerate
+
     axis_fifo_buffer #(
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
         .BUFFER_LENGTH(BUFFER_LENGTH),
-        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
+        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+        .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
     ) q (
         .ACLK(clk_i),
         .ARESETn(rst_n_i),
 
-        .in_mosi_i(in_mosi_i),
-        .in_miso_o(in_miso_o),
-        .out_mosi_o(queue_o_mosi),
-        .out_miso_i(queue_o_miso)
+        .s_axis_i(s_axis_i),
+        .m_axis_o(queue_o_if)
     );
 
-    generate
-        genvar i;
-        for (i = 0; i < CHANNEL_NUMBER/2; i++) begin : interfaces_concat
-            assign arb_req_axis_i_mosi[i] = queue_o_mosi[i*2];
-            assign queue_o_miso[i*2] = arb_req_axis_i_miso[i];
-
-            assign arb_resp_axis_i_mosi[i] = queue_o_mosi[i*2+1];
-            assign queue_o_miso[i*2+1] = arb_resp_axis_i_miso[i];
-
-            assign out_mosi_o[i*2]   = alg_req_axis_o_mosi[i];
-            assign alg_req_axis_o_miso[i]  = out_miso_i[i*2];
-
-            assign out_mosi_o[i*2+1] = alg_resp_axis_o_mosi[i];
-            assign alg_resp_axis_o_miso[i] =  out_miso_i[i*2+1];
-        end
-    endgenerate
-
     arbiter #(
-        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif,
+        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+        .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
         .CHANNEL_NUMBER(CHANNEL_NUMBER/2),
         .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER),
 
@@ -140,40 +97,25 @@ module router_dual_parallel #(
     ) arb_req (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
-        .in_mosi_i(arb_req_axis_i_mosi),
-        .in_miso_o(arb_req_axis_i_miso),
-
-        .out_mosi_o(arbiter_o_req_mosi),
-        .out_miso_i(arbiter_o_req_miso),
+        .s_axis_i(arb_i_req_axis_if),
+        .m_axis_o(arb_o_req_if),
 
         // Mesh and Torus
         .target_o(target_req)
     ), arb_resp (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
-        .in_mosi_i(arb_resp_axis_i_mosi),
-        .in_miso_o(arb_resp_axis_i_miso),
-
-        .out_mosi_o(arbiter_o_resp_mosi),
-        .out_miso_i(arbiter_o_resp_miso),
+        .s_axis_i(arb_i_resp_axis_if),
+        .m_axis_o(arb_o_resp_if),
 
         .target_o(target_resp)
     );
 
     algorithm #(
-        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif,
+        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+        .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
         .CHANNEL_NUMBER(CHANNEL_NUMBER/2),
 
         .TARGET_LEN(TARGET_LEN),
@@ -190,21 +132,15 @@ module router_dual_parallel #(
     ) alg_req (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
-        .in_mosi_i(arbiter_o_req_mosi),
-        .in_miso_o(arbiter_o_req_miso),
-
-        .out_mosi_o(alg_req_axis_o_mosi),
-        .out_miso_i(alg_req_axis_o_miso),
+        .s_axis_i(arb_o_req_if),
+        .m_axis_o(alg_o_req_axis_if),
 
         .target_i(target_req)
     ), alg_resp (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
-        .in_mosi_i(arbiter_o_resp_mosi),
-        .in_miso_o(arbiter_o_resp_miso),
-
-        .out_mosi_o(alg_resp_axis_o_mosi),
-        .out_miso_i(alg_resp_axis_o_miso),
+        .s_axis_i(arb_o_resp_if),
+        .m_axis_o(alg_o_resp_axis_if),
 
         .target_i(target_resp)
     );

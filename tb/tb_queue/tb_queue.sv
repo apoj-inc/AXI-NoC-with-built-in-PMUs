@@ -1,4 +1,11 @@
-module tb_queue(
+`include "defines.svh"
+
+module tb_queue #(
+    parameter AXIS_DATA_WIDTH = 40,
+    parameter AXIS_ID_WIDTH   = 3,
+    parameter AXIS_DEST_WIDTH = 4,
+    parameter AXIS_USER_WIDTH = 4
+) (
     input clk,
     input rst_n,
     input m_tvalid,
@@ -12,6 +19,8 @@ module tb_queue(
     output m_tready_alt,
     output [32-1:0] s_tdata_alt
 );
+
+    `GENERATE_AXIS_TYPEDEFS
 
     axis_miso_t axis_miso_in, axis_miso_out;
     axis_mosi_t axis_mosi_in, axis_mosi_out;
