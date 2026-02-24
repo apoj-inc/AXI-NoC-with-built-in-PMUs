@@ -6,7 +6,7 @@ RTL_PATH ?= ../../../rtl
 FILES_RTL_PATH ?= $(RTL_PATH)/lists/files_rtl.lst
 INCDIRS_PATH ?= $(RTL_PATH)/lists/incdirs.lst
 CUSTOM_ASSIGNMENTS_PATH ?= $(QUARTUS_BUILD_PATH)/custom_assignments.tcl
-DEVICE_FAMILY ?= \"Cyclone V\"
+DEVICE_FAMILY ?= "$"Cyclone V$""
 DEVICE_PART ?= "5CGXFC9E7F35C8"
 
 RELEASE_DIR 	?= $(CURDIR)/release
