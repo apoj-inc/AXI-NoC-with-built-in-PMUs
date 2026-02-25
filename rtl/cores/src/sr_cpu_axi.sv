@@ -2,33 +2,16 @@
 
 module sr_cpu_axi
 # (
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter MAX_ID_WIDTH = 4,
-    parameter ADDR_WIDTH = 16,
-
-    parameter AXI_DATA_WIDTH = 8
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
+    parameter AXI_DATA_WIDTH = 8,
+    parameter AXI_ID_W_WIDTH = 4,
+    parameter AXI_ID_R_WIDTH = 4,
+    parameter AXI_ADDR_WIDTH = 16
 ) (
     input   logic         clk,  
     input   logic         rst_n,
 
-    input  axi_miso_t in_miso_i,
-    output axi_mosi_t in_mosi_o
+    axi_if.m              m_axi_o
 );
-
-    `include "axi_type.svh"
 
     logic         mem_wr;
     logic [15:0]  mem_addr;
@@ -67,23 +50,10 @@ module sr_cpu_axi
     );
 
     sr_axi_adapter #(
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH),
-        .MAX_ID_WIDTH(MAX_ID_WIDTH),
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
+        .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+        .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+        .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
+        .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH)
     ) axi_adapt (
         .clk              (clk),
         .rst_n            (rst_n),
@@ -97,8 +67,7 @@ module sr_cpu_axi
         .mem_wdata_i      (mem_wdata),
         .mem_rdata_o      (mem_rdata),
 
-        .in_miso_i(in_miso_i),
-        .in_mosi_o(in_mosi_o)
+        .m_axi_o (m_axi_o)
     );
 
 endmodule

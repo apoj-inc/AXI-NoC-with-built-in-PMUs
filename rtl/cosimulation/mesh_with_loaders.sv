@@ -1,114 +1,81 @@
 `include "defines.svh"
 
 module mesh_with_loaders # (
-    parameter ID_W_WIDTH = 5,
-    parameter ID_R_WIDTH = 5,
-    parameter ADDR_WIDTH = 16,
+    parameter AXI_DATA_WIDTH = 32,
+    parameter AXI_ID_W_WIDTH = 5,
+    parameter AXI_ID_R_WIDTH = 5,
+    parameter AXI_ADDR_WIDTH = 16,
+    
+    parameter AXIS_DATA_WIDTH = 40,
+    parameter AXIS_ID_WIDTH = 4,
+    parameter AXIS_DEST_WIDTH = 4,
+    parameter AXIS_USER_WIDTH = 4,
     
     parameter AXI_MASTER_LOADER_FIFO_DEPTH = 64,
 
     parameter MAX_ROUTERS_X = 4,
-    parameter MAX_ROUTERS_X_WIDTH
-    = $clog2(MAX_ROUTERS_X),
     parameter MAX_ROUTERS_Y = 4,
-    parameter MAX_ROUTERS_Y_WIDTH
-    = $clog2(MAX_ROUTERS_Y),
 
     parameter N = MAX_ROUTERS_X*MAX_ROUTERS_Y,
-    parameter MAX_ID_WIDTH = (ID_W_WIDTH > ID_R_WIDTH) ? ID_W_WIDTH : ID_R_WIDTH,
 
-    parameter AXI_DATA_WIDTH = 32,
+    parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
+    parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
+
+    parameter AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH,
+
     parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
 ) (
-    input  logic                      aclk,
-    input  logic                      aresetn,
+    input  logic                        aclk,
+    input  logic                        aresetn,
 
-    input  logic                      pmu_enable_i,
-    input  logic [4:0]                pmu_addr_i   [N],
-    output logic [31:0]               pmu_data_o   [N],
+    input  logic                        pmu_enable_i,
+    input  logic [4:0]                  pmu_addr_i   [N],
+    output logic [31:0]                 pmu_data_o   [N],
 
-    input  logic                      resp_wait_i  [N],
-    input  logic [MAX_ID_WIDTH-1:0]   id_i         [N],
-    input  logic                      write_i      [N],
-    input  logic [ADDR_WIDTH-1:0]     axaddr_i     [N],
-    input  logic [7:0]                axlen_i      [N],
-    input  logic [AXI_DATA_WIDTH-1:0] wdata_i      [N],
-    input  logic [AXI_DATA_BYTES-1:0] wstrb_i      [N],
-    input  logic                      fifo_push_i  [N],
-    input  logic                      start_i,
-    output logic                      idle_o       [N],
-    output logic [AXI_DATA_WIDTH-1:0] rdata_o      [N]
+    input  logic                        resp_wait_i  [N],
+    input  logic [AXI_MAX_ID_WIDTH-1:0] id_i         [N],
+    input  logic                        write_i      [N],
+    input  logic [AXI_ADDR_WIDTH-1:0]   axaddr_i     [N],
+    input  logic [7:0]                  axlen_i      [N],
+    input  logic [AXI_DATA_WIDTH-1:0]   wdata_i      [N],
+    input  logic [AXI_DATA_BYTES-1:0]   wstrb_i      [N],
+    input  logic                        fifo_push_i  [N],
+    input  logic                        start_i,
+    output logic                        idle_o       [N],
+    output logic [AXI_DATA_WIDTH-1:0]   rdata_o      [N]
 );
 
-    `include "axi_type.svh"
-
-    axi_mosi_t axi_mosi[N];
-    axi_miso_t axi_miso[N];
-
-    axi_mosi_t axi_mosi_ram[N];
-    axi_miso_t axi_miso_ram[N];
+    axi_if #(
+        .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
+        .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
+        .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH),
+        .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH)
+    ) axi_if_loader_noc [N](), axi_if_noc_ram [N]();
 
     generate
         genvar i;
         for (i = 0; i < N; i++) begin : map_wires
 
             axi_pmu #(
-                .ADDR_WIDTH(ADDR_WIDTH),
-                .ID_W_WIDTH(ID_W_WIDTH),
-                .ID_R_WIDTH(ID_R_WIDTH),
-                .MAX_ID_WIDTH(MAX_ID_WIDTH)
-                `ifdef TID_PRESENT
-                ,
-                .ID_WIDTH(ID_WIDTH)
-                `endif
-                `ifdef TDEST_PRESENT
-                ,
-                .DEST_WIDTH(DEST_WIDTH)
-                `endif
-                `ifdef TUSER_PRESENT
-                ,
-                .USER_WIDTH(USER_WIDTH)
-                `endif
+                .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
+                .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
+                .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH),
+                .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH)
             ) pmu (
                 .aclk         (aclk),
                 .aresetn      (aresetn),
                 .enable       (pmu_enable_i),
-                .mon_axi_miso (axi_miso[i]),
-                .mon_axi_mosi (axi_mosi[i]),
+                .mon_axi_i    (axi_if_loader_noc[i]),
                 .addr_i       (pmu_addr_i[i]),
                 .data_o       (pmu_data_o[i])
             );
 
             axi_master_loader #(
-                .ADDR_WIDTH(ADDR_WIDTH),
-                .ID_W_WIDTH(ID_W_WIDTH),
-                .ID_R_WIDTH(ID_R_WIDTH),
-                .FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH)
-                `ifdef TID_PRESENT
-                ,
-                .ID_WIDTH(ID_WIDTH)
-                `endif
-                `ifdef TDEST_PRESENT
-                ,
-                .DEST_WIDTH(DEST_WIDTH)
-                `endif
-                `ifdef TUSER_PRESENT
-                ,
-                .USER_WIDTH(USER_WIDTH)
-                `endif
-                ,
+                .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+                .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+                .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
+                .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH),
+                .FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH),
                 .LOADER_ID(i)
             ) loader (
                 .clk_i       (aclk),
@@ -124,56 +91,41 @@ module mesh_with_loaders # (
                 .start_i     (start_i),
                 .idle_o      (idle_o[i]),
                 .rdata_o     (rdata_o[i]),
-                .m_axi_i     (axi_miso[i]),
-                .m_axi_o     (axi_mosi[i])
+                .m_axi_if_o  (axi_if_loader_noc[i])
+            );
+
+            axi_ram #(
+                .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
+                .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
+                .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH),
+                .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH),
+                .BYTE_WIDTH(8)
+            ) ram (
+                .clk_i(aclk),
+                .rst_n_i(aresetn),
+                .s_axi_i(axi_if_noc_ram[i])
             );
         end
     endgenerate
 
     XY_mesh_dual_parallel #(
         .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH)
-        `ifdef TID_PRESENT
-        ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-        ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-        ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-        ,
+        .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+        .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
+        .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH),
+        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
+        .AXIS_ID_WIDTH(AXIS_ID_WIDTH),
+        .AXIS_DEST_WIDTH(AXIS_DEST_WIDTH),
+        .AXIS_USER_WIDTH(AXIS_USER_WIDTH),
+
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
-        .MAX_ROUTERS_X_WIDTH(MAX_ROUTERS_X_WIDTH),
-        .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-        .MAX_ROUTERS_Y_WIDTH(MAX_ROUTERS_Y_WIDTH)
+        .MAX_ROUTERS_Y(MAX_ROUTERS_Y)
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
 
-        .s_axi_i(axi_mosi),
-        .s_axi_o(axi_miso),
-
-        .m_axi_i(axi_miso_ram),
-        .m_axi_o(axi_mosi_ram)
-    );
-
-    axi_ram #(
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-        .BYTE_WIDTH(8),
-        .ADDR_WIDTH(ADDR_WIDTH),
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH)
-    ) ram[N] (
-        .clk_i({N{aclk}}),
-        .rst_n_i({N{aresetn}}),
-        .in_mosi_i(axi_mosi_ram),
-        .in_miso_o(axi_miso_ram)
+        .s_axi_i(axi_if_loader_noc),
+        .m_axi_o(axi_if_noc_ram)
     );
     
 endmodule

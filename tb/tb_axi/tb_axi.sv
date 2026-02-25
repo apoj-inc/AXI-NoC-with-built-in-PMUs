@@ -7,25 +7,23 @@ module tb_axi;
     always #10 ACLK = ~ACLK;
 
 
-    axi_miso_t axi_miso_master;
-    axi_mosi_t axi_mosi_master;
-
-    axi_miso_t axi_miso_slave[3];
-    axi_mosi_t axi_mosi_slave[3];
+    axi_if #(
+        .AXI_DATA_WIDTH(32),
+        .AXI_ADDR_WIDTH(16),
+        .AXI_ID_W_WIDTH(4),
+        .AXI_ID_R_WIDTH(4)
+    ) axi_in(), axi_out[3]();
 
     axi_demux #(
-        .ADDR_WIDTH(12),
+        .AXI_ADDR_WIDTH(12),
         .OUTPUT_NUM(3),
         .ID_ROUTING('{0, 1, 2, 3})
     ) ad (
         .ACLK(ACLK),
         .ARESETn(ARESETn),
 
-        .s_axi_i(axi_mosi_master),
-        .s_axi_o(axi_miso_master),
-
-        .m_axi_i(axi_miso_slave),
-        .m_axi_o(axi_mosi_slave)
+        .s_axi_if_i(axi_in),
+        .m_axi_if_o(axi_out)
     );
 
     task aw_send(
@@ -38,38 +36,38 @@ module tb_axi;
     );
 
         @(posedge ACLK) begin
-            axi_mosi_master.AWVALID <= 1;
-            axi_mosi_master.data.aw.AWID <= id[0];
-            axi_mosi_master.data.aw.AWADDR <= addr[0];
-            axi_mosi_master.data.aw.AWLEN <= length[0];
-            axi_mosi_master.data.aw.AWSIZE <= size[0];
-            axi_mosi_master.data.aw.AWBURST <= burst[0];
+            axi_in.AWVALID <= 1;
+            axi_in.AWID <= id[0];
+            axi_in.AWADDR <= addr[0];
+            axi_in.AWLEN <= length[0];
+            axi_in.AWSIZE <= size[0];
+            axi_in.AWBURST <= burst[0];
         end
 
         for (int i = 1; i < number; i++) begin
             @(posedge ACLK) begin
-                while (!axi_miso_master.AWREADY) begin
+                while (!axi_in.AWREADY) begin
                     @(posedge ACLK);
                 end
-                axi_mosi_master.AWVALID <= 1;
-                axi_mosi_master.data.aw.AWID <= id[i];
-                axi_mosi_master.data.aw.AWADDR <= addr[i];
-                axi_mosi_master.data.aw.AWLEN <= length[i];
-                axi_mosi_master.data.aw.AWSIZE <= size[i];
-                axi_mosi_master.data.aw.AWBURST <= burst[i];
+                axi_in.AWVALID <= 1;
+                axi_in.AWID <= id[i];
+                axi_in.AWADDR <= addr[i];
+                axi_in.AWLEN <= length[i];
+                axi_in.AWSIZE <= size[i];
+                axi_in.AWBURST <= burst[i];
             end
         end
 
         @(posedge ACLK) begin
-            while (!axi_miso_master.AWREADY) begin
+            while (!axi_in.AWREADY) begin
                 @(posedge ACLK);
             end
-            axi_mosi_master.AWVALID <= 0;
-            axi_mosi_master.data.aw.AWID <= 0;
-            axi_mosi_master.data.aw.AWADDR <= 0;
-            axi_mosi_master.data.aw.AWLEN <= 0;
-            axi_mosi_master.data.aw.AWSIZE <= 0;
-            axi_mosi_master.data.aw.AWBURST <= 0;
+            axi_in.AWVALID <= 0;
+            axi_in.AWID <= 0;
+            axi_in.AWADDR <= 0;
+            axi_in.AWLEN <= 0;
+            axi_in.AWSIZE <= 0;
+            axi_in.AWBURST <= 0;
         end
     endtask
 
@@ -81,26 +79,26 @@ module tb_axi;
 
         for (int i = 0; i < length; i++) begin
             @(posedge ACLK) begin
-                while (!axi_miso_master.WREADY) begin
+                while (!axi_in.WREADY) begin
                     @(posedge ACLK);
                 end
-                axi_mosi_master.WVALID <= 1;
-                axi_mosi_master.data.w.WDATA <= wdata[i];
-                axi_mosi_master.data.w.WSTRB <= wstrb[i];
+                axi_in.WVALID <= 1;
+                axi_in.WDATA <= wdata[i];
+                axi_in.WSTRB <= wstrb[i];
                 if (i == length - 1) begin
-                    axi_mosi_master.data.w.WLAST <= 1;
+                    axi_in.WLAST <= 1;
                 end
             end
         end
 
         @(posedge ACLK) begin
-            while (!axi_miso_master.WREADY) begin
+            while (!axi_in.WREADY) begin
                 @(posedge ACLK);
             end
-            axi_mosi_master.WVALID <= 0;
-            axi_mosi_master.data.w.WDATA <= 0;
-            axi_mosi_master.data.w.WSTRB <= 0;
-            axi_mosi_master.data.w.WLAST <= 0;
+            axi_in.WVALID <= 0;
+            axi_in.WDATA <= 0;
+            axi_in.WSTRB <= 0;
+            axi_in.WLAST <= 0;
         end
 
     endtask
@@ -113,12 +111,12 @@ module tb_axi;
 
     generate
         for (genvar i = 0; i < 3; i++) begin
-            assign axi_miso_slave[i].BVALID = BVALID[i];
-            assign axi_miso_slave[i].data.b.BID = i;
-            assign BREADY[i] = axi_mosi_slave[i].BREADY;
-            assign WLAST[i] = axi_mosi_slave[i].data.w.WLAST;
-            assign WVALID[i] = axi_mosi_slave[i].WVALID;
-            assign axi_miso_slave[i].WREADY = WREADY[i];
+            assign axi_out[i].BVALID = BVALID[i];
+            assign axi_out[i].BID = i;
+            assign BREADY[i] = axi_out[i].BREADY;
+            assign WLAST[i] = axi_out[i].WLAST;
+            assign WVALID[i] = axi_out[i].WVALID;
+            assign axi_out[i].WREADY = WREADY[i];
         end
     endgenerate
 
@@ -151,23 +149,23 @@ module tb_axi;
         ACLK = 1;
         ARESETn = 0;
 
-        axi_mosi_master.AWVALID = 0;
-        axi_mosi_master.data.aw.AWID = 0;
-        axi_mosi_master.data.aw.AWADDR = 0;
-        axi_mosi_master.data.aw.AWLEN = 0;
-        axi_mosi_master.data.aw.AWSIZE = 0;
-        axi_mosi_master.data.aw.AWBURST = 0;
+        axi_in.AWVALID = 0;
+        axi_in.AWID = 0;
+        axi_in.AWADDR = 0;
+        axi_in.AWLEN = 0;
+        axi_in.AWSIZE = 0;
+        axi_in.AWBURST = 0;
 
-        axi_mosi_master.WVALID = 0;
-        axi_mosi_master.data.w.WDATA = 0;
-        axi_mosi_master.data.w.WSTRB = 0;
-        axi_mosi_master.data.w.WLAST = 0;
+        axi_in.WVALID = 0;
+        axi_in.WDATA = 0;
+        axi_in.WSTRB = 0;
+        axi_in.WLAST = 0;
         
-        axi_mosi_master.BREADY = 0;
+        axi_in.BREADY = 0;
 
-        axi_miso_slave[0].AWREADY = 0;
-        axi_miso_slave[1].AWREADY = 0;
-        axi_miso_slave[2].AWREADY = 0;
+        axi_out[0].AWREADY = 0;
+        axi_out[1].AWREADY = 0;
+        axi_out[2].AWREADY = 0;
 
         WREADY[0] = 0;
         WREADY[1] = 0;
@@ -200,13 +198,13 @@ module tb_axi;
                 @(posedge ACLK);
                 @(posedge ACLK);
                 @(posedge ACLK) begin
-                    axi_miso_slave[0].AWREADY <= 1;
-                    axi_miso_slave[1].AWREADY <= 1;
-                    axi_miso_slave[2].AWREADY <= 1;
+                    axi_out[0].AWREADY <= 1;
+                    axi_out[1].AWREADY <= 1;
+                    axi_out[2].AWREADY <= 1;
                     WREADY[0] <= 1;
                     WREADY[1] <= 1;
                     WREADY[2] <= 1;
-                    axi_mosi_master.BREADY <= 1;
+                    axi_in.BREADY <= 1;
                 end
             end
 

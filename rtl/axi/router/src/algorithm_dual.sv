@@ -1,26 +1,17 @@
 `include "defines.svh"
+`include "axi2axis_typedef.svh"
 
 module algorithm_dual #(
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+    parameter AXIS_DATA_WIDTH = 40,
+    parameter AXIS_ID_WIDTH = 4,
+    parameter AXIS_DEST_WIDTH = 4,
+    parameter AXIS_USER_WIDTH = 4,
     parameter CHANNEL_NUMBER = 10,
-    parameter CHANNEL_NUMBER_WIDTH
-    = $clog2(CHANNEL_NUMBER),
+    parameter CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
     parameter TARGET_LEN     = 0,
 
     // Algorithm and topology specific parameters
-    // Mesh
+    // Mesh and Torus
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
     = $clog2(MAX_ROUTERS_X),
@@ -35,15 +26,25 @@ module algorithm_dual #(
 ) (
     input clk_i, rst_n_i,
     
-    input  axis_mosi_t in_mosi_i,
-    output axis_miso_t in_miso_o,
-    output axis_mosi_t out_mosi_o [CHANNEL_NUMBER],
-    input  axis_miso_t out_miso_i [CHANNEL_NUMBER],
+    axis_if.s s_axis_i,
+    axis_if.m m_axis_o [CHANNEL_NUMBER],
 
     input logic [CHANNEL_NUMBER_WIDTH-1:0] current_grant_i,
 
     input logic [TARGET_LEN-1:0] target_i
 );
+
+    `GENERATE_AXIS_TYPEDEFS
+    axis_mosi_t in_mosi_i, out_mosi_o[CHANNEL_NUMBER];
+    axis_miso_t in_miso_o, out_miso_i[CHANNEL_NUMBER];
+
+    `AXIS_INTERFACE_SLAVE2TYPEDEF(s_axis_i, in_mosi_i, in_miso_o)
+    generate
+        genvar i;
+        for (i = 0; i < CHANNEL_NUMBER; i++) begin : typedef_to_interface
+            `AXIS_INTERFACE_MASTER2TYPEDEF(m_axis_o[i], out_mosi_o[i], out_miso_i[i])
+        end
+    endgenerate
 
     logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i;
     assign target_y_i =
@@ -51,8 +52,6 @@ module algorithm_dual #(
     logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
     assign target_x_i =
         target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
-
-    `include "axis_type.svh"
 
     logic [CHANNEL_NUMBER_WIDTH-1:0] ctrl;
     logic [CHANNEL_NUMBER-1:0] selector;

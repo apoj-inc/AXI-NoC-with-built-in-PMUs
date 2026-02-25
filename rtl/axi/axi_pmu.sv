@@ -1,37 +1,26 @@
 `include "defines.svh"
 
-module axi_pmu # (
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter MAX_ID_WIDTH = 4,
-    parameter ADDR_WIDTH = 16,
-
-    parameter AXI_DATA_WIDTH = 32
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
+module axi_pmu #(
+    parameter AXI_DATA_WIDTH = 32,
+    parameter AXI_ADDR_WIDTH = 16,
+    parameter AXI_ID_R_WIDTH = 4,
+    parameter AXI_ID_W_WIDTH = 4
 ) (
     input  logic        aclk,
     input  logic        aresetn,
     input  logic        enable,
 
-    input  axi_miso_t   mon_axi_miso,
-    input  axi_mosi_t   mon_axi_mosi,
+    axi_if.mon          mon_axi_i,
 
     input  logic [4:0]  addr_i,
     output logic [31:0] data_o
 );
 
-    `include "axi_type.svh"
+    `GENERATE_AXI_TYPEDEFS
+
+    axi_mosi_t mon_axi_mosi;
+    axi_miso_t mon_axi_miso;
+    `AXI_INTERFACE_MONITOR2TYPEDEF(mon_axi_i, mon_axi_mosi, mon_axi_miso)
 
     typedef struct packed {
         logic [31:0] idle;

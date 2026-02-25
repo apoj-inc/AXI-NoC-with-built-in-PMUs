@@ -2,63 +2,33 @@
 
 module axi_ram 
 #(
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter ADDR_WIDTH = 16,
-
-    parameter AXI_DATA_WIDTH = 32
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
-
+    parameter AXI_DATA_WIDTH = 32,
+    parameter AXI_ID_W_WIDTH = 5,
+    parameter AXI_ID_R_WIDTH = 5,
+    parameter AXI_ADDR_WIDTH = 16,
+    
     parameter BYTE_WIDTH = 8
 ) (
 	input logic clk_i, rst_n_i,
     
-    input  axi_mosi_t in_mosi_i,
-    output axi_miso_t in_miso_o
+    axi_if.s s_axi_i
 
 );
 
-    `include "axi_type.svh"
-
     localparam WSRTB_W = AXI_DATA_WIDTH/BYTE_WIDTH;
     
-    logic [ADDR_WIDTH-1:0]     waddr, waddr_ff;
-    logic [ADDR_WIDTH-1:0]     raddr, raddr_ff;
+    logic [AXI_ADDR_WIDTH-1:0] waddr, waddr_ff;
+    logic [AXI_ADDR_WIDTH-1:0] raddr, raddr_ff;
     logic [AXI_DATA_WIDTH-1:0] wdata, wdata_ff;
     logic [AXI_DATA_WIDTH-1:0] rdata, rdata_ff;
     logic [WSRTB_W-1:0]        be,    be_ff;
     logic we_ff;
 
     axi2ram #(
-        .ID_W_WIDTH(ID_W_WIDTH),
-        .ID_R_WIDTH(ID_R_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH),
-
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    
+        .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+        .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
+        .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH),
+        .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH)
     ) axi (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
         
@@ -68,8 +38,7 @@ module axi_ram
         .be(be),
         .rdata(rdata),
 
-        .in_mosi_i(in_mosi_i),
-        .in_miso_o(in_miso_o)
+        .s_axi_i(s_axi_i)
 
     );
     
@@ -90,7 +59,7 @@ module axi_ram
     end
 
     ram #(
-        .ADDR_WIDTH(ADDR_WIDTH),
+        .ADDR_WIDTH(AXI_ADDR_WIDTH),
         .BYTE_WIDTH(BYTE_WIDTH)
     ) coupled_ram (
         .clk_i(clk_i),

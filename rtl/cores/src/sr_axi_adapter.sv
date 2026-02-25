@@ -1,24 +1,10 @@
 `include "defines.svh"
 
 module sr_axi_adapter #(
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter MAX_ID_WIDTH = 4,
-    parameter ADDR_WIDTH = 16,
-
-    parameter AXI_DATA_WIDTH = 8
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
+    parameter AXI_DATA_WIDTH = 8,
+    parameter AXI_ID_W_WIDTH = 4,
+    parameter AXI_ID_R_WIDTH = 4,
+    parameter AXI_ADDR_WIDTH = 16
 ) (
     input   logic         clk,        // clock
     input   logic         rst_n,      // reset
@@ -32,11 +18,15 @@ module sr_axi_adapter #(
     input   logic [31:0]  mem_wdata_i,
     output  logic [31:0]  mem_rdata_o,
 
-    input  axi_miso_t in_miso_i,
-    output axi_mosi_t in_mosi_o
+    axi_if.m              m_axi_o
 );
 
-    `include "axi_type.svh"
+    `GENERATE_AXI_TYPEDEFS
+
+    axi_mosi_t in_mosi_o;
+    axi_miso_t in_miso_i;
+    `AXI_INTERFACE_MASTER2TYPEDEF(m_axi_o, in_mosi_o, in_miso_i)
+    
 
     logic [1:0] w_data_count;
     logic [1:0] r_data_count;

@@ -3,10 +3,8 @@
 module tb_cpu (
     input  logic        rst_n
 );
-
+/*
     logic clk;
-
-    `include "axi_type.svh"
 
     axi_miso_t axi_miso;
     axi_mosi_t axi_mosi;
@@ -35,5 +33,5 @@ module tb_cpu (
 
         clk = 1;
     end
-    
+    */
 endmodule

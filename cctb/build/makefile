@@ -19,7 +19,7 @@ INCLUDE_DIRS += $(CURDIR)/rtl/cores/src
 INCLUDE_DIRS += $(CURDIR)/tests/inc
 endif
 
-TB_FILES ?=  $(foreach file,$(shell find tb/ -type f -name '*.sv'),$(CURDIR)/$(file))
+TB_FILES ?=  $(foreach file,$(shell find tb/tb_* -type f -name '*.sv'),$(CURDIR)/$(file))
 
 SIM ?= questa-compat
 
@@ -52,13 +52,14 @@ TOPLEVEL_LIBRARY ?= work
 
 run: $(VENV_DIR) $(VERILOG_SOURCES)
 	@mkdir -p $(SIM_BUILD)
+	@rm -f $(CCTB_DIR)/runsim.do
 	@cp -r $(TB_DIR)/$(COCOTB_TEST_MODULES) $(SIM_BUILD)/..
 	source $(VENV_DIR)/bin/activate; \
 	cd $(SIM_BUILD); \
 	make -f $(shell $(VENV_DIR)/bin/cocotb-config --makefiles)/Makefile.sim TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
 	COCOTB_TOPLEVEL=$(COCOTB_TOPLEVEL) COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES) SIM=$(SIM) SIM_BUILD=$(CCTB_DIR) \
 	COMPILE_ARGS='$(COMPILE_ARGS)' SIM_ARGS='$(SIM_ARGS)' WAVES=$(WAVES) VERILOG_INCLUDE_DIRS="$(INCLUDE_DIRS)" TOPLEVEL_LIBRARY=$(TOPLEVEL_LIBRARY) \
-	VERILOG_SOURCES="$(CURDIR)/tests/test.svh $(VERILOG_SOURCES) $(TB_FILES)" \
+	VERILOG_SOURCES="$(VERILOG_SOURCES) $(TB_FILES)" \
 	SCRIPT_FILE=$(SCRIPT_FILE)
 
 wave:

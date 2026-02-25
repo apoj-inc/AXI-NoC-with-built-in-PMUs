@@ -1,50 +1,41 @@
 `include "defines.svh"
 
 module axi_master_loader #(
-    parameter ADDR_WIDTH   = 16,
-    parameter ID_W_WIDTH   = 5,
-    parameter ID_R_WIDTH   = 5,
     parameter AXI_DATA_WIDTH = 32,
-    parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+    parameter AXI_ADDR_WIDTH = 16,
+    parameter AXI_ID_W_WIDTH = 5,
+    parameter AXI_ID_R_WIDTH = 5,
+    parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0),
     parameter FIFO_DEPTH   = 64,
     parameter LOADER_ID    = 0,
 
-    parameter MAX_ID_WIDTH = (ID_W_WIDTH > ID_R_WIDTH) ? ID_W_WIDTH : ID_R_WIDTH
+    parameter AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH
 ) (
-    input  logic                      clk_i,
-    input  logic                      arstn_i,
+    input  logic                        clk_i,
+    input  logic                        arstn_i,
 
-    input  logic                      resp_wait_i,
-    input  logic [MAX_ID_WIDTH-1:0]   id_i,
-    input  logic                      write_i,
-    input  logic [ADDR_WIDTH-1:0]     axaddr_i,
-    input  logic [7:0]                axlen_i,
-    input  logic [AXI_DATA_WIDTH-1:0] wdata_i,
-    input  logic [AXI_DATA_BYTES-1:0] wstrb_i,
-    input  logic                      fifo_push_i,
+    input  logic                        resp_wait_i,
+    input  logic [AXI_MAX_ID_WIDTH-1:0] id_i,
+    input  logic                        write_i,
+    input  logic [AXI_ADDR_WIDTH-1:0]   axaddr_i,
+    input  logic [7:0]                  axlen_i,
+    input  logic [AXI_DATA_WIDTH-1:0]   wdata_i,
+    input  logic [AXI_DATA_BYTES-1:0]   wstrb_i,
+    input  logic                        fifo_push_i,
 
-    input  logic                      start_i,
-    output logic                      idle_o,
+    input  logic                        start_i,
+    output logic                        idle_o,
 
-    output logic [AXI_DATA_WIDTH-1:0] rdata_o,
+    output logic [AXI_DATA_WIDTH-1:0]   rdata_o,
 
-    input  axi_miso_t                 m_axi_i,    
-    output axi_mosi_t                 m_axi_o
+    axi_if.m                            m_axi_if_o
 );
 
-    `include "axi_type.svh"
+    `GENERATE_AXI_TYPEDEFS
+
+    axi_mosi_t m_axi_o;
+    axi_miso_t m_axi_i;
+    `AXI_INTERFACE_MASTER2TYPEDEF(m_axi_if_o, m_axi_o, m_axi_i)
 
     typedef enum logic[1:0] {
         IDLE,
@@ -57,8 +48,8 @@ module axi_master_loader #(
 
     logic [AXI_DATA_WIDTH-1:0] wdata_rd;
     logic [AXI_DATA_BYTES-1:0] wstrb_rd;
-    logic [ADDR_WIDTH-1:0] awaddr_rd, araddr_rd;
-    logic [MAX_ID_WIDTH-1:0] awid_rd, arid_rd;
+    logic [AXI_ADDR_WIDTH-1:0] awaddr_rd, araddr_rd;
+    logic [AXI_MAX_ID_WIDTH-1:0] awid_rd, arid_rd;
     logic [7:0] awlen_rd, arlen_rd;
     logic w_resp_wait_rd, r_resp_wait_rd;
     logic w_fifo_valid_rd, w_fifo_ready_rd, r_fifo_valid_rd, r_fifo_ready_rd;
@@ -108,7 +99,7 @@ module axi_master_loader #(
     /* --- W SECTION --- */
 
     stream_fifo #(
-        .DATA_WIDTH (ADDR_WIDTH + MAX_ID_WIDTH + 1 + 8),
+        .DATA_WIDTH (AXI_ADDR_WIDTH + AXI_MAX_ID_WIDTH + 1 + 8),
         .FIFO_LEN   (FIFO_DEPTH)
     ) u_stream_fifo_w (
         .ACLK    (clk_i),
@@ -242,7 +233,7 @@ module axi_master_loader #(
     /* --- R SECTION --- */
 
     stream_fifo #(
-        .DATA_WIDTH (ADDR_WIDTH + MAX_ID_WIDTH + 1 + 8),
+        .DATA_WIDTH (AXI_ADDR_WIDTH + AXI_MAX_ID_WIDTH + 1 + 8),
         .FIFO_LEN   (FIFO_DEPTH)
     ) u_stream_fifo_r (
         .ACLK    (clk_i),

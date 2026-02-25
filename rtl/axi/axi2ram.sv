@@ -2,23 +2,10 @@
 
 module axi2ram
 #(
-    parameter ID_W_WIDTH = 4,
-    parameter ID_R_WIDTH = 4,
-    parameter ADDR_WIDTH = 4,
-
-    parameter AXI_DATA_WIDTH = 32
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif,
+    parameter AXI_DATA_WIDTH = 32,
+    parameter AXI_ID_W_WIDTH = 4,
+    parameter AXI_ID_R_WIDTH = 4,
+    parameter AXI_ADDR_WIDTH = 4,
     
     parameter BYTE_WIDTH = 8,
     parameter BATCH_WIDTH = AXI_DATA_WIDTH/BYTE_WIDTH
@@ -26,34 +13,38 @@ module axi2ram
 (
 	input clk_i, rst_n_i,
 
-    
-    output logic [ADDR_WIDTH-1:0] waddr, raddr,
+    output logic [AXI_ADDR_WIDTH-1:0] waddr, raddr,
     output logic [AXI_DATA_WIDTH-1:0] wdata,
     output logic [BATCH_WIDTH-1:0] be,
     input  logic [AXI_DATA_WIDTH-1:0] rdata,
 
     //AXI
-    input  axi_mosi_t in_mosi_i,
-    output axi_miso_t in_miso_o
+    axi_if.s s_axi_i
 
 );
 
-    `include "axi_type.svh"
+    `GENERATE_AXI_TYPEDEFS
+
+    axi_mosi_t in_mosi_i;
+    axi_miso_t in_miso_o;
+    `AXI_INTERFACE_SLAVE2TYPEDEF(s_axi_i, in_mosi_i, in_miso_o)
+
+
 
     enum { READING_ADDRESS, REQUESTING_DATA, RESPONDING }
     r_state, r_state_next,
     w_state,  w_state_next;
 
     // AR channel 
-    logic [ID_W_WIDTH-1:0] ARID;
-    logic [ADDR_WIDTH-1:0] ARADDR;
+    logic [AXI_ID_W_WIDTH-1:0] ARID;
+    logic [AXI_ADDR_WIDTH-1:0] ARADDR;
     logic [7:0] ARLEN;
     logic [2:0] ARSIZE;
     logic [1:0] ARBURST;
 
     // AW channel 
-    logic [ID_W_WIDTH-1:0] AWID;
-    logic [ADDR_WIDTH-1:0] AWADDR;
+    logic [AXI_ID_W_WIDTH-1:0] AWID;
+    logic [AXI_ADDR_WIDTH-1:0] AWADDR;
     logic [7:0] AWLEN;
     logic [2:0] AWSIZE;
     logic [1:0] AWBURST;
@@ -77,7 +68,7 @@ module axi2ram
         in_miso_o.data.r.RID = ARID;
 
         raddr = r_state == RESPONDING ? (ARBURST == 2'b01) ? ARADDR + in_mosi_i.RREADY : 
-                    (ARBURST == 2'b10) ? (ARADDR + in_mosi_i.RREADY > 2**ADDR_WIDTH-1 ? '0 : ARADDR + in_mosi_i.RREADY) : ARADDR
+                    (ARBURST == 2'b10) ? (ARADDR + in_mosi_i.RREADY > 2**AXI_ADDR_WIDTH-1 ? '0 : ARADDR + in_mosi_i.RREADY) : ARADDR
                     : ARADDR;
         in_miso_o.data.r.RDATA = rdata;
 
@@ -179,7 +170,7 @@ module axi2ram
                             ARADDR <= ARADDR + 1'b1;
                         end
                         2'b10: begin
-                            if(ARADDR + 1'b1 > 2**ADDR_WIDTH-1) begin
+                            if(ARADDR + 1'b1 > 2**AXI_ADDR_WIDTH-1) begin
                                 ARADDR <= '0;
                             end
                             else begin
@@ -208,7 +199,7 @@ module axi2ram
                     case (AWBURST)
                         2'b01: AWADDR <= AWADDR + 1'b1;
                         2'b10: begin
-                            if(AWADDR + 1'b1 > 2**ADDR_WIDTH-1)
+                            if(AWADDR + 1'b1 > 2**AXI_ADDR_WIDTH-1)
                                 AWADDR <= '0;
                             else
                                 AWADDR <= AWADDR + 1'b1;

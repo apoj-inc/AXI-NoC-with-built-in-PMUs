@@ -1,93 +1,31 @@
-`include "defines.svh"
-
 interface axis_if #(
-    parameter AXIS_DATA_WIDTH = 40
-    `ifdef TID_PRESENT
-    ,
-    parameter ID_WIDTH = 4
-    `endif
-    `ifdef TDEST_PRESENT
-    ,
-    parameter DEST_WIDTH = 4
-    `endif
-    `ifdef TUSER_PRESENT
-    ,
-    parameter USER_WIDTH = 4
-    `endif
+    parameter AXIS_DATA_WIDTH = 40,
+    parameter AXIS_ID_WIDTH   = 4,
+    parameter AXIS_DEST_WIDTH = 4,
+    parameter AXIS_USER_WIDTH = 4
 ) ();
 
     // T channel 
-    logic TVALID;
-    logic TREADY;
-    logic [AXIS_DATA_WIDTH-1:0] TDATA;
-    
-    `ifdef TSTRB_PRESENT
-    logic [(AXIS_DATA_WIDTH/8)-1:0] TSTRB;
-    `endif
-    `ifdef TKEEP_PRESENT
-    logic [(AXIS_DATA_WIDTH/8)-1:0] TKEEP;
-    `endif
-    `ifdef TLAST_PRESENT
-    logic TLAST;
-    `endif
-    `ifdef TID_PRESENT
-    logic [ID_WIDTH-1:0] TID;
-    `endif
-    `ifdef TDEST_PRESENT
-    logic [DEST_WIDTH-1:0] TDEST;
-    `endif
-    `ifdef TUSER_PRESENT
-    logic [USER_WIDTH-1:0] TUSER;
-    `endif
+    logic                           TVALID ;
+    logic                           TREADY ;
+    logic [AXIS_DATA_WIDTH-1:0]     TDATA  ;
+    logic [(AXIS_DATA_WIDTH/8)-1:0] TSTRB  ;
+    logic [(AXIS_DATA_WIDTH/8)-1:0] TKEEP  ;
+    logic                           TLAST  ;
+    logic [AXIS_ID_WIDTH-1:0]       TID    ;
+    logic [AXIS_DEST_WIDTH-1:0]     TDEST  ;
+    logic [AXIS_USER_WIDTH-1:0]     TUSER  ;
 
     modport m (
         output TVALID,
-        input TREADY,
-        output TDATA
-
-        `ifdef TSTRB_PRESENT
-        , TSTRB
-        `endif
-        `ifdef TKEEP_PRESENT
-        , TKEEP
-        `endif
-        `ifdef TLAST_PRESENT
-        , TLAST
-        `endif
-        `ifdef TID_PRESENT
-        , TID
-        `endif
-        `ifdef TDEST_PRESENT
-        , TDEST
-        `endif
-        `ifdef TUSER_PRESENT
-        , TUSER
-        `endif
+        input  TREADY,
+        output TDATA, TSTRB, TKEEP, TLAST, TID, TDEST, TUSER
     );
 
     modport s (
-        input TVALID,
+        input  TVALID,
         output TREADY,
-        input TDATA
-
-        `ifdef TSTRB_PRESENT
-        , TSTRB
-        `endif
-        `ifdef TKEEP_PRESENT
-        , TKEEP
-        `endif
-        `ifdef TLAST_PRESENT
-        , TLAST
-        `endif
-        `ifdef TID_PRESENT
-        , TID
-        `endif
-        `ifdef TDEST_PRESENT
-        , TDEST
-        `endif
-        `ifdef TUSER_PRESENT
-        , TUSER
-        `endif
+        input  TDATA, TSTRB, TKEEP, TLAST, TID, TDEST, TUSER
     );
     
 endinterface

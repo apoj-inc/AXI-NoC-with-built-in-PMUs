@@ -45,51 +45,49 @@ module mesh_throughput (
         aclk = 1;
     end
 
-    axi_mosi_t mosi[16], mosi_ram[16];
-    axi_miso_t miso[16], miso_ram[16];
+    axi_if #(.AXI_DATA_WIDTH(8)) axi_if[16](), axi_if_ram[16]();
 
     generate
         for (genvar i = 0; i < 16; i++) begin : map_wires
             always_comb begin
-                mosi[i].AWVALID         = awvalid[i];
-                mosi[i].data.aw.AWID    = awid[i];
-                mosi[i].data.aw.AWADDR  = awaddr[i];
-                mosi[i].data.aw.AWLEN   = awlen[i];
-                mosi[i].data.aw.AWSIZE  = awsize[i];
-                mosi[i].data.aw.AWBURST = awburst[i];
-                awready[i]              = miso[i].AWREADY;
+                axi_if[i].AWVALID         = awvalid[i];
+                axi_if[i].AWID    = awid[i];
+                axi_if[i].AWADDR  = awaddr[i];
+                axi_if[i].AWLEN   = awlen[i];
+                axi_if[i].AWSIZE  = awsize[i];
+                axi_if[i].AWBURST = awburst[i];
+                awready[i]              = axi_if[i].AWREADY;
 
-                mosi[i].WVALID        = wvalid[i];
-                mosi[i].data.w.WDATA  = wdata[i];
-                mosi[i].data.w.WSTRB  = wstrb[i];
-                mosi[i].data.w.WLAST  = wlast[i];
-                wready[i]             = miso[i].WREADY;
+                axi_if[i].WVALID        = wvalid[i];
+                axi_if[i].WDATA  = wdata[i];
+                axi_if[i].WSTRB  = wstrb[i];
+                axi_if[i].WLAST  = wlast[i];
+                wready[i]             = axi_if[i].WREADY;
 
-                bvalid[i]      = miso[i].BVALID;
-                bid[i]         = miso[i].data.b.BID;
-                mosi[i].BREADY = bready[i];
+                bvalid[i]      = axi_if[i].BVALID;
+                bid[i]         = axi_if[i].BID;
+                axi_if[i].BREADY = bready[i];
                 
-                mosi[i].ARVALID         = arvalid[i];
-                mosi[i].data.ar.ARID    = arid[i];
-                mosi[i].data.ar.ARADDR  = araddr[i];
-                mosi[i].data.ar.ARLEN   = arlen[i];
-                mosi[i].data.ar.ARSIZE  = arsize[i];
-                mosi[i].data.ar.ARBURST = arburst[i];
-                arready[i]              = miso[i].ARREADY;
+                axi_if[i].ARVALID         = arvalid[i];
+                axi_if[i].ARID    = arid[i];
+                axi_if[i].ARADDR  = araddr[i];
+                axi_if[i].ARLEN   = arlen[i];
+                axi_if[i].ARSIZE  = arsize[i];
+                axi_if[i].ARBURST = arburst[i];
+                arready[i]              = axi_if[i].ARREADY;
 
-                rvalid[i]      = miso[i].RVALID;
-                rid[i]         = miso[i].data.r.RID;
-                rdata[i]       = miso[i].data.r.RDATA;
-                rlast[i]       = miso[i].data.r.RLAST;
-                mosi[i].RREADY = rready[i];
+                rvalid[i]      = axi_if[i].RVALID;
+                rid[i]         = axi_if[i].RID;
+                rdata[i]       = axi_if[i].RDATA;
+                rlast[i]       = axi_if[i].RLAST;
+                axi_if[i].RREADY = rready[i];
 
             end
 
             axi_pmu pmu (
                 .aclk         (aclk),
                 .aresetn      (aresetn),
-                .mon_axi_miso (miso[i]),
-                .mon_axi_mosi (mosi[i])
+                .mon_axi_i    (axi_if[i])
             );
         end
     endgenerate
@@ -98,19 +96,16 @@ module mesh_throughput (
         .ACLK(aclk),
         .ARESETn(aresetn),
 
-        .s_axi_i(mosi),
-        .s_axi_o(miso),
-        .m_axi_i(miso_ram),
-        .m_axi_o(mosi_ram)
+        .s_axi_i(axi_if),
+        .m_axi_o(axi_if_ram)
     );
 
     generate
         for (genvar i = 0; i < 16; i++) begin : map_rams
-            axi_ram ram (
+            axi_ram #(.AXI_DATA_WIDTH(8), .AXI_ADDR_WIDTH(12)) ram (
                 .clk_i     (aclk),
                 .rst_n_i   (aresetn),
-                .in_mosi_i (mosi_ram[i]),
-                .in_miso_o (miso_ram[i])
+                .s_axi_i   (axi_if_ram[i])
             );
             
             initial begin

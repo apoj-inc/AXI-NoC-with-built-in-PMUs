@@ -7,7 +7,7 @@ module tb_cosim (
 
     cosim_top #(
         .BAUD_RATE(10_000_000),
-        .ADDR_WIDTH(12)
+        .AXI_ADDR_WIDTH(12)
     ) ct (
         .clk_i(clk_i),
         .arstn_i(arstn_i),

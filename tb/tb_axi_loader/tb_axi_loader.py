@@ -21,7 +21,7 @@ async def test(dut):
     dut.start_i.value = 0
     dut.axaddr_i.value = 17
     dut.wdata_i.value = 17
-    dut.wstrb_i.value = 15
+    dut.wstrb_i.value = 1
 
 
     await RisingEdge(dut.clk_i)
