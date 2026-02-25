@@ -3,7 +3,7 @@
 
 module axis_fifo_buffer #(
     parameter CHANNEL_NUMBER = 8,
-    parameter BUFFER_LENGTH = 8,
+    parameter BUFFER_DEPTH = 8,
     parameter AXIS_DATA_WIDTH = 40,
     parameter AXIS_ID_WIDTH = 4,
     parameter AXIS_DEST_WIDTH = 4,
@@ -31,7 +31,7 @@ module axis_fifo_buffer #(
         for (i = 0; i < CHANNEL_NUMBER; i++) begin : gen_fifos
             stream_fifo #(
                 .DATA_WIDTH($bits(axis_data_t)),
-                .FIFO_LEN(BUFFER_LENGTH)
+                .FIFO_DEPTH(BUFFER_DEPTH)
             ) q (
                 .ACLK(ACLK),
                 .ARESETn(ARESETn),

@@ -101,7 +101,7 @@ module axi_master_loader #(
 
     stream_fifo #(
         .DATA_WIDTH (AXI_ADDR_WIDTH + AXI_MAX_ID_WIDTH + 1 + 8),
-        .FIFO_LEN   (FIFO_DEPTH)
+        .FIFO_DEPTH   (FIFO_DEPTH)
     ) u_stream_fifo_w (
         .ACLK    (clk_i),
         .ARESETn (arstn_i),
@@ -193,7 +193,7 @@ module axi_master_loader #(
 
     stream_fifo #(
         .DATA_WIDTH (1 + 8 + AXI_DATA_WIDTH + AXI_DATA_BYTES),
-        .FIFO_LEN   (FIFO_DEPTH)
+        .FIFO_DEPTH   (FIFO_DEPTH)
     ) u_stream_fifo_awlen (
         .ACLK    (clk_i),
         .ARESETn (arstn_i),
@@ -235,7 +235,7 @@ module axi_master_loader #(
 
     stream_fifo #(
         .DATA_WIDTH (AXI_ADDR_WIDTH + AXI_MAX_ID_WIDTH + 1 + 8),
-        .FIFO_LEN   (FIFO_DEPTH)
+        .FIFO_DEPTH   (FIFO_DEPTH)
     ) u_stream_fifo_r (
         .ACLK    (clk_i),
         .ARESETn (arstn_i),

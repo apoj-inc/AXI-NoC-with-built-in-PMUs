@@ -21,6 +21,8 @@ module mesh_with_loaders # (
     parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
     parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
 
+    parameter BUFFER_DEPTH = 16,
+
     parameter AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH,
 
     parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
@@ -117,6 +119,8 @@ module mesh_with_loaders # (
         .AXIS_ID_WIDTH(AXIS_ID_WIDTH),
         .AXIS_DEST_WIDTH(AXIS_DEST_WIDTH),
         .AXIS_USER_WIDTH(AXIS_USER_WIDTH),
+
+        .BUFFER_DEPTH(BUFFER_DEPTH)
 
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y)

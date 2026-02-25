@@ -1,5 +1,5 @@
 module algorithm_selector_clockwise #(
-    parameter MAX_N = 5,
+    parameter MAX_N = 6,
     parameter MAX_N_WIDTH = $clog2(MAX_N),
     parameter N = 0,
     parameter CHANNEL_NUMBER = 5,
@@ -11,7 +11,7 @@ module algorithm_selector_clockwise #(
     logic [MAX_N_WIDTH:0] extended_target;
     logic [MAX_N_WIDTH-1:0] target_dif;
 
-    assign extended_target = N > target ? target + MAX_N + 1'b1: target;
+    assign extended_target = N > target ? target + MAX_N: target;
     assign target_dif = extended_target - N;
 
     always_comb begin

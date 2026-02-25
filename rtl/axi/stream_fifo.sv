@@ -1,6 +1,6 @@
 module stream_fifo #(
     parameter DATA_WIDTH = 32,
-    parameter FIFO_LEN = 16
+    parameter FIFO_DEPTH = 16
 ) (
     input logic ACLK,
     input logic ARESETn,
@@ -14,9 +14,9 @@ module stream_fifo #(
     input logic ready_i
     
 );
-    localparam ADDR_WIDTH = $clog2(FIFO_LEN);
+    localparam ADDR_WIDTH = $clog2(FIFO_DEPTH);
 
-    logic [DATA_WIDTH-1:0] fifo_mem [FIFO_LEN];
+    logic [DATA_WIDTH-1:0] fifo_mem [FIFO_DEPTH];
     logic [ADDR_WIDTH-1:0] read_ptr, read_ptr_reg;
     logic [ADDR_WIDTH-1:0] write_ptr;
     logic [ADDR_WIDTH:0] count;
@@ -24,7 +24,7 @@ module stream_fifo #(
     assign data_o = fifo_mem[read_ptr];
 
     assign valid_o = (count > 0);
-    assign ready_o = !(count == FIFO_LEN);
+    assign ready_o = !(count == FIFO_DEPTH);
 
     always_ff @(posedge ACLK or negedge ARESETn) begin
         if (!ARESETn) begin
@@ -34,10 +34,10 @@ module stream_fifo #(
         end
         else begin
             if (valid_i && ready_o) begin
-                write_ptr <= (write_ptr == (FIFO_LEN - 1)) ? 0 : write_ptr + 1;
+                write_ptr <= (write_ptr == (FIFO_DEPTH - 1)) ? 0 : write_ptr + 1;
             end
             if (valid_o && ready_i) begin
-                read_ptr <= (read_ptr == (FIFO_LEN - 1)) ? 0 : read_ptr + 1;
+                read_ptr <= (read_ptr == (FIFO_DEPTH - 1)) ? 0 : read_ptr + 1;
             end
 
             if (valid_i && ready_o && !(valid_o && ready_i)) begin
@@ -78,7 +78,7 @@ module stream_fifo #(
         end
         else begin
             if (valid_i && ready_o) begin
-                write_ptr <= (write_ptr == (FIFO_LEN - 1)) ? 0 : write_ptr + 1;
+                write_ptr <= (write_ptr == (FIFO_DEPTH - 1)) ? 0 : write_ptr + 1;
             end
 
             read_ptr_reg <= read_ptr;
@@ -89,7 +89,7 @@ module stream_fifo #(
     always_comb begin
         read_ptr = read_ptr_reg;
         if (valid_o && ready_i) begin
-            read_ptr = (read_ptr_reg == (FIFO_LEN - 1)) ? 0 : read_ptr_reg + 1;
+            read_ptr = (read_ptr_reg == (FIFO_DEPTH - 1)) ? 0 : read_ptr_reg + 1;
         end
     end
 

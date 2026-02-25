@@ -22,8 +22,8 @@ module XY_mesh_dual_cpu #(
     parameter MAX_ROUTERS_X = 3,
     parameter MAX_ROUTERS_Y = 3,
 
-    parameter Ax_FIFO_LEN = 4,
-    parameter W_FIFO_LEN = 4
+    parameter Ax_FIFO_DEPTH = 4,
+    parameter W_FIFO_DEPTH = 4
 ) (
     input logic clk,
     input logic rst_n
@@ -111,8 +111,8 @@ module XY_mesh_dual_cpu #(
     .MAX_ROUTERS_X(MAX_ROUTERS_X),
     .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
 
-    .Ax_FIFO_LEN(Ax_FIFO_LEN),
-    .W_FIFO_LEN(W_FIFO_LEN)
+    .Ax_FIFO_DEPTH(Ax_FIFO_DEPTH),
+    .W_FIFO_DEPTH(W_FIFO_DEPTH)
 
     ) mesh (
         .ACLK      (clk),

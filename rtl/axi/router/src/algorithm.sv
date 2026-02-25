@@ -26,7 +26,8 @@ module algorithm #(
     // Circulant
     parameter N = 0,
     parameter MAX_N = 0,
-    parameter USE_CLOCKWISE = 0
+    parameter USE_CLOCKWISE = 0,
+    parameter GENERATICS = {1, 2}
 ) (
     input clk_i, rst_n_i,
     
@@ -77,14 +78,12 @@ module algorithm #(
             );
         end else if(USE_CLOCKWISE) begin
             algorithm_selector_clockwise #(
-            .MAX_ROUTERS_X(MAX_ROUTERS_X), 
-            .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
-            .ROUTER_X(ROUTER_X),
-            .ROUTER_Y(ROUTER_Y),
+            .N(N),
+            .MAX_N(MAX_N),
+            .GENERATICS(GENERATICS),
             .CHANNEL_NUMBER(CHANNEL_NUMBER)
             ) algorithm_selector (
-                .target_x_i(target_x_i),
-                .target_y_i(target_y_i),
+                .target_i(target_i),
                 .selector_o(selector)
             );
         end else $error("No algorithm specified!");

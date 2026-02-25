@@ -10,12 +10,12 @@ module router_dual_parallel #(
     parameter CHANNEL_NUMBER = 10,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
-    parameter BUFFER_LENGTH = 16,
+    parameter BUFFER_DEPTH = 16,
     parameter MAXIMUM_PACKAGES_NUMBER = 5,
     parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
     = $clog2(MAXIMUM_PACKAGES_NUMBER - 1),
 
-    parameter USE_X_Y_COORDINATES = 0,
+    parameter USE_XY_COORDINATES = 0,
     parameter USE_N_COORDINATES   = 0,
     
     // Algorithm and topology specific parameters
@@ -34,14 +34,15 @@ module router_dual_parallel #(
     // Circulant
     parameter N = 0,
     parameter MAX_N = 0,
-    parameter USE_CLOCKWISE = 0
+    parameter USE_CLOCKWISE = 0,
+    parameter GENERATICS = {1, 2}
 )(
     input clk_i, rst_n_i,
     axis_if.s s_axis_i [CHANNEL_NUMBER],
     axis_if.m m_axis_o [CHANNEL_NUMBER]
 );
 
-    localparam TARGET_LEN = USE_X_Y_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
+    localparam TARGET_LEN = USE_XY_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
                             USE_N_COORDINATES   ?   $clog2(N)                                   :
                                                     0                                           ;
 
@@ -75,7 +76,7 @@ module router_dual_parallel #(
 
     axis_fifo_buffer #(
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
-        .BUFFER_LENGTH(BUFFER_LENGTH),
+        .BUFFER_DEPTH(BUFFER_DEPTH),
         .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
         .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
         .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
@@ -132,7 +133,8 @@ module router_dual_parallel #(
         // Circulant
         .N(N),
         .MAX_N(MAX_N),
-        .USE_CLOCKWISE(USE_CLOCKWISE)
+        .USE_CLOCKWISE(USE_CLOCKWISE),
+        .GENERATICS(GENERATICS)
     ) alg_req (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 

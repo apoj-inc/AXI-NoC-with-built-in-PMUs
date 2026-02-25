@@ -8,12 +8,12 @@ module router #(
     parameter AXIS_USER_WIDTH = 4,
 
     parameter CHANNEL_NUMBER = 5,
-    parameter BUFFER_LENGTH = 16,
+    parameter BUFFER_DEPTH = 16,
     parameter MAXIMUM_PACKAGES_NUMBER = 5,
     parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
     = $clog2(MAXIMUM_PACKAGES_NUMBER - 1),
 
-    parameter USE_X_Y_COORDINATES = 0,
+    parameter USE_XY_COORDINATES = 0,
     parameter USE_N_COORDINATES   = 0,
     
     // Algorithm and topology specific parameters
@@ -32,7 +32,8 @@ module router #(
     // Circulant
     parameter N = 0,
     parameter MAX_N = 0,
-    parameter USE_CLOCKWISE = 0
+    parameter USE_CLOCKWISE = 0,
+    parameter GENERATICS = {1, 2}
 )(
     input  clk_i, rst_n_i,
     axis_if.s s_axis_i [CHANNEL_NUMBER],
@@ -52,7 +53,7 @@ module router #(
         end
     endgenerate
 
-    localparam TARGET_LEN = USE_X_Y_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
+    localparam TARGET_LEN = USE_XY_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
                             USE_N_COORDINATES   ?   $clog2(N)                                   :
                                                     0                                           ;
 
@@ -68,7 +69,7 @@ module router #(
 
     axis_fifo_buffer #(
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
-        .BUFFER_LENGTH(BUFFER_LENGTH),
+        .BUFFER_DEPTH(BUFFER_DEPTH),
         .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
         `ifdef TID_PRESENT
          ,
@@ -150,7 +151,8 @@ module router #(
         // Circulant
         .N(N),
         .MAX_N(MAX_N),
-        .USE_CLOCKWISE(USE_CLOCKWISE)
+        .USE_CLOCKWISE(USE_CLOCKWISE),
+        .GENERATICS(GENERATICS)
     ) alg (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 
