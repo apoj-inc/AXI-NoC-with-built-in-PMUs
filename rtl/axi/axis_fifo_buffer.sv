@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axis_defines.svh"
 
 module axis_fifo_buffer #(
     parameter CHANNEL_NUMBER = 8,

@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axis_defines.svh"
 `include "axi2axis_typedef.svh"
 
 module algorithm #(

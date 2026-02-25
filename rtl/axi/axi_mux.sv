@@ -1,3 +1,6 @@
+`include "defines.svh"
+`include "axi_defines.svh"
+
 module axi_mux #(
     parameter INPUT_NUM = 3,
     parameter integer ID_ROUTING [(INPUT_NUM-1) * 2] = '{0, 0, 1, 1},

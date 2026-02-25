@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axis_defines.svh"
 
 module router_dual_parallel #(
     parameter AXIS_DATA_WIDTH = 40,

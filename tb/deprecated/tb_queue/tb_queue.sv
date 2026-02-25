@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axis_defines.svh"
 
 module tb_queue #(
     parameter AXIS_DATA_WIDTH = 40,

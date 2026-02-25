@@ -6,17 +6,14 @@ CCTB_MAKEFILE ?= $(CURDIR)/cctb/build/makefile
 QUARTUS_MAKEFILE ?= $(BUILD_SYSTEM_DIR)/quartus/makefile
 
 CACHE_DIR ?= $(CURDIR)/.cache
+RTL_PATH  ?= $(CURDIR)/rtl
 VENV_DIR ?= $(CACHE_DIR)/.venv
 COCOTB_DIR ?= $(CACHE_DIR)/cctb
 
-ifndef INCLUDE_DIRS
-INCLUDE_DIRS :=
-INCLUDE_DIRS += $(CURDIR)/rtl/axi
-INCLUDE_DIRS += $(CURDIR)/rtl/cores/src
-INCLUDE_DIRS += $(CURDIR)/tests/inc
-endif
+INCDIRS_PATH ?= $(RTL_PATH)/lists/incdirs.lst
+INCLUDE_DIRS ?= $(foreach file,$(shell cat $(INCDIRS_PATH)),$(CURDIR)/$(file))
 
-LIST_DIR ?= $(CURDIR)/rtl/lists
+LIST_DIR ?= $(RTL_PATH)/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
 VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)),$(CURDIR)/$(file))
 

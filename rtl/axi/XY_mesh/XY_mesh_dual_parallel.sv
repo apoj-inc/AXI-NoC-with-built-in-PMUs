@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axis_defines.svh"
 
 module XY_mesh_dual_parallel #(
     parameter AXI_DATA_WIDTH  = 32,

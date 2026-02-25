@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axi_defines.svh"
 
 module axi_master_loader #(
     parameter AXI_DATA_WIDTH = 32,

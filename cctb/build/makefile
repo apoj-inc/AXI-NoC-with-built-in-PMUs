@@ -3,21 +3,18 @@ SHELL := /bin/bash
 TOPLEVEL_LANG ?= verilog
 
 CACHE_DIR ?= $(CURDIR)/.cache
+RTL_PATH  ?= $(CURDIR)/rtl
 
 COCOTB_TOPLEVEL ?= tb_uart_loop
 COCOTB_TEST_MODULES ?= tb_example
 TB_DIR ?= $(CURDIR)/tb
 TB_EXT ?= sv
 
-LIST_DIR ?= $(CURDIR)/rtl/lists
+LIST_DIR ?= $(RTL_PATH)/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
 
-ifndef INCLUDE_DIRS
-INCLUDE_DIRS :=
-INCLUDE_DIRS += $(CURDIR)/rtl/axi
-INCLUDE_DIRS += $(CURDIR)/rtl/cores/src
-INCLUDE_DIRS += $(CURDIR)/tests/inc
-endif
+INCDIRS_PATH ?= $(RTL_PATH)/incdirs.lst
+INCLUDE_DIRS ?= $(foreach file,$(shell cat $(INCDIRS_PATH)),$(CURDIR)/$(file))
 
 TB_FILES ?=  $(foreach file,$(shell find tb/tb_* -type f -name '*.sv'),$(CURDIR)/$(file))
 
