@@ -121,6 +121,7 @@ module XY_mesh #(
 
                 router #(
                     .USE_X_Y_COORDINATES(1),
+                    .USE_MESH_XY(1),
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
                     .ROUTER_Y(i),

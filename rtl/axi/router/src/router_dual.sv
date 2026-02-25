@@ -28,9 +28,12 @@ module router_dual #(
     parameter MAX_PACKAGES = 4,
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
+    parameter USE_MESH_XY = 0,
     
     // Circulant
-    parameter N = 0
+    parameter N = 0,
+    parameter MAX_N = 0,
+    parameter USE_CLOCKWISE = 0
 )(
     input  clk_i, rst_n_i,
     axis_if.s s_axis_i [CHANNEL_NUMBER],
@@ -104,7 +107,9 @@ module router_dual #(
         .ROUTER_Y(ROUTER_Y),
         
         // Circulant
-        .N(N)
+        .N(N),
+        .MAX_N(MAX_N),
+        .USE_CLOCKWISE(USE_CLOCKWISE)
     ) alg (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 

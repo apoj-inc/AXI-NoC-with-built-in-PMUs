@@ -21,9 +21,12 @@ module algorithm_dual #(
     = $clog2(MAX_ROUTERS_Y),
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
+    parameter USE_MESH_XY = 0,
     
     // Circulant
-    parameter N = 0
+    parameter N = 0,
+    parameter MAX_N = 0,
+    parameter USE_CLOCKWISE = 0
 ) (
     input clk_i, rst_n_i,
     
@@ -69,17 +72,35 @@ module algorithm_dual #(
         end
     end
 
-    algorithm_selector_mesh_XY #(
-       .MAX_ROUTERS_X(MAX_ROUTERS_X), 
-       .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
-       .ROUTER_X(ROUTER_X),
-       .ROUTER_Y(ROUTER_Y),
-       .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
-    ) algorithm_selector (
-        .target_x_i(target_x_i),
-        .target_y_i(target_y_i),
-        .selector_o(selector_count)
-    );
+    generate
+
+        if(USE_MESH_XY) begin
+            algorithm_selector_mesh_XY #(
+            .MAX_ROUTERS_X(MAX_ROUTERS_X), 
+            .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
+            .ROUTER_X(ROUTER_X),
+            .ROUTER_Y(ROUTER_Y),
+            .CHANNEL_NUMBER(CHANNEL_NUMBER)
+            ) algorithm_selector (
+                .target_x_i(target_x_i),
+                .target_y_i(target_y_i),
+                .selector_o(selector)
+            );
+        end else if(USE_CLOCKWISE) begin
+            algorithm_selector_clockwise #(
+            .MAX_ROUTERS_X(MAX_ROUTERS_X), 
+            .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
+            .ROUTER_X(ROUTER_X),
+            .ROUTER_Y(ROUTER_Y),
+            .CHANNEL_NUMBER(CHANNEL_NUMBER)
+            ) algorithm_selector (
+                .target_x_i(target_x_i),
+                .target_y_i(target_y_i),
+                .selector_o(selector)
+            );
+        end else $error("No algorithm specified!");
+
+    endgenerate
 
     always_comb begin
         ctrl = '0;
