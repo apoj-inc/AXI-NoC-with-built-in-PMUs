@@ -95,6 +95,7 @@ module circulant_dual #(
             end
             
             router_dual #(
+                .CHANNEL_NUMBER(CHANNEL_NUMBER),
                 .USE_N_COORDINATES(1),
                 .USE_CLOCKWISE(1),
                 .ROUTER_N(i),
@@ -107,8 +108,7 @@ module circulant_dual #(
 
                 .BUFFER_DEPTH(BUFFER_DEPTH),
                 .GENERATICS_COUNT(GENERATICS_COUNT),
-                .GENERATICS(GENERATICS),
-                .CHANNEL_NUMBER(CHANNEL_NUMBER)
+                .GENERATICS(GENERATICS)
             ) router (
                 .clk_i(ACLK),
                 .rst_n_i(ARESETn),

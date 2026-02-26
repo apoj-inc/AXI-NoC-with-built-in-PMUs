@@ -126,6 +126,7 @@ module XY_mesh_dual #(
                 `AXIS_INTERFACE2INTERFACE(router_if[i+1][j][EAST_RESP], router_in[i][j][WEST_RESP])
                 
                 router_dual #(
+                    .CHANNEL_NUMBER(10),
                     .USE_XY_COORDINATES(1),
                     .USE_MESH_XY(1),
                     .ROUTER_X(j),

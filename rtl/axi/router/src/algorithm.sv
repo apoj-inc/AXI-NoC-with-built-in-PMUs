@@ -71,7 +71,7 @@ module algorithm #(
             .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
             .ROUTER_X(ROUTER_X),
             .ROUTER_Y(ROUTER_Y),
-            .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+            .CHANNEL_NUMBER(CHANNEL_NUMBER)
             ) algorithm_selector (
                 .target_x_i(target_x_i),
                 .target_y_i(target_y_i),
@@ -83,7 +83,7 @@ module algorithm #(
             .ROUTERS_N(ROUTERS_N),
             .GENERATICS_COUNT(GENERATICS_COUNT),
             .GENERATICS(GENERATICS),
-            .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+            .CHANNEL_NUMBER(CHANNEL_NUMBER)
             ) algorithm_selector (
                 .target_i(target_i),
                 .selector_o(selector)
