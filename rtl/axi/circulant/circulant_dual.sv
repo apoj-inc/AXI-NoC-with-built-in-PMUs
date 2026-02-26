@@ -90,7 +90,7 @@ module circulant_dual #(
             `AXIS_INTERFACE2INTERFACE(from_home[i][HOME_REQ], router_in[i][HOME_REQ])
             `AXIS_INTERFACE2INTERFACE(from_home[i][HOME_RESP], router_in[i][HOME_RESP])
 
-            for (generatic = 0; generatic < GENERATICS_COUNT; generatic++) begin
+            for (generatic = 0; generatic < GENERATICS_COUNT; generatic++) begin : interconnection_assignment
                 //Clockwise
                 `AXIS_INTERFACE2INTERFACE(router_if[i][generatic*2+2]  , router_in[(i+GENERATICS[generatic])%ROUTERS_COUNT][generatic*2+2]  )
                 `AXIS_INTERFACE2INTERFACE(router_if[i][generatic*2+1+2], router_in[(i+GENERATICS[generatic])%ROUTERS_COUNT][generatic*2+1+2])
