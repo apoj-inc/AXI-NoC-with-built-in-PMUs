@@ -32,7 +32,7 @@ async def test_mux(dut):
         )
     )
 
-    assert result is not timeout, "Design has hung!"
+    assert result is not timeout, "The design has hung!"
 
 
     timeout = Timer(200_000, unit='ns')
@@ -46,4 +46,4 @@ async def test_mux(dut):
         )
     )
 
-    assert result is not timeout, "Design has hung!"
+    assert result is not timeout, "The design has hung!"

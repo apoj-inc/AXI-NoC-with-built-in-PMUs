@@ -33,7 +33,7 @@ async def test_demux(dut):
             cocotb.start_soon(axi_master.write(0x00000008, b'beef', awid=2))
         )
     )
-    assert result is not timeout, "Design has hung!"
+    assert result is not timeout, "The design has hung!"
 
     result = await First(
         timeout,
@@ -43,4 +43,4 @@ async def test_demux(dut):
             cocotb.start_soon(axi_master.read(0x00000008, 4, arid=2))
         )
     )
-    assert result is not timeout, "Design has hung!"
+    assert result is not timeout, "The design has hung!"

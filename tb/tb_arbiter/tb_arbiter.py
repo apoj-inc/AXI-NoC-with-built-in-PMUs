@@ -12,4 +12,4 @@ async def test(dut):
     timeout = Timer(100_000, unit='ns')
 
     result = await First(timeout, cocotb.start_soon(wait_to_finish(dut)))
-    assert result is not timeout, "Design has hung!"
+    assert result is not timeout, "The design has hung!"

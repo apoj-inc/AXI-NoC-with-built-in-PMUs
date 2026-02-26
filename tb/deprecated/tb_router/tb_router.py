@@ -78,7 +78,7 @@ async def test(dut):
             Combine (*processes)
         )
 
-        assert result is not timeout, "Design has hung!"
+        assert result is not timeout, "The design has hung!"
 
     for _ in range(10):
         await RisingEdge(dut.aclk)

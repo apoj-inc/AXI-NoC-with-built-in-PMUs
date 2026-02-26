@@ -39,7 +39,7 @@ module circulant_dual #(
     assert (test_previous_generatic > 0) else $error("Incorrect genetarics format: nonpositive!");
     end
 
-    localparam CHANNEL_NUMBER = (GENERATICS_COUNT + 1'b1)*2;
+    localparam CHANNEL_NUMBER = (GENERATICS_COUNT*2 + 1'b1)*2;
 
     typedef enum logic {
         HOME_REQ,
@@ -91,8 +91,12 @@ module circulant_dual #(
             `AXIS_INTERFACE2INTERFACE(from_home[i][HOME_RESP], router_in[i][HOME_RESP])
 
             for (generatic = 0; generatic < GENERATICS_COUNT; generatic++) begin
+                //Clockwise
                 `AXIS_INTERFACE2INTERFACE(router_if[i][generatic*2+2]  , router_in[(i+GENERATICS[generatic])%ROUTERS_COUNT][generatic*2+2]  )
                 `AXIS_INTERFACE2INTERFACE(router_if[i][generatic*2+1+2], router_in[(i+GENERATICS[generatic])%ROUTERS_COUNT][generatic*2+1+2])
+                //Counter clockwise
+                `AXIS_INTERFACE2INTERFACE(router_if[i][(generatic+GENERATICS_COUNT)*2+2]  , router_in[(i+GENERATICS[generatic])%ROUTERS_COUNT][(generatic+GENERATICS_COUNT)*2+2]  )
+                `AXIS_INTERFACE2INTERFACE(router_if[i][(generatic+GENERATICS_COUNT)*2+1+2], router_in[(i+GENERATICS[generatic])%ROUTERS_COUNT][(generatic+GENERATICS_COUNT)*2+1+2])
             end
             
             router_dual #(

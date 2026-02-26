@@ -25,7 +25,7 @@ async def test(dut):
         )
     )
     
-    assert result is not timeout, "Design has hung!"
+    assert result is not timeout, "The design has hung!"
 
     
     timeout = Timer(200_000, unit='ns')
@@ -39,7 +39,7 @@ async def test(dut):
         )
     )
 
-    assert result is not timeout, "Design has hung!"
+    assert result is not timeout, "The design has hung!"
 
     for _ in range(100):
         await RisingEdge(dut.aclk)
