@@ -16,7 +16,7 @@ module circulant_dual #(
 
     parameter ROUTERS_N = 6,
     parameter GENERATICS_COUNT = 2,
-    parameter int GENERATICS[GENERATICS_COUNT] = '{1, 2},
+    parameter int GENERATICS[GENERATICS_COUNT] = '{1, 2}
 ) (
     input ACLK, ARESETn,
 
@@ -24,19 +24,21 @@ module circulant_dual #(
     axi_if.m m_axi_o[ROUTERS_N]
 );
 
-    initial begin //GENERATICS sanity test
-    assert GENERATICS_COUNT > 0 else $error("No generatics passed!");
+    int test_previous_generatic;
+    int test_i;
 
-    int test_previous_generatic = 0;
-    for(int test_i = 0; test_i < GENERATICS_COUNT; i++) begin
-        assert GENERATICS[test_i] > test_previous_generatic else $error("Generatics order broken!");
+    initial begin //GENERATICS sanity test
+    assert (GENERATICS_COUNT > 0) else $error("No generatics passed!");
+    test_previous_generatic = 0;
+    for(test_i = 0; test_i < GENERATICS_COUNT; test_i++) begin
+        assert (GENERATICS[test_i] > test_previous_generatic) else $error("Generatics order broken!");
         test_previous_generatic = GENERATICS[test_i];
     end
 
-    assert test_previous_generatic < ROUTERS_N else $error("Generatics greater than routers!");
+    assert (test_previous_generatic < ROUTERS_N) else $error("Generatics greater than routers!");
     end
 
-    localparam CHANNEL_NUMBER = GENERATICS_COUNT + 1'b1;
+    localparam CHANNEL_NUMBER = (GENERATICS_COUNT + 1'b1)*2;
 
     typedef enum logic {
         HOME_REQ,
@@ -50,9 +52,9 @@ module circulant_dual #(
         .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
         .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
         .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-    )   router_if[ROUTERS_N][CHANNEL_NUMBER*2](),
+    )   router_if[ROUTERS_N][CHANNEL_NUMBER](),
         from_home[ROUTERS_N][2](),
-        router_in[ROUTERS_N][CHANNEL_NUMBER*2]();
+        router_in[ROUTERS_N][CHANNEL_NUMBER]();
 
     generate
         for (i = 0; i < ROUTERS_N; i++) begin : router_iteration
@@ -68,6 +70,7 @@ module circulant_dual #(
                 .AXIS_DEST_WIDTH(AXIS_DEST_WIDTH),
                 .AXIS_USER_WIDTH(AXIS_USER_WIDTH),
 
+                .ROUTER_N(i),
                 .ROUTERS_N(ROUTERS_N)
             ) bridge (
                 .ACLK(ACLK),
@@ -83,12 +86,12 @@ module circulant_dual #(
                 .m_axis_if_req_o(from_home[i][HOME_REQ])
             );
 
-            `AXIS_INTERFACE2INTERFACE(from_home[i][j][HOME_REQ], router_in[i][j][HOME_REQ])
-            `AXIS_INTERFACE2INTERFACE(from_home[i][j][HOME_RESP], router_in[i][j][HOME_RESP])
+            `AXIS_INTERFACE2INTERFACE(from_home[i][HOME_REQ], router_in[i][HOME_REQ])
+            `AXIS_INTERFACE2INTERFACE(from_home[i][HOME_RESP], router_in[i][HOME_RESP])
 
-            for (generatic = 0; generatic < $size(GENERATICS); generatic++) begin
-                `AXIS_INTERFACE2INTERFACE(router_if[(i+GENERATICS[generatic])%ROUTERS_N][generatic]  , router_in[i][generatic]  )
-                `AXIS_INTERFACE2INTERFACE(router_if[(i+GENERATICS[generatic])%ROUTERS_N][generatic+1], router_in[i][generatic+1])
+            for (generatic = 0; generatic < GENERATICS_COUNT; generatic++) begin
+                `AXIS_INTERFACE2INTERFACE(router_if[(i+GENERATICS[generatic])%ROUTERS_N][generatic*2+2]  , router_in[i][generatic*2+2]  )
+                `AXIS_INTERFACE2INTERFACE(router_if[(i+GENERATICS[generatic])%ROUTERS_N][generatic*2+1+2], router_in[i][generatic*2+1+2])
             end
             
             router_dual #(
@@ -104,7 +107,8 @@ module circulant_dual #(
 
                 .BUFFER_DEPTH(BUFFER_DEPTH),
                 .GENERATICS_COUNT(GENERATICS_COUNT),
-                .GENERATICS(GENERATICS)
+                .GENERATICS(GENERATICS),
+                .CHANNEL_NUMBER(CHANNEL_NUMBER)
             ) router (
                 .clk_i(ACLK),
                 .rst_n_i(ARESETn),

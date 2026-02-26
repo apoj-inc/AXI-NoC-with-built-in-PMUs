@@ -17,7 +17,7 @@ module axi2axis_N #(
     parameter ROUTER_N        = 0,
     parameter ROUTERS_N       = 6,
 
-    parameter MAX_ROUTERS_N_WIDTH = $clog2(MAX_ROUTERS_N)
+    parameter ROUTERS_N_WIDTH = $clog2(ROUTERS_N)
 ) (
     input ACLK, ARESETn,
 
@@ -53,12 +53,10 @@ module axi2axis_N #(
     `AXIS_INTERFACE_MASTER2TYPEDEF(m_axis_if_req_o, m_axis_req_o, m_axis_req_i)
 
     typedef struct packed {
-        logic [AXIS_DATA_WIDTH - (8 + (MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH) * 2) - 1:0] RESERVED;
+        logic [AXIS_DATA_WIDTH - (8 + (ROUTERS_N_WIDTH) * 2) - 1:0] RESERVED;
         logic [7:0] PACKET_COUNT;
-        logic [MAX_ROUTERS_X_WIDTH-1:0] SOURCE_X;
-        logic [MAX_ROUTERS_Y_WIDTH-1:0] SOURCE_Y;
-        logic [MAX_ROUTERS_X_WIDTH-1:0] DESTINATION_X;
-        logic [MAX_ROUTERS_Y_WIDTH-1:0] DESTINATION_Y;
+        logic [ROUTERS_N_WIDTH-1:0] SOURCE_N;
+        logic [ROUTERS_N_WIDTH-1:0] DESTINATION_N;
     } routing_header;
 
     typedef struct packed {
@@ -97,12 +95,9 @@ module axi2axis_N #(
 
     // response coordinate logic
     logic [8:0] RRESP_LEN, RRESP_LEN_next;
-    logic [MAX_ROUTERS_X_WIDTH-1:0] ROUTING_SOURCE_X, ROUTING_SOURCE_X_next;
-    logic [MAX_ROUTERS_Y_WIDTH-1:0] ROUTING_SOURCE_Y, ROUTING_SOURCE_Y_next;
-    logic [MAX_ROUTERS_X_WIDTH-1:0] RRESP_DESTINATION_X, RRESP_DESTINATION_X_next;
-    logic [MAX_ROUTERS_Y_WIDTH-1:0] RRESP_DESTINATION_Y, RRESP_DESTINATION_Y_next;
-    logic [MAX_ROUTERS_X_WIDTH-1:0] BRESP_DESTINATION_X, BRESP_DESTINATION_X_next;
-    logic [MAX_ROUTERS_Y_WIDTH-1:0] BRESP_DESTINATION_Y, BRESP_DESTINATION_Y_next;
+    logic [ROUTERS_N_WIDTH-1:0] ROUTING_SOURCE_N, ROUTING_SOURCE_N_next;
+    logic [ROUTERS_N_WIDTH-1:0] RRESP_DESTINATION_N, RRESP_DESTINATION_N_next;
+    logic [ROUTERS_N_WIDTH-1:0] BRESP_DESTINATION_N, BRESP_DESTINATION_N_next;
     
 
     packet_type AW;
@@ -254,21 +249,18 @@ module axi2axis_N #(
                     routing_header_req_o.RESERVED = '0;
 
                     if (request_data_o == AW_SUBHEADER) begin
-                        routing_header_req_o.DESTINATION_X = (s_axi_i.data.aw.AWID - 1) % MAX_ROUTERS_X;
-                        routing_header_req_o.DESTINATION_Y = (s_axi_i.data.aw.AWID - 1) / MAX_ROUTERS_X;
+                        routing_header_req_o.DESTINATION_N = (s_axi_i.data.aw.AWID - 1) % ROUTERS_N;
                         routing_header_req_o.PACKET_COUNT = s_axi_i.data.aw.AWLEN + 2;
                     end
                     else if (request_data_o == AR_SUBHEADER) begin
-                        routing_header_req_o.DESTINATION_X = (s_axi_i.data.ar.ARID - 1) % MAX_ROUTERS_X;
-                        routing_header_req_o.DESTINATION_Y = (s_axi_i.data.ar.ARID - 1) / MAX_ROUTERS_X;
+                        routing_header_req_o.DESTINATION_N = (s_axi_i.data.ar.ARID - 1) % ROUTERS_N;
                         routing_header_req_o.PACKET_COUNT = 1;
                     end
                     else begin
                         routing_header_req_o = '0;
                     end
 
-                    routing_header_req_o.SOURCE_X = ROUTER_X;
-                    routing_header_req_o.SOURCE_Y = ROUTER_Y;
+                    routing_header_req_o.SOURCE_N = ROUTER_N;
 
 
                     s_axi_o.WREADY = '0;
@@ -414,20 +406,17 @@ module axi2axis_N #(
                     routing_header_resp_o.RESERVED = '0;
 
                     if (response_data_o == B_SUBHEADER) begin
-                        routing_header_resp_o.DESTINATION_X = BRESP_DESTINATION_X;
-                        routing_header_resp_o.DESTINATION_Y = BRESP_DESTINATION_Y;
+                        routing_header_resp_o.DESTINATION_N = BRESP_DESTINATION_N;
                         routing_header_resp_o.PACKET_COUNT = 1;
                     end
                     else if (response_data_o == R_DATA) begin
-                        routing_header_resp_o.DESTINATION_X = RRESP_DESTINATION_X;
-                        routing_header_resp_o.DESTINATION_Y = RRESP_DESTINATION_Y;
+                        routing_header_resp_o.DESTINATION_N = RRESP_DESTINATION_N;
                         routing_header_resp_o.PACKET_COUNT = RRESP_LEN;
                     end
                     else begin
                         routing_header_resp_o = '0;
                     end
-                    routing_header_resp_o.SOURCE_X = ROUTER_X;
-                    routing_header_resp_o.SOURCE_Y = ROUTER_Y;
+                    routing_header_resp_o.SOURCE_N = ROUTER_N;
 
                     response_ready_i = '0;
 
@@ -507,21 +496,15 @@ module axi2axis_N #(
     always_ff @(posedge ACLK or negedge ARESETn) begin
         if (!ARESETn) begin
             RRESP_LEN <= 0;
-            ROUTING_SOURCE_X <= 0;
-            ROUTING_SOURCE_Y <= 0;
-            RRESP_DESTINATION_X <= 0;
-            RRESP_DESTINATION_Y <= 0;
-            BRESP_DESTINATION_X <= 0;
-            BRESP_DESTINATION_Y <= 0;
+            ROUTING_SOURCE_N <= 0;
+            RRESP_DESTINATION_N <= 0;
+            BRESP_DESTINATION_N <= 0;
         end
         else begin
             RRESP_LEN <= RRESP_LEN_next;
-            ROUTING_SOURCE_X <= ROUTING_SOURCE_X_next;
-            ROUTING_SOURCE_Y <= ROUTING_SOURCE_Y_next;
-            RRESP_DESTINATION_X <= RRESP_DESTINATION_X_next;
-            RRESP_DESTINATION_Y <= RRESP_DESTINATION_Y_next;
-            BRESP_DESTINATION_X <= BRESP_DESTINATION_X_next;
-            BRESP_DESTINATION_Y <= BRESP_DESTINATION_Y_next;
+            ROUTING_SOURCE_N <= ROUTING_SOURCE_N_next;
+            RRESP_DESTINATION_N <= RRESP_DESTINATION_N_next;
+            BRESP_DESTINATION_N <= BRESP_DESTINATION_N_next;
         end
     end
 
@@ -543,13 +526,10 @@ module axi2axis_N #(
                 ROUTING_HEADER: begin
                     RRESP_LEN_next = RRESP_LEN;
 
-                    ROUTING_SOURCE_X_next = routing_header_req_i.SOURCE_X;
-                    ROUTING_SOURCE_Y_next = routing_header_req_i.SOURCE_Y;
+                    ROUTING_SOURCE_N_next = routing_header_req_i.SOURCE_N;
 
-                    RRESP_DESTINATION_X_next = RRESP_DESTINATION_X;
-                    RRESP_DESTINATION_Y_next = RRESP_DESTINATION_Y;
-                    BRESP_DESTINATION_X_next = BRESP_DESTINATION_X;
-                    BRESP_DESTINATION_Y_next = BRESP_DESTINATION_Y;
+                    RRESP_DESTINATION_N_next = RRESP_DESTINATION_N;
+                    BRESP_DESTINATION_N_next = BRESP_DESTINATION_N;
 
                     s_axis_req_o.TREADY = '1;
 
@@ -575,19 +555,15 @@ module axi2axis_N #(
                 AW_SUBHEADER: begin
                     RRESP_LEN_next = RRESP_LEN;
 
-                    ROUTING_SOURCE_X_next = ROUTING_SOURCE_X;
-                    ROUTING_SOURCE_Y_next = ROUTING_SOURCE_Y;
+                    ROUTING_SOURCE_N_next = ROUTING_SOURCE_N;
 
-                    RRESP_DESTINATION_X_next = RRESP_DESTINATION_X;
-                    RRESP_DESTINATION_Y_next = RRESP_DESTINATION_Y;
+                    RRESP_DESTINATION_N_next = RRESP_DESTINATION_N;
 
                     if (m_axi_i.AWREADY) begin
-                        BRESP_DESTINATION_X_next = ROUTING_SOURCE_X;
-                        BRESP_DESTINATION_Y_next = ROUTING_SOURCE_Y;
+                        BRESP_DESTINATION_N_next = ROUTING_SOURCE_N;
                     end
                     else begin
-                        BRESP_DESTINATION_X_next = BRESP_DESTINATION_X;
-                        BRESP_DESTINATION_Y_next = BRESP_DESTINATION_Y;
+                        BRESP_DESTINATION_N_next = BRESP_DESTINATION_N;
                     end
 
                     s_axis_req_o.TREADY = m_axi_i.AWREADY;
@@ -614,19 +590,15 @@ module axi2axis_N #(
                 AR_SUBHEADER: begin
                     RRESP_LEN_next = ar_subheader_i.LEN + 1;
 
-                    ROUTING_SOURCE_X_next = ROUTING_SOURCE_X;
-                    ROUTING_SOURCE_Y_next = ROUTING_SOURCE_Y;
+                    ROUTING_SOURCE_N_next = ROUTING_SOURCE_N;
 
-                    BRESP_DESTINATION_X_next = BRESP_DESTINATION_X;
-                    BRESP_DESTINATION_Y_next = BRESP_DESTINATION_Y;
+                    BRESP_DESTINATION_N_next = BRESP_DESTINATION_N;
 
                     if (m_axi_i.ARREADY) begin
-                        RRESP_DESTINATION_X_next = ROUTING_SOURCE_X;
-                        RRESP_DESTINATION_Y_next = ROUTING_SOURCE_Y;
+                        RRESP_DESTINATION_N_next = ROUTING_SOURCE_N;
                     end
                     else begin
-                        RRESP_DESTINATION_X_next = RRESP_DESTINATION_X;
-                        RRESP_DESTINATION_Y_next = RRESP_DESTINATION_Y;
+                        RRESP_DESTINATION_N_next = RRESP_DESTINATION_N;
                     end
 
                     s_axis_req_o.TREADY = m_axi_i.ARREADY;
@@ -653,13 +625,10 @@ module axi2axis_N #(
                 W_DATA: begin
                     RRESP_LEN_next = RRESP_LEN;
 
-                    ROUTING_SOURCE_X_next = ROUTING_SOURCE_X;
-                    ROUTING_SOURCE_Y_next = ROUTING_SOURCE_Y;
+                    ROUTING_SOURCE_N_next = ROUTING_SOURCE_N;
 
-                    RRESP_DESTINATION_X_next = RRESP_DESTINATION_X;
-                    RRESP_DESTINATION_Y_next = RRESP_DESTINATION_Y;
-                    BRESP_DESTINATION_X_next = BRESP_DESTINATION_X;
-                    BRESP_DESTINATION_Y_next = BRESP_DESTINATION_Y;
+                    RRESP_DESTINATION_N_next = RRESP_DESTINATION_N;
+                    BRESP_DESTINATION_N_next = BRESP_DESTINATION_N;
 
                     s_axis_req_o.TREADY = m_axi_i.WREADY;
 
@@ -685,13 +654,10 @@ module axi2axis_N #(
                 default: begin
                     RRESP_LEN_next = RRESP_LEN;
 
-                    ROUTING_SOURCE_X_next = ROUTING_SOURCE_X;
-                    ROUTING_SOURCE_Y_next = ROUTING_SOURCE_Y;
+                    ROUTING_SOURCE_N_next = ROUTING_SOURCE_N;
 
-                    RRESP_DESTINATION_X_next = RRESP_DESTINATION_X;
-                    RRESP_DESTINATION_Y_next = RRESP_DESTINATION_Y;
-                    BRESP_DESTINATION_X_next = BRESP_DESTINATION_X;
-                    BRESP_DESTINATION_Y_next = BRESP_DESTINATION_Y;
+                    RRESP_DESTINATION_N_next = RRESP_DESTINATION_N;
+                    BRESP_DESTINATION_N_next = BRESP_DESTINATION_N;
 
                     s_axis_req_o.TREADY = '1;
 
@@ -719,13 +685,10 @@ module axi2axis_N #(
         else begin
             RRESP_LEN_next = RRESP_LEN;
 
-            ROUTING_SOURCE_X_next = ROUTING_SOURCE_X;
-            ROUTING_SOURCE_Y_next = ROUTING_SOURCE_Y;
+            ROUTING_SOURCE_N_next = ROUTING_SOURCE_N;
 
-            RRESP_DESTINATION_X_next = RRESP_DESTINATION_X;
-            RRESP_DESTINATION_Y_next = RRESP_DESTINATION_Y;
-            BRESP_DESTINATION_X_next = BRESP_DESTINATION_X;
-            BRESP_DESTINATION_Y_next = BRESP_DESTINATION_Y;
+            RRESP_DESTINATION_N_next = RRESP_DESTINATION_N;
+            BRESP_DESTINATION_N_next = BRESP_DESTINATION_N;
 
             s_axis_req_o.TREADY = '1;
 

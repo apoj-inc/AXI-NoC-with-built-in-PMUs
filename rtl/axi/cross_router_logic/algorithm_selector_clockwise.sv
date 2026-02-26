@@ -6,13 +6,13 @@ module algorithm_selector_clockwise #(
     parameter GENERATICS_COUNT = 2,
     parameter int GENERATICS[GENERATICS_COUNT] = '{1, 2}
 ) (
-    input  logic [ROUTERS_N_WIDTH-1:0]         target,
+    input  logic [ROUTERS_N_WIDTH-1:0]       target_i,
     output logic [CHANNEL_NUMBER-1:0]      selector_o
 );
     logic [ROUTERS_N_WIDTH:0] extended_target;
     logic [ROUTERS_N_WIDTH-1:0] target_dif;
 
-    assign extended_target = ROUTERS_N > target ? target + ROUTERS_N: target;
+    assign extended_target = ROUTERS_N > target_i ? target_i + ROUTERS_N: target_i;
     assign target_dif = extended_target - ROUTERS_N;
 
     always_comb begin
@@ -22,7 +22,7 @@ module algorithm_selector_clockwise #(
             selector_o[0] = 1'b1;
         end
 
-        for (int i = 0; i < $size(GENERATICS); i++) begin
+        for (int i = 0; i < GENERATICS_COUNT; i++) begin
             if(GENERATICS[i] <= target_dif) begin
                 selector_o[i] = 1'b1;
             end
