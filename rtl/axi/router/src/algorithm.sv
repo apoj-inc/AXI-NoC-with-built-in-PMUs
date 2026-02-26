@@ -24,10 +24,11 @@ module algorithm #(
     parameter USE_MESH_XY = 0,
     
     // Circulant
-    parameter N = 0,
-    parameter MAX_N = 0,
+    parameter ROUTER_N = 0,
+    parameter ROUTERS_N = 6,
     parameter USE_CLOCKWISE = 0,
-    parameter GENERATICS = {1, 2}
+    parameter GENERATICS_COUNT = 2,
+    parameter int GENERATICS[GENERATICS_COUNT] = '{1, 2}
 ) (
     input clk_i, rst_n_i,
     
@@ -78,15 +79,20 @@ module algorithm #(
             );
         end else if(USE_CLOCKWISE) begin
             algorithm_selector_clockwise #(
-            .N(N),
-            .MAX_N(MAX_N),
+            .ROUTER_N(ROUTER_N),
+            .ROUTERS_N(ROUTERS_N),
+            .GENERATICS_COUNT(GENERATICS_COUNT),
             .GENERATICS(GENERATICS),
             .CHANNEL_NUMBER(CHANNEL_NUMBER)
             ) algorithm_selector (
                 .target_i(target_i),
                 .selector_o(selector)
             );
-        end else $error("No algorithm specified!");
+        end else begin
+             initial begin
+                $error("No algorithm specified!");
+             end
+        end
 
     endgenerate
 

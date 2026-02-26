@@ -32,18 +32,19 @@ module router_dual_parallel #(
     parameter USE_MESH_XY = 0,
     
     // Circulant
-    parameter N = 0,
-    parameter MAX_N = 0,
+    parameter ROUTER_N = 0,
+    parameter ROUTERS_N = 6,
     parameter USE_CLOCKWISE = 0,
-    parameter GENERATICS = {1, 2}
+    parameter GENERATICS_COUNT = 2,
+    parameter int GENERATICS[GENERATICS_COUNT] = '{1, 2}
 )(
     input clk_i, rst_n_i,
     axis_if.s s_axis_i [CHANNEL_NUMBER],
     axis_if.m m_axis_o [CHANNEL_NUMBER]
 );
 
-    localparam TARGET_LEN = USE_XY_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
-                            USE_N_COORDINATES   ?   $clog2(N)                                   :
+    localparam TARGET_LEN = USE_XY_COORDINATES ?    MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
+                            USE_N_COORDINATES  ?    $clog2(ROUTERS_N)                           :
                                                     0                                           ;
 
     initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
@@ -129,11 +130,13 @@ module router_dual_parallel #(
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
         .ROUTER_X(ROUTER_X),
         .ROUTER_Y(ROUTER_Y),
+        .USE_MESH_XY(USE_MESH_XY),
         
         // Circulant
-        .N(N),
-        .MAX_N(MAX_N),
+        .ROUTER_N(ROUTER_N),
+        .ROUTERS_N(ROUTERS_N),
         .USE_CLOCKWISE(USE_CLOCKWISE),
+        .GENERATICS_COUNT(GENERATICS_COUNT),
         .GENERATICS(GENERATICS)
     ) alg_req (
         .clk_i(clk_i), .rst_n_i(rst_n_i),

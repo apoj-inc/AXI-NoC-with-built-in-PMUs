@@ -23,8 +23,8 @@ module cosim_top #(
 
     parameter BUFFER_DEPTH = 16,
 
-    parameter N = MAX_ROUTERS_X*MAX_ROUTERS_Y,
-    parameter CORE_COUNT = N,
+    parameter ROUTERS_N = MAX_ROUTERS_X*MAX_ROUTERS_Y,
+    parameter CORE_COUNT = ROUTERS_N,
     parameter AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH,
 
     parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
