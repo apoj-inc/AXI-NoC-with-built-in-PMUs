@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axi_defines.svh"
 
 module sr_axi_adapter #(
     parameter AXI_DATA_WIDTH = 8,

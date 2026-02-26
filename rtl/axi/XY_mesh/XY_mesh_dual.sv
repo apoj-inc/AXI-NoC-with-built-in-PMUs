@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axis_defines.svh"
 
 module XY_mesh_dual #(
     parameter AXI_DATA_WIDTH  = 32,
@@ -13,6 +14,8 @@ module XY_mesh_dual #(
 
     parameter MAX_ROUTERS_X   = 4,
     parameter MAX_ROUTERS_Y   = 4,
+    
+    parameter BUFFER_DEPTH = 16,
 
     parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
     parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y)
@@ -123,7 +126,9 @@ module XY_mesh_dual #(
                 `AXIS_INTERFACE2INTERFACE(router_if[i+1][j][EAST_RESP], router_in[i][j][WEST_RESP])
                 
                 router_dual #(
-                    .USE_X_Y_COORDINATES(1),
+                    .CHANNEL_NUMBER(10),
+                    .USE_XY_COORDINATES(1),
+                    .USE_MESH_XY(1),
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
                     .ROUTER_Y(i),
@@ -132,7 +137,9 @@ module XY_mesh_dual #(
                     .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
                     .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
                     .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
-                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+
+                    .BUFFER_DEPTH(BUFFER_DEPTH)
                 ) router (
                     .clk_i(ACLK),
                     .rst_n_i(ARESETn),

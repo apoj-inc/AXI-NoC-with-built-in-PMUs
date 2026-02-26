@@ -15,7 +15,7 @@ module router #(
     `endif
     ,
     parameter CHANNEL_NUMBER = 5,
-    parameter BUFFER_LENGTH = 16,
+    parameter BUFFER_DEPTH = 16,
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
     = $clog2(MAX_ROUTERS_X),
@@ -168,7 +168,7 @@ module router #(
 
             stream_fifo #(
                 .DATA_TYPE(queue_datatype),
-                .FIFO_LEN(BUFFER_LENGTH)
+                .FIFO_DEPTH(BUFFER_DEPTH)
             ) q (
                 .ACLK(clk),
                 .ARESETn(rst_n),

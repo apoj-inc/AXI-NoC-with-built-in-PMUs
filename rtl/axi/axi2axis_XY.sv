@@ -1,4 +1,6 @@
 `include "defines.svh"
+`include "axi_defines.svh"
+`include "axis_defines.svh"
 `include "axi2axis_typedef.svh"
 
 module axi2axis_XY #(

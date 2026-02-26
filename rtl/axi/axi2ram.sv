@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axi_defines.svh"
 
 module axi2ram
 #(

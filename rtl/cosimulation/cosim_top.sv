@@ -21,8 +21,10 @@ module cosim_top #(
     parameter MAX_ROUTERS_Y = 4,
     parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
 
-    parameter N = MAX_ROUTERS_X*MAX_ROUTERS_Y,
-    parameter CORE_COUNT = N,
+    parameter BUFFER_DEPTH = 16,
+
+    parameter ROUTERS_N = MAX_ROUTERS_X*MAX_ROUTERS_Y,
+    parameter CORE_COUNT = ROUTERS_N,
     parameter AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH,
 
     parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
@@ -74,6 +76,8 @@ module cosim_top #(
 
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
+
+        .BUFFER_DEPTH(BUFFER_DEPTH),
 
         .AXI_MASTER_LOADER_FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH)
     ) mesh_with_loaders (

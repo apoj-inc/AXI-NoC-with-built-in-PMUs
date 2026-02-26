@@ -1,2 +1,4 @@
-rtl/axi/defines.svh
-rtl/axi/axi2axis_typedef.svh
+rtl/inc/defines.svh
+rtl/axi/inc/axi_defines.svh
+rtl/axi/inc/axis_defines.svh
+rtl/axi/inc/axi2axis_typedef.svh

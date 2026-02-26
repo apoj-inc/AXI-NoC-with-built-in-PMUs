@@ -4,7 +4,7 @@ module tb_with_loaders #(
     parameter MAX_ID_WIDTH = 4,
     parameter ADDR_WIDTH = 12,
 
-    parameter N = (ID_W_WIDTH-1)*(ID_R_WIDTH-1),
+    parameter ROUTERS_N = (ID_W_WIDTH-1)*(ID_R_WIDTH-1),
 
     parameter AXI_DATA_WIDTH = 32
     `ifdef TID_PRESENT
@@ -24,16 +24,16 @@ module tb_with_loaders #(
     input  logic        aresetn,
 
     input  logic        pmu_enable_i,
-    input  logic [4:0]  pmu_addr_i   [N],
-    output logic [31:0] pmu_data_o   [N],
+    input  logic [4:0]  pmu_addr_i   [ROUTERS_N],
+    output logic [31:0] pmu_data_o   [ROUTERS_N],
 
-    input  logic        resp_wait_i  [N],
-    input  logic [4:0]  id_i         [N],
-    input  logic        write_i      [N],
-    input  logic [7:0]  axlen_i      [N],
-    input  logic        fifo_push_i  [N],
+    input  logic        resp_wait_i  [ROUTERS_N],
+    input  logic [4:0]  id_i         [ROUTERS_N],
+    input  logic        write_i      [ROUTERS_N],
+    input  logic [7:0]  axlen_i      [ROUTERS_N],
+    input  logic        fifo_push_i  [ROUTERS_N],
     input  logic        start_i,
-    output logic        idle_o       [N]
+    output logic        idle_o       [ROUTERS_N]
 );
 
     mesh_with_loaders #(

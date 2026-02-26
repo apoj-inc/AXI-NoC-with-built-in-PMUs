@@ -1,3 +1,6 @@
+`include "defines.svh"
+`include "axi_defines.svh"
+
 module axi_demux #(
     parameter OUTPUT_NUM = 3,
     parameter integer ID_ROUTING [(OUTPUT_NUM-1) * 2] = '{0, 0, 1, 1},
@@ -8,10 +11,10 @@ module axi_demux #(
     parameter AXI_ADDR_WIDTH = 16,
     
 
-    parameter Ax_FIFO_LEN = 4,
-    parameter W_FIFO_LEN = 4,
-    parameter B_FIFO_LEN = 4,
-    parameter R_FIFO_LEN = 4
+    parameter Ax_FIFO_DEPTH = 4,
+    parameter W_FIFO_DEPTH = 4,
+    parameter B_FIFO_DEPTH = 4,
+    parameter R_FIFO_DEPTH = 4
 ) (
     input logic ACLK,
     input logic ARESETn,
@@ -97,7 +100,7 @@ module axi_demux #(
 
     stream_fifo #(
         .DATA_WIDTH(AXI_ID_W_WIDTH + AXI_ADDR_WIDTH + 8 + 3 + 2),
-        .FIFO_LEN(Ax_FIFO_LEN)
+        .FIFO_DEPTH(Ax_FIFO_DEPTH)
     ) stream_fifo_aw (
         .ACLK(ACLK),
         .ARESETn(ARESETn),
@@ -113,7 +116,7 @@ module axi_demux #(
 
     stream_fifo #(
         .DATA_WIDTH(AXI_DATA_WIDTH + (AXI_DATA_WIDTH/8) + 1),
-        .FIFO_LEN(W_FIFO_LEN)
+        .FIFO_DEPTH(W_FIFO_DEPTH)
     ) stream_fifo_w (
         .ACLK(ACLK),
         .ARESETn(ARESETn),
@@ -138,7 +141,7 @@ module axi_demux #(
 
     stream_fifo #(
         .DATA_WIDTH(AXI_ID_R_WIDTH + AXI_ADDR_WIDTH + 8 + 3 + 2),
-        .FIFO_LEN(Ax_FIFO_LEN)
+        .FIFO_DEPTH(Ax_FIFO_DEPTH)
     ) stream_fifo_ar (
         .ACLK(ACLK),
         .ARESETn(ARESETn),

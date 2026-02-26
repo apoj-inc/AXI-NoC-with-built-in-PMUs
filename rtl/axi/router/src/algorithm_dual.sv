@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axis_defines.svh"
 `include "axi2axis_typedef.svh"
 
 module algorithm_dual #(
@@ -20,9 +21,14 @@ module algorithm_dual #(
     = $clog2(MAX_ROUTERS_Y),
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
+    parameter USE_MESH_XY = 0,
     
     // Circulant
-    parameter N = 0
+    parameter ROUTER_N = 0,
+    parameter ROUTERS_N = 6,
+    parameter USE_CLOCKWISE = 0,
+    parameter GENERATICS_COUNT = 2,
+    parameter int GENERATICS[GENERATICS_COUNT] = '{1, 2}
 ) (
     input clk_i, rst_n_i,
     
@@ -68,17 +74,38 @@ module algorithm_dual #(
         end
     end
 
-    algorithm_selector_mesh_XY #(
-       .MAX_ROUTERS_X(MAX_ROUTERS_X), 
-       .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
-       .ROUTER_X(ROUTER_X),
-       .ROUTER_Y(ROUTER_Y),
-       .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
-    ) algorithm_selector (
-        .target_x_i(target_x_i),
-        .target_y_i(target_y_i),
-        .selector_o(selector_count)
-    );
+    generate
+
+        if(USE_MESH_XY) begin
+            algorithm_selector_mesh_XY #(
+            .MAX_ROUTERS_X(MAX_ROUTERS_X), 
+            .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
+            .ROUTER_X(ROUTER_X),
+            .ROUTER_Y(ROUTER_Y),
+            .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+            ) algorithm_selector (
+                .target_x_i(target_x_i),
+                .target_y_i(target_y_i),
+                .selector_o(selector_count)
+            );
+        end else if(USE_CLOCKWISE) begin
+            algorithm_selector_clockwise #(
+            .ROUTER_N(ROUTER_N),
+            .ROUTERS_N(ROUTERS_N),
+            .GENERATICS_COUNT(GENERATICS_COUNT),
+            .GENERATICS(GENERATICS),
+            .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+            ) algorithm_selector (
+                .target_i(target_i),
+                .selector_o(selector_count)
+            );
+        end else begin
+             initial begin
+                $error("No algorithm specified!");
+             end
+        end
+
+    endgenerate
 
     always_comb begin
         ctrl = '0;

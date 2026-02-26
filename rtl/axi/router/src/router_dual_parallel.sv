@@ -1,4 +1,5 @@
 `include "defines.svh"
+`include "axis_defines.svh"
 
 module router_dual_parallel #(
     parameter AXIS_DATA_WIDTH = 40,
@@ -9,12 +10,12 @@ module router_dual_parallel #(
     parameter CHANNEL_NUMBER = 10,
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
-    parameter BUFFER_LENGTH = 16,
+    parameter BUFFER_DEPTH = 16,
     parameter MAXIMUM_PACKAGES_NUMBER = 5,
     parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
     = $clog2(MAXIMUM_PACKAGES_NUMBER - 1),
 
-    parameter USE_X_Y_COORDINATES = 0,
+    parameter USE_XY_COORDINATES = 0,
     parameter USE_N_COORDINATES   = 0,
     
     // Algorithm and topology specific parameters
@@ -28,17 +29,22 @@ module router_dual_parallel #(
     parameter MAX_PACKAGES = 4,
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
+    parameter USE_MESH_XY = 0,
     
     // Circulant
-    parameter N = 0
+    parameter ROUTER_N = 0,
+    parameter ROUTERS_N = 6,
+    parameter USE_CLOCKWISE = 0,
+    parameter GENERATICS_COUNT = 2,
+    parameter int GENERATICS[GENERATICS_COUNT] = '{1, 2}
 )(
     input clk_i, rst_n_i,
     axis_if.s s_axis_i [CHANNEL_NUMBER],
     axis_if.m m_axis_o [CHANNEL_NUMBER]
 );
 
-    localparam TARGET_LEN = USE_X_Y_COORDINATES ?   MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
-                            USE_N_COORDINATES   ?   $clog2(N)                                   :
+    localparam TARGET_LEN = USE_XY_COORDINATES ?    MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
+                            USE_N_COORDINATES  ?    $clog2(ROUTERS_N)                           :
                                                     0                                           ;
 
     initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
@@ -71,7 +77,7 @@ module router_dual_parallel #(
 
     axis_fifo_buffer #(
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
-        .BUFFER_LENGTH(BUFFER_LENGTH),
+        .BUFFER_DEPTH(BUFFER_DEPTH),
         .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
         .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
         .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
@@ -124,9 +130,14 @@ module router_dual_parallel #(
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
         .ROUTER_X(ROUTER_X),
         .ROUTER_Y(ROUTER_Y),
+        .USE_MESH_XY(USE_MESH_XY),
         
         // Circulant
-        .N(N)
+        .ROUTER_N(ROUTER_N),
+        .ROUTERS_N(ROUTERS_N),
+        .USE_CLOCKWISE(USE_CLOCKWISE),
+        .GENERATICS_COUNT(GENERATICS_COUNT),
+        .GENERATICS(GENERATICS)
     ) alg_req (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
 

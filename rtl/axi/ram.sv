@@ -17,7 +17,7 @@ module ram #(
 
     logic [BATCH_SIZE-1:0][BYTE_WIDTH-1:0] ram [2**ADDR_WIDTH];
 
-    always_ff @( posedge clk_i ) begin : ram_a
+    always @( posedge clk_i ) begin : ram_a
         if(we) begin
             if (BATCH_SIZE>0) if (be[0]) ram[waddr][0] <= wdata[BYTE_WIDTH*0 +: BYTE_WIDTH];
             if (BATCH_SIZE>1) if (be[1]) ram[waddr][1] <= wdata[BYTE_WIDTH*1 +: BYTE_WIDTH];
