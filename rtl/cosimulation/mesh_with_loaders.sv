@@ -16,7 +16,7 @@ module mesh_with_loaders # (
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_Y = 4,
 
-    parameter ROUTERS_N = MAX_ROUTERS_X*MAX_ROUTERS_Y,
+    parameter ROUTERS_COUNT = MAX_ROUTERS_X*MAX_ROUTERS_Y,
 
     parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
     parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
@@ -31,20 +31,20 @@ module mesh_with_loaders # (
     input  logic                        aresetn,
 
     input  logic                        pmu_enable_i,
-    input  logic [4:0]                  pmu_addr_i   [ROUTERS_N],
-    output logic [31:0]                 pmu_data_o   [ROUTERS_N],
+    input  logic [4:0]                  pmu_addr_i   [ROUTERS_COUNT],
+    output logic [31:0]                 pmu_data_o   [ROUTERS_COUNT],
 
-    input  logic                        resp_wait_i  [ROUTERS_N],
-    input  logic [AXI_MAX_ID_WIDTH-1:0] id_i         [ROUTERS_N],
-    input  logic                        write_i      [ROUTERS_N],
-    input  logic [AXI_ADDR_WIDTH-1:0]   axaddr_i     [ROUTERS_N],
-    input  logic [7:0]                  axlen_i      [ROUTERS_N],
-    input  logic [AXI_DATA_WIDTH-1:0]   wdata_i      [ROUTERS_N],
-    input  logic [AXI_DATA_BYTES-1:0]   wstrb_i      [ROUTERS_N],
-    input  logic                        fifo_push_i  [ROUTERS_N],
+    input  logic                        resp_wait_i  [ROUTERS_COUNT],
+    input  logic [AXI_MAX_ID_WIDTH-1:0] id_i         [ROUTERS_COUNT],
+    input  logic                        write_i      [ROUTERS_COUNT],
+    input  logic [AXI_ADDR_WIDTH-1:0]   axaddr_i     [ROUTERS_COUNT],
+    input  logic [7:0]                  axlen_i      [ROUTERS_COUNT],
+    input  logic [AXI_DATA_WIDTH-1:0]   wdata_i      [ROUTERS_COUNT],
+    input  logic [AXI_DATA_BYTES-1:0]   wstrb_i      [ROUTERS_COUNT],
+    input  logic                        fifo_push_i  [ROUTERS_COUNT],
     input  logic                        start_i,
-    output logic                        idle_o       [ROUTERS_N],
-    output logic [AXI_DATA_WIDTH-1:0]   rdata_o      [ROUTERS_N]
+    output logic                        idle_o       [ROUTERS_COUNT],
+    output logic [AXI_DATA_WIDTH-1:0]   rdata_o      [ROUTERS_COUNT]
 );
 
     axi_if #(
@@ -52,11 +52,11 @@ module mesh_with_loaders # (
         .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
         .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH),
         .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH)
-    ) axi_if_loader_noc [ROUTERS_N](), axi_if_noc_ram [ROUTERS_N]();
+    ) axi_if_loader_noc [ROUTERS_COUNT](), axi_if_noc_ram [ROUTERS_COUNT]();
 
     generate
         genvar i;
-        for (i = 0; i < ROUTERS_N; i++) begin : map_wires
+        for (i = 0; i < ROUTERS_COUNT; i++) begin : map_wires
 
             axi_pmu #(
                 .AXI_DATA_WIDTH (AXI_DATA_WIDTH),

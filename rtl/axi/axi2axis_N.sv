@@ -15,9 +15,9 @@ module axi2axis_N #(
     parameter AXIS_USER_WIDTH = 4,
 
     parameter ROUTER_N        = 0,
-    parameter ROUTERS_N       = 6,
+    parameter ROUTERS_COUNT   = 6,
 
-    parameter ROUTERS_N_WIDTH = $clog2(ROUTERS_N)
+    parameter ROUTERS_COUNT_WIDTH = $clog2(ROUTERS_COUNT)
 ) (
     input ACLK, ARESETn,
 
@@ -53,10 +53,10 @@ module axi2axis_N #(
     `AXIS_INTERFACE_MASTER2TYPEDEF(m_axis_if_req_o, m_axis_req_o, m_axis_req_i)
 
     typedef struct packed {
-        logic [AXIS_DATA_WIDTH - (8 + (ROUTERS_N_WIDTH) * 2) - 1:0] RESERVED;
+        logic [AXIS_DATA_WIDTH - (8 + (ROUTERS_COUNT_WIDTH) * 2) - 1:0] RESERVED;
         logic [7:0] PACKET_COUNT;
-        logic [ROUTERS_N_WIDTH-1:0] SOURCE_N;
-        logic [ROUTERS_N_WIDTH-1:0] DESTINATION_N;
+        logic [ROUTERS_COUNT_WIDTH-1:0] SOURCE_N;
+        logic [ROUTERS_COUNT_WIDTH-1:0] DESTINATION_N;
     } routing_header;
 
     typedef struct packed {
@@ -95,9 +95,9 @@ module axi2axis_N #(
 
     // response coordinate logic
     logic [8:0] RRESP_LEN, RRESP_LEN_next;
-    logic [ROUTERS_N_WIDTH-1:0] ROUTING_SOURCE_N, ROUTING_SOURCE_N_next;
-    logic [ROUTERS_N_WIDTH-1:0] RRESP_DESTINATION_N, RRESP_DESTINATION_N_next;
-    logic [ROUTERS_N_WIDTH-1:0] BRESP_DESTINATION_N, BRESP_DESTINATION_N_next;
+    logic [ROUTERS_COUNT_WIDTH-1:0] ROUTING_SOURCE_N, ROUTING_SOURCE_N_next;
+    logic [ROUTERS_COUNT_WIDTH-1:0] RRESP_DESTINATION_N, RRESP_DESTINATION_N_next;
+    logic [ROUTERS_COUNT_WIDTH-1:0] BRESP_DESTINATION_N, BRESP_DESTINATION_N_next;
     
 
     packet_type AW;
@@ -249,11 +249,11 @@ module axi2axis_N #(
                     routing_header_req_o.RESERVED = '0;
 
                     if (request_data_o == AW_SUBHEADER) begin
-                        routing_header_req_o.DESTINATION_N = (s_axi_i.data.aw.AWID - 1) % ROUTERS_N;
+                        routing_header_req_o.DESTINATION_N = (s_axi_i.data.aw.AWID - 1) % ROUTERS_COUNT;
                         routing_header_req_o.PACKET_COUNT = s_axi_i.data.aw.AWLEN + 2;
                     end
                     else if (request_data_o == AR_SUBHEADER) begin
-                        routing_header_req_o.DESTINATION_N = (s_axi_i.data.ar.ARID - 1) % ROUTERS_N;
+                        routing_header_req_o.DESTINATION_N = (s_axi_i.data.ar.ARID - 1) % ROUTERS_COUNT;
                         routing_header_req_o.PACKET_COUNT = 1;
                     end
                     else begin
