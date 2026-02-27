@@ -22,6 +22,7 @@ module algorithm #(
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
     parameter USE_MESH_XY = 0,
+    parameter USE_XY_COORDINATES = 0,
     
     // Circulant
     parameter ROUTER_N = 0,
@@ -42,6 +43,9 @@ module algorithm #(
     axis_mosi_t in_mosi_i, out_mosi_o[CHANNEL_NUMBER];
     axis_miso_t in_miso_o, out_miso_i[CHANNEL_NUMBER];
 
+    logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i;
+    logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
+
     `AXIS_INTERFACE_SLAVE2TYPEDEF(s_axis_i, in_mosi_i, in_miso_o)
     generate
         genvar i;
@@ -51,11 +55,9 @@ module algorithm #(
     endgenerate
 
     generate
-        if(USE_MESH_XY) begin
-            logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i;
+        if(USE_XY_COORDINATES) begin
             assign target_y_i =
                 target_i[MAX_ROUTERS_Y_WIDTH-1:0];
-            logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
             assign target_x_i =
                 target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
         end

@@ -43,7 +43,7 @@ module router_dual #(
 );
 
     localparam TARGET_LEN = USE_XY_COORDINATES ?    MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
-                            USE_N_COORDINATES  ?    $clog2(ROUTERS_COUNT)                           :
+                            USE_N_COORDINATES  ?    $clog2(ROUTERS_COUNT)                       :
                                                     0                                           ;
 
     initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
@@ -98,6 +98,7 @@ module router_dual #(
         .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
         .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
         .CHANNEL_NUMBER  (CHANNEL_NUMBER),
+        .USE_XY_COORDINATES(USE_XY_COORDINATES),
 
         .TARGET_LEN(TARGET_LEN),
 

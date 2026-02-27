@@ -22,6 +22,7 @@ module algorithm_dual #(
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
     parameter USE_MESH_XY = 0,
+    parameter USE_XY_COORDINATES = 0,
     
     // Circulant
     parameter ROUTER_N = 0,
@@ -52,12 +53,13 @@ module algorithm_dual #(
         end
     endgenerate
 
+    logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i;
+    logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
+
     generate
-        if(USE_MESH_XY) begin
-            logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i;
+        if(USE_XY_COORDINATES) begin
             assign target_y_i =
                 target_i[MAX_ROUTERS_Y_WIDTH-1:0];
-            logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
             assign target_x_i =
                 target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
         end

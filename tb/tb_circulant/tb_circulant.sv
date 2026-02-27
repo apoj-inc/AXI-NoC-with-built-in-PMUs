@@ -90,7 +90,7 @@ module tb_circulant (
 
     circulant_dual #(
         .AXI_ADDR_WIDTH(12),
-        .BUFFER_DEPTH(64)
+        .BUFFER_DEPTH(128)
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),

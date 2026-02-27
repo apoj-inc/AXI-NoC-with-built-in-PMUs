@@ -55,7 +55,7 @@ module router #(
     endgenerate
 
     localparam TARGET_LEN = USE_XY_COORDINATES ?    MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
-                            USE_N_COORDINATES  ?    $clog2(ROUTERS_COUNT)                           :
+                            USE_N_COORDINATES  ?    $clog2(ROUTERS_COUNT)                       :
                                                     0                                           ;
 
     initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
@@ -149,6 +149,7 @@ module router #(
         .ROUTER_X(ROUTER_X),
         .ROUTER_Y(ROUTER_Y),
         .USE_MESH_XY(USE_MESH_XY),
+        .USE_XY_COORDINATES(USE_XY_COORDINATES),
         
         // Circulant
         .ROUTER_N(ROUTER_N),
