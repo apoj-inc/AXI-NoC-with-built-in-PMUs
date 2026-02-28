@@ -22,6 +22,7 @@ module algorithm_dual #(
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
     parameter USE_MESH_XY = 0,
+    parameter USE_TORUS_XY = 0,
     parameter USE_XY_COORDINATES = 0,
     
     // Circulant
@@ -84,6 +85,18 @@ module algorithm_dual #(
 
         if(USE_MESH_XY) begin
             algorithm_selector_mesh_XY #(
+            .MAX_ROUTERS_X(MAX_ROUTERS_X), 
+            .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
+            .ROUTER_X(ROUTER_X),
+            .ROUTER_Y(ROUTER_Y),
+            .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+            ) algorithm_selector (
+                .target_x_i(target_x_i),
+                .target_y_i(target_y_i),
+                .selector_o(selector_count)
+            );
+        end else if(USE_TORUS_XY) begin
+            algorithm_selector_torus_XY #(
             .MAX_ROUTERS_X(MAX_ROUTERS_X), 
             .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
             .ROUTER_X(ROUTER_X),
