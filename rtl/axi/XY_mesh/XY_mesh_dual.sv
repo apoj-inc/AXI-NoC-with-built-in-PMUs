@@ -1,5 +1,6 @@
 `include "defines.svh"
 `include "axis_defines.svh"
+`include "XY_compas.svh"
 
 module XY_mesh_dual #(
     parameter AXI_DATA_WIDTH  = 32,
@@ -25,19 +26,6 @@ module XY_mesh_dual #(
     axi_if.s s_axi_i[MAX_ROUTERS_X*MAX_ROUTERS_Y],
     axi_if.m m_axi_o[MAX_ROUTERS_X*MAX_ROUTERS_Y]
 );
-
-    typedef enum logic [3:0] {
-        HOME_REQ,
-        HOME_RESP,
-        NORTH_REQ,
-        NORTH_RESP,
-        EAST_REQ,
-        EAST_RESP,
-        SOUTH_REQ,
-        SOUTH_RESP,
-        WEST_REQ,
-        WEST_RESP
-    } index;
     
     axis_if #(
         .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),

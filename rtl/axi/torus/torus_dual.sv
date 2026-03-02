@@ -1,5 +1,6 @@
 `include "defines.svh"
 `include "axis_defines.svh"
+`include "XY_compas.svh"
 
 module torus_dual #(
     parameter AXI_DATA_WIDTH  = 32,
@@ -27,19 +28,6 @@ module torus_dual #(
 );
 
     genvar i, j;
-
-    typedef enum logic [3:0] {
-        HOME_REQ,
-        HOME_RESP,
-        NORTH_REQ,
-        NORTH_RESP,
-        EAST_REQ,
-        EAST_RESP,
-        SOUTH_REQ,
-        SOUTH_RESP,
-        WEST_REQ,
-        WEST_RESP
-    } index;
     
     axis_if #(
         .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
@@ -76,27 +64,27 @@ module torus_dual #(
                     .s_axi_if_i(s_axi_i[i * MAX_ROUTERS_X + j]),
                     .m_axi_if_o(m_axi_o[i * MAX_ROUTERS_X + j]),
 
-                    .s_axis_if_resp_i(router_if[(i+1)%MAX_ROUTERS_Y][(j+1)%MAX_ROUTERS_X][HOME_RESP]),
+                    .s_axis_if_resp_i(router_if[i][j][HOME_RESP]),
                     .m_axis_if_resp_o(from_home[i][j][HOME_RESP]),
 
-                    .s_axis_if_req_i(router_if[(i+1)%MAX_ROUTERS_Y][(j+1)%MAX_ROUTERS_X][HOME_REQ]),
+                    .s_axis_if_req_i(router_if[i][j][HOME_REQ]),
                     .m_axis_if_req_o(from_home[i][j][HOME_REQ])
                 );
 
                 `AXIS_INTERFACE2INTERFACE(from_home[i][j][HOME_REQ], router_in[i][j][HOME_REQ])
                 `AXIS_INTERFACE2INTERFACE(from_home[i][j][HOME_RESP], router_in[i][j][HOME_RESP])
 
-                `AXIS_INTERFACE2INTERFACE(router_if[i][(j+1)%MAX_ROUTERS_X][SOUTH_REQ] , router_in[i][j][NORTH_REQ])
-                `AXIS_INTERFACE2INTERFACE(router_if[i][(j+1)%MAX_ROUTERS_X][SOUTH_RESP], router_in[i][j][NORTH_RESP])
+                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i+1)%MAX_ROUTERS_Y][j][SOUTH_REQ] , router_in[i][j][NORTH_REQ])
+                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i+1)%MAX_ROUTERS_Y][j][SOUTH_RESP], router_in[i][j][NORTH_RESP])
 
-                `AXIS_INTERFACE2INTERFACE(router_if[(i+1)%MAX_ROUTERS_Y][(j+2)%MAX_ROUTERS_X][WEST_REQ] , router_in[i][j][EAST_REQ])
-                `AXIS_INTERFACE2INTERFACE(router_if[(i+1)%MAX_ROUTERS_Y][(j+2)%MAX_ROUTERS_X][WEST_RESP], router_in[i][j][EAST_RESP])
+                `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j+1)%MAX_ROUTERS_X][WEST_REQ] , router_in[i][j][EAST_REQ])
+                `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j+1)%MAX_ROUTERS_X][WEST_RESP], router_in[i][j][EAST_RESP])
 
-                `AXIS_INTERFACE2INTERFACE(router_if[(i+2)%MAX_ROUTERS_Y][(j+1)%MAX_ROUTERS_X][NORTH_REQ] , router_in[i][j][SOUTH_REQ])
-                `AXIS_INTERFACE2INTERFACE(router_if[(i+2)%MAX_ROUTERS_Y][(j+1)%MAX_ROUTERS_X][NORTH_RESP], router_in[i][j][SOUTH_RESP])
+                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i-1)%MAX_ROUTERS_Y][j][NORTH_REQ] , router_in[i][j][SOUTH_REQ])
+                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i-1)%MAX_ROUTERS_Y][j][NORTH_RESP], router_in[i][j][SOUTH_RESP])
 
-                `AXIS_INTERFACE2INTERFACE(router_if[(i+1)%MAX_ROUTERS_Y][j][EAST_REQ] , router_in[i][j][WEST_REQ])
-                `AXIS_INTERFACE2INTERFACE(router_if[(i+1)%MAX_ROUTERS_Y][j][EAST_RESP], router_in[i][j][WEST_RESP])
+                `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j-1)%MAX_ROUTERS_X][EAST_REQ] , router_in[i][j][WEST_REQ])
+                `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j-1)%MAX_ROUTERS_X][EAST_RESP], router_in[i][j][WEST_RESP])
                 
                 router_dual #(
                     .CHANNEL_NUMBER(10),
@@ -118,7 +106,7 @@ module torus_dual #(
                     .rst_n_i(ARESETn),
 
                     .s_axis_i(router_in[i][j]),
-                    .m_axis_o(router_if[(i+1)%MAX_ROUTERS_Y][(j+1)%MAX_ROUTERS_X])
+                    .m_axis_o(router_if[i][j])
                 );
 
             end
