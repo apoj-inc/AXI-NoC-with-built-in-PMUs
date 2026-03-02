@@ -1,6 +1,6 @@
 `include "XY_compas.svh"
 
-module algorithm_selector_mesh_XY #(
+module algorithm_selector_torus_XY_one_way #(
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH
     = $clog2(MAX_ROUTERS_X),
@@ -15,9 +15,11 @@ module algorithm_selector_mesh_XY #(
     input  logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i,
     output logic [CHANNEL_NUMBER-1:0]      selector_o
 );
+
     assign selector_o[HOME] = ((target_x_i == ROUTER_X) && (target_y_i == ROUTER_Y));
-    assign selector_o[NORTH] = (target_y_i < ROUTER_Y);
-    assign selector_o[EAST] = (target_x_i > ROUTER_X);
-    assign selector_o[SOUTH] = (target_y_i > ROUTER_Y);
-    assign selector_o[WEST] = (target_x_i < ROUTER_X);
-endmodule
+    assign selector_o[NORTH] = (target_y_i != ROUTER_Y);
+    assign selector_o[EAST] = (target_x_i != ROUTER_X);
+    assign selector_o[SOUTH] = '0;
+    assign selector_o[WEST] = '0;
+
+endmodule: algorithm_selector_torus_XY_one_way

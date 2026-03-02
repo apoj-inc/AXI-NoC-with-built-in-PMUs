@@ -30,6 +30,7 @@ module router_dual_parallel #(
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
     parameter USE_MESH_XY = 0,
+    parameter USE_TORUS_XY = 0,
     
     // Circulant
     parameter ROUTER_N = 0,
@@ -131,6 +132,7 @@ module router_dual_parallel #(
         .ROUTER_X(ROUTER_X),
         .ROUTER_Y(ROUTER_Y),
         .USE_MESH_XY(USE_MESH_XY),
+        .USE_TORUS_XY(USE_TORUS_XY),
         .USE_XY_COORDINATES(USE_XY_COORDINATES),
         
         // Circulant
