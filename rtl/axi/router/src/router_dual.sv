@@ -32,10 +32,10 @@ module router_dual #(
     
     // Circulant
     parameter ROUTER_N = 0,
-    parameter ROUTERS_N = 6,
+    parameter ROUTERS_COUNT = 6,
     parameter USE_CLOCKWISE = 0,
     parameter GENERATICS_COUNT = 2,
-    parameter int GENERATICS[GENERATICS_COUNT] = '{1, 2}
+    parameter int GENERATICS[GENERATICS_COUNT] = '{2, 1}
 )(
     input  clk_i, rst_n_i,
     axis_if.s s_axis_i [CHANNEL_NUMBER],
@@ -43,7 +43,7 @@ module router_dual #(
 );
 
     localparam TARGET_LEN = USE_XY_COORDINATES ?    MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
-                            USE_N_COORDINATES  ?    $clog2(ROUTERS_N)                           :
+                            USE_N_COORDINATES  ?    $clog2(ROUTERS_COUNT)                       :
                                                     0                                           ;
 
     initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
@@ -98,6 +98,7 @@ module router_dual #(
         .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
         .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
         .CHANNEL_NUMBER  (CHANNEL_NUMBER),
+        .USE_XY_COORDINATES(USE_XY_COORDINATES),
 
         .TARGET_LEN(TARGET_LEN),
 
@@ -111,7 +112,7 @@ module router_dual #(
         
         // Circulant
         .ROUTER_N(ROUTER_N),
-        .ROUTERS_N(ROUTERS_N),
+        .ROUTERS_COUNT(ROUTERS_COUNT),
         .USE_CLOCKWISE(USE_CLOCKWISE),
         .GENERATICS_COUNT(GENERATICS_COUNT),
         .GENERATICS(GENERATICS)

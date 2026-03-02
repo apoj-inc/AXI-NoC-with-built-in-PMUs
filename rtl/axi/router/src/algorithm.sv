@@ -22,13 +22,14 @@ module algorithm #(
     parameter ROUTER_X = 0,
     parameter ROUTER_Y = 0,
     parameter USE_MESH_XY = 0,
+    parameter USE_XY_COORDINATES = 0,
     
     // Circulant
     parameter ROUTER_N = 0,
-    parameter ROUTERS_N = 6,
+    parameter ROUTERS_COUNT = 6,
     parameter USE_CLOCKWISE = 0,
     parameter GENERATICS_COUNT = 2,
-    parameter int GENERATICS[GENERATICS_COUNT] = '{1, 2}
+    parameter int GENERATICS[GENERATICS_COUNT] = '{2, 1}
 ) (
     input clk_i, rst_n_i,
     
@@ -42,6 +43,9 @@ module algorithm #(
     axis_mosi_t in_mosi_i, out_mosi_o[CHANNEL_NUMBER];
     axis_miso_t in_miso_o, out_miso_i[CHANNEL_NUMBER];
 
+    logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i;
+    logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
+
     `AXIS_INTERFACE_SLAVE2TYPEDEF(s_axis_i, in_mosi_i, in_miso_o)
     generate
         genvar i;
@@ -50,12 +54,14 @@ module algorithm #(
         end
     endgenerate
 
-    logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i;
-    assign target_y_i =
-        target_i[MAX_ROUTERS_Y_WIDTH-1:0];
-    logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
-    assign target_x_i =
-        target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
+    generate
+        if(USE_XY_COORDINATES) begin
+            assign target_y_i =
+                target_i[MAX_ROUTERS_Y_WIDTH-1:0];
+            assign target_x_i =
+                target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
+        end
+    endgenerate
 
     logic [CHANNEL_NUMBER_WIDTH-1:0] ctrl;
     logic [CHANNEL_NUMBER-1:0] selector;
@@ -80,7 +86,7 @@ module algorithm #(
         end else if(USE_CLOCKWISE) begin
             algorithm_selector_clockwise #(
             .ROUTER_N(ROUTER_N),
-            .ROUTERS_N(ROUTERS_N),
+            .ROUTERS_COUNT(ROUTERS_COUNT),
             .GENERATICS_COUNT(GENERATICS_COUNT),
             .GENERATICS(GENERATICS),
             .CHANNEL_NUMBER(CHANNEL_NUMBER)

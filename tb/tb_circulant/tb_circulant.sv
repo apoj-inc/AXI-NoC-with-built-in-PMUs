@@ -3,41 +3,41 @@
 module tb_circulant (
     input aresetn,
 
-    output logic awready[6],
-    input  logic awvalid[6],
-    input  logic [4:0] awid[6],
-    input  logic [11:0] awaddr[6],
-    input  logic [7:0] awlen[6],
-    input  logic [2:0] awsize[6],
-    input  logic [1:0] awburst[6],
+    output logic awready[16],
+    input  logic awvalid[16],
+    input  logic [4:0] awid[16],
+    input  logic [11:0] awaddr[16],
+    input  logic [7:0] awlen[16],
+    input  logic [2:0] awsize[16],
+    input  logic [1:0] awburst[16],
 
-    output logic wready[6],
-    input  logic wvalid[6],
-    input  logic [7:0] wdata[6],
-    input  logic wstrb[6],
-    input  logic wlast[6],
+    output logic wready[16],
+    input  logic wvalid[16],
+    input  logic [7:0] wdata[16],
+    input  logic wstrb[16],
+    input  logic wlast[16],
 
-    output logic bvalid[6],
-    output logic [4:0] bid[6],
-    input  logic bready[6],
+    output logic bvalid[16],
+    output logic [4:0] bid[16],
+    input  logic bready[16],
 
-    output logic arready[6],
-    input  logic arvalid[6],
-    input  logic [4:0] arid[6],
-    input  logic [11:0] araddr[6],
-    input  logic [7:0] arlen[6],
-    input  logic [2:0] arsize[6],
-    input  logic [1:0] arburst[6],
+    output logic arready[16],
+    input  logic arvalid[16],
+    input  logic [4:0] arid[16],
+    input  logic [11:0] araddr[16],
+    input  logic [7:0] arlen[16],
+    input  logic [2:0] arsize[16],
+    input  logic [1:0] arburst[16],
 
-    output logic rvalid[6],
-    output logic [4:0] rid[6],
-    output logic [7:0] rdata[6],
-    output logic rlast[6],
-    input  logic rready[6]
+    output logic rvalid[16],
+    output logic [4:0] rid[16],
+    output logic [7:0] rdata[16],
+    output logic rlast[16],
+    input  logic rready[16]
     
 );
 
-    axi_if axi_if[6](), axi_if_ram[6]();
+    axi_if axi_if[16](), axi_if_ram[16]();
 
     logic aclk;
 
@@ -48,7 +48,7 @@ module tb_circulant (
     end
 
     generate
-        for (genvar i = 0; i < 6; i++) begin : map_wires
+        for (genvar i = 0; i < 16; i++) begin : map_wires
             always_comb begin
                 axi_if[i].AWVALID = awvalid[i];
                 axi_if[i].AWID    = awid[i];
@@ -89,7 +89,10 @@ module tb_circulant (
     endgenerate
 
     circulant_dual #(
-        .AXI_ADDR_WIDTH(12)
+        .AXI_ADDR_WIDTH(12),
+        .ROUTERS_COUNT(16),
+        .GENERATICS_COUNT(3),
+        .GENERATICS('{5,2,1})
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
@@ -100,7 +103,7 @@ module tb_circulant (
 
     
     generate
-        for (genvar i = 0; i < 6; i++) begin : map_rams
+        for (genvar i = 0; i < 16; i++) begin : map_rams
             axi_ram #(.AXI_ADDR_WIDTH(12)) ram (
                 .clk_i     (aclk),
                 .rst_n_i   (aresetn),
@@ -108,7 +111,7 @@ module tb_circulant (
             );
             
             initial begin
-                for (int j = 0; j < 2**6; j++) begin
+                for (int j = 0; j < 2**16; j++) begin
                     ram.coupled_ram.ram[j] = $urandom();
                 end
             end
