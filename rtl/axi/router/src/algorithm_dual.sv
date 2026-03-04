@@ -141,8 +141,10 @@ module algorithm_dual #(
         for (int i = 0; i < CHANNEL_NUMBER; i++) begin
             out_mosi_o[i] = '0;
         end
-        in_miso_o = ((in_mosi_i.data.TID != ROUTING_HEADER) || !busy[ctrl]) ? out_miso_i[ctrl] : '0;
-        out_mosi_o[ctrl] = ((in_mosi_i.data.TID != ROUTING_HEADER) || !busy[ctrl]) ? in_mosi_i : '0;
+        in_miso_o = ((in_mosi_i.data.TID != ROUTING_HEADER_READ && in_mosi_i.data.TID != ROUTING_HEADER_WRITE) || !busy[ctrl]) ?
+                    out_miso_i[ctrl] : '0;
+        out_mosi_o[ctrl] = ((in_mosi_i.data.TID != ROUTING_HEADER_READ && in_mosi_i.data.TID != ROUTING_HEADER_WRITE) || !busy[ctrl]) ?
+                            in_mosi_i : '0;
     end
 
     always_ff @(posedge clk_i or negedge rst_n_i) begin
@@ -155,7 +157,7 @@ module algorithm_dual #(
 
     always_comb begin
         busy_next = busy;
-        if (in_mosi_i.TVALID && (in_mosi_i.data.TID == ROUTING_HEADER)) begin
+        if (in_mosi_i.TVALID && (in_mosi_i.data.TID == ROUTING_HEADER_READ || in_mosi_i.data.TID == ROUTING_HEADER_WRITE)) begin
             busy_next[ctrl] = out_miso_i[ctrl].TREADY ? 1'b1 : busy[ctrl];
         end
         else if (in_mosi_i.TVALID) begin

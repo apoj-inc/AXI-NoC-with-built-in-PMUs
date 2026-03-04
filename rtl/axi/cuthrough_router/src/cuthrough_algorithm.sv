@@ -83,7 +83,7 @@ module algorithm #(
             target_x <= '0;
             target_y <= '0;
         end else begin
-            if(in.TID == ROUTING_HEADER) begin
+            if(in.TID == ROUTING_HEADER_WRITE || in.TID == ROUTING_HEADER_READ) begin
                 target_y <= in.TDATA[
                     MAX_ROUTERS_X_WIDTH-1:0
                 ];
@@ -97,7 +97,7 @@ module algorithm #(
 
     always_comb begin
         busy_next = busy;
-        if (in.TVALID && (in.TID == ROUTING_HEADER)) begin
+        if (in.TVALID && (in.TID == ROUTING_HEADER_WRITE || in.TID == ROUTING_HEADER_READ)) begin
 
             in_filtered.TVALID = !busy ? '1 : '0;
             in_filtered.TDATA  = !busy ? in.TDATA : '0;

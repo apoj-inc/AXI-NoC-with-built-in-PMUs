@@ -322,6 +322,7 @@ module uart_control #(
                 fifo_push_o[core_select] = trans_counter > (CORE_COUNT_BYTES + AXI_ID_BYTES + 1);
 
                 wdata_next[core_select] = 'h30 + core_select;
+                wstrb_next[core_select] = '1;
                 axaddr_next[core_select] = core_select << 5;
 
                 if (rx_data_valid) begin

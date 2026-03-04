@@ -14,7 +14,7 @@ LIST_DIR ?= $(RTL_PATH)/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
 
 INCDIRS_PATH ?= $(RTL_PATH)/incdirs.lst
-INCLUDE_DIRS ?= $(foreach file,$(shell cat $(INCDIRS_PATH)),$(CURDIR)/$(file))
+INCLUDE_DIRS ?= $(foreach file,$(shell cat $(INCDIRS_PATH) | grep -v "#"),$(CURDIR)/$(file))
 
 TB_FILES ?=  $(foreach file,$(shell find tb/tb_* -type f -name '*.sv'),$(CURDIR)/$(file))
 
@@ -41,7 +41,7 @@ VENV_DIR ?= $(CACHE_DIR)/.venv
 
 WAVES ?= 1
 
-VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)),$(CURDIR)/$(file))
+VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL) | grep -v "#"),$(CURDIR)/$(file))
 
 TOPLEVEL_LIBRARY ?= work
 

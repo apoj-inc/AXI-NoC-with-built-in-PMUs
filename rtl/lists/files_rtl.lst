@@ -4,7 +4,7 @@ rtl/cores/src/sm_rom.v
 rtl/cores/src/sr_cpu.v
 rtl/cores/src/sr_cpu_axi.sv
 rtl/cores/src/sr_axi_adapter.sv
-rtl/axi/cross_router_logic/algorithm_selector_clockwise.sv
+#rtl/axi/cross_router_logic/algorithm_selector_clockwise.sv
 rtl/axi/cross_router_logic/algorithm_selector_mesh_XY.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_XY.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_XY_one_way.sv
@@ -13,7 +13,7 @@ rtl/axi/router/src/algorithm_dual.sv
 rtl/axi/router/src/arbiter.sv
 rtl/axi/router/src/router_dual.sv
 rtl/axi/router/src/router_dual_parallel.sv
-rtl/axi/circulant/circulant_dual.sv
+#rtl/axi/circulant/circulant_dual.sv
 rtl/axi/XY_mesh/XY_mesh_dual.sv
 rtl/axi/XY_mesh/XY_mesh_dual_parallel.sv
 rtl/axi/torus/torus_dual.sv
@@ -23,7 +23,7 @@ rtl/axi/axi_master_loader.sv
 rtl/axi/axi_mux.sv
 rtl/axi/axi_ram.sv
 rtl/axi/axi2axis_XY.sv
-rtl/axi/axi2axis_N.sv
+#rtl/axi/axi2axis_N.sv
 rtl/axi/axi2ram.sv
 rtl/axi/axis_if_demux.sv
 rtl/axi/axis_if_mux.sv
