@@ -8,6 +8,7 @@ rtl/cores/src/sr_axi_adapter.sv
 rtl/axi/cross_router_logic/algorithm_selector_mesh_XY.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_XY.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_XY_one_way.sv
+rtl/axi/cross_router_logic/algorithm_selector_torus_EWn_SNe.sv
 rtl/axi/router/src/algorithm.sv
 rtl/axi/router/src/algorithm_dual.sv
 rtl/axi/router/src/arbiter.sv

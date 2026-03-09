@@ -3,23 +3,24 @@
 `include "XY_compas.svh"
 
 module torus_dual #(
-    parameter AXI_DATA_WIDTH  = 32,
-    parameter AXI_ADDR_WIDTH  = 16,
-    parameter AXI_ID_W_WIDTH  = 5,
-    parameter AXI_ID_R_WIDTH  = 5,
+    parameter        AXI_DATA_WIDTH  = 32,
+    parameter        AXI_ADDR_WIDTH  = 16,
+    parameter        AXI_ID_W_WIDTH  = 5,
+    parameter        AXI_ID_R_WIDTH  = 5,
 
-    parameter AXIS_DATA_WIDTH = 40,
-    parameter AXIS_ID_WIDTH   = 4,
-    parameter AXIS_DEST_WIDTH = 4,
-    parameter AXIS_USER_WIDTH = 4,
+    parameter        AXIS_DATA_WIDTH = 40,
+    parameter        AXIS_ID_WIDTH   = 4,
+    parameter        AXIS_DEST_WIDTH = 4,
+    parameter        AXIS_USER_WIDTH = 4,
 
-    parameter MAX_ROUTERS_X   = 4,
-    parameter MAX_ROUTERS_Y   = 4,
+    parameter        MAX_ROUTERS_X   = 5,
+    parameter        MAX_ROUTERS_Y   = 5,
     
-    parameter BUFFER_DEPTH = 16,
+    parameter        BUFFER_DEPTH    = 16,
+    parameter string ALGORITHM       = "XY",
 
-    parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
-    parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y)
+    parameter        MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
+    parameter        MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y)
 ) (
     input ACLK, ARESETn,
 
@@ -74,33 +75,34 @@ module torus_dual #(
                 `AXIS_INTERFACE2INTERFACE(from_home[i][j][HOME_REQ], router_in[i][j][HOME_REQ])
                 `AXIS_INTERFACE2INTERFACE(from_home[i][j][HOME_RESP], router_in[i][j][HOME_RESP])
 
-                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i+1)%MAX_ROUTERS_Y][j][SOUTH_REQ] , router_in[i][j][NORTH_REQ])
-                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i+1)%MAX_ROUTERS_Y][j][SOUTH_RESP], router_in[i][j][NORTH_RESP])
+                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i-1)%MAX_ROUTERS_Y][j][SOUTH_REQ] , router_in[i][j][NORTH_REQ])
+                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i-1)%MAX_ROUTERS_Y][j][SOUTH_RESP], router_in[i][j][NORTH_RESP])
 
                 `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j+1)%MAX_ROUTERS_X][WEST_REQ] , router_in[i][j][EAST_REQ])
                 `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j+1)%MAX_ROUTERS_X][WEST_RESP], router_in[i][j][EAST_RESP])
 
-                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i-1)%MAX_ROUTERS_Y][j][NORTH_REQ] , router_in[i][j][SOUTH_REQ])
-                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i-1)%MAX_ROUTERS_Y][j][NORTH_RESP], router_in[i][j][SOUTH_RESP])
+                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i+1)%MAX_ROUTERS_Y][j][NORTH_REQ] , router_in[i][j][SOUTH_REQ])
+                `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i+1)%MAX_ROUTERS_Y][j][NORTH_RESP], router_in[i][j][SOUTH_RESP])
 
                 `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j-1)%MAX_ROUTERS_X][EAST_REQ] , router_in[i][j][WEST_REQ])
                 `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j-1)%MAX_ROUTERS_X][EAST_RESP], router_in[i][j][WEST_RESP])
                 
                 router_dual #(
-                    .CHANNEL_NUMBER(10),
-                    .USE_XY_COORDINATES(1),
-                    .USE_TORUS_XY(1),
-                    .ROUTER_X(j),
-                    .MAX_ROUTERS_X(MAX_ROUTERS_X),
-                    .ROUTER_Y(i),
-                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-
                     .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
                     .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
                     .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                     .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
 
-                    .BUFFER_DEPTH(BUFFER_DEPTH)
+                    .CHANNEL_NUMBER  (10),
+                    .BUFFER_DEPTH    (BUFFER_DEPTH),
+                    .TOPOLOGY        ("Torus"),
+                    .ALGORITHM       (ALGORITHM),
+                    .COORDINATES     ("XY"),
+
+                    .MAX_ROUTERS_X   (MAX_ROUTERS_X),
+                    .MAX_ROUTERS_Y   (MAX_ROUTERS_Y),
+                    .ROUTER_X        (j),
+                    .ROUTER_Y        (i)
                 ) router (
                     .clk_i(ACLK),
                     .rst_n_i(ARESETn),

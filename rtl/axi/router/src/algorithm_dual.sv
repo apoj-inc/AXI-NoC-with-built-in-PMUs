@@ -3,34 +3,33 @@
 `include "axi2axis_typedef.svh"
 
 module algorithm_dual #(
-    parameter AXIS_DATA_WIDTH = 40,
-    parameter AXIS_ID_WIDTH = 4,
-    parameter AXIS_DEST_WIDTH = 4,
-    parameter AXIS_USER_WIDTH = 4,
-    parameter CHANNEL_NUMBER = 10,
-    parameter CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
-    parameter TARGET_LEN     = 0,
+    parameter        AXIS_DATA_WIDTH = 40,
+    parameter        AXIS_ID_WIDTH = 4,
+    parameter        AXIS_DEST_WIDTH = 4,
+    parameter        AXIS_USER_WIDTH = 4,
+
+    parameter        CHANNEL_NUMBER = 10,
+    parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
+    parameter string TOPOLOGY = "Mesh",
+    parameter string ALGORITHM = "XY",
+    parameter string COORDINATES = "XY",
+    
+    parameter        TARGET_LEN     = 0,
 
     // Algorithm and topology specific parameters
     // Mesh and Torus
-    parameter MAX_ROUTERS_X = 4,
-    parameter MAX_ROUTERS_X_WIDTH
-    = $clog2(MAX_ROUTERS_X),
-    parameter MAX_ROUTERS_Y = 4,
-    parameter MAX_ROUTERS_Y_WIDTH
-    = $clog2(MAX_ROUTERS_Y),
-    parameter ROUTER_X = 0,
-    parameter ROUTER_Y = 0,
-    parameter USE_MESH_XY = 0,
-    parameter USE_TORUS_XY = 0,
-    parameter USE_XY_COORDINATES = 0,
+    parameter        MAX_ROUTERS_X = 4,
+    parameter        MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
+    parameter        MAX_ROUTERS_Y = 4,
+    parameter        MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
+    parameter        ROUTER_X = 0,
+    parameter        ROUTER_Y = 0,
     
     // Circulant
-    parameter ROUTER_N = 0,
-    parameter ROUTERS_COUNT = 6,
-    parameter USE_CLOCKWISE = 0,
-    parameter GENERATICS_COUNT = 2,
-    parameter int GENERATICS[GENERATICS_COUNT] = '{2, 1}
+    parameter        ROUTER_N = 0,
+    parameter        ROUTERS_COUNT = 6,
+    parameter        GENERATICS_COUNT = 2,
+    parameter int    GENERATICS[GENERATICS_COUNT] = '{2, 1}
 ) (
     input clk_i, rst_n_i,
     
@@ -58,84 +57,98 @@ module algorithm_dual #(
     logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
 
     generate
-        if(USE_XY_COORDINATES) begin
+        if(COORDINATES == "XY") begin
             assign target_y_i =
                 target_i[MAX_ROUTERS_Y_WIDTH-1:0];
             assign target_x_i =
                 target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
         end
+        else if (COORDINATES == "N") begin
+        end
+        else begin
+            $error("Wrong coordinate system! (COORDINATES == %s)", COORDINATES);
+        end
     endgenerate
 
+    logic [CHANNEL_NUMBER_WIDTH-1-1:0] ctrl_logical;
     logic [CHANNEL_NUMBER_WIDTH-1:0] ctrl;
-    logic [CHANNEL_NUMBER-1:0] selector;
 
-    logic [CHANNEL_NUMBER/2-1:0] selector_count;
+    assign ctrl = (ctrl_logical << 1) | current_grant_i[0];
 
     logic [CHANNEL_NUMBER-1:0] busy;
     logic [CHANNEL_NUMBER-1:0] busy_next;
 
-    always_comb begin
-        for (int i = 0; i < CHANNEL_NUMBER/2; i = i + 1) begin : selector_copier
-            selector[i*2]   = selector_count[i];
-            selector[i*2+1] = selector_count[i];
-        end
-    end
-
     generate
-
-        if(USE_MESH_XY) begin
-            algorithm_selector_mesh_XY #(
-            .MAX_ROUTERS_X(MAX_ROUTERS_X), 
-            .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
-            .ROUTER_X(ROUTER_X),
-            .ROUTER_Y(ROUTER_Y),
-            .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
-            ) algorithm_selector (
-                .target_x_i(target_x_i),
-                .target_y_i(target_y_i),
-                .selector_o(selector_count)
-            );
-        end else if(USE_TORUS_XY) begin
-            algorithm_selector_torus_XY #(
-            .MAX_ROUTERS_X(MAX_ROUTERS_X), 
-            .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
-            .ROUTER_X(ROUTER_X),
-            .ROUTER_Y(ROUTER_Y),
-            .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
-            ) algorithm_selector (
-                .target_x_i(target_x_i),
-                .target_y_i(target_y_i),
-                .selector_o(selector_count)
-            );
-        end else if(USE_CLOCKWISE) begin
-            algorithm_selector_clockwise #(
-            .ROUTER_N(ROUTER_N),
-            .ROUTERS_COUNT(ROUTERS_COUNT),
-            .GENERATICS_COUNT(GENERATICS_COUNT),
-            .GENERATICS(GENERATICS),
-            .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
-            ) algorithm_selector (
-                .target_i(target_i),
-                .selector_o(selector_count)
-            );
+        if(TOPOLOGY == "Mesh") begin
+            if (ALGORITHM == "XY") begin
+                algorithm_selector_mesh_XY #(
+                    .MAX_ROUTERS_X(MAX_ROUTERS_X), 
+                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
+                    .ROUTER_X(ROUTER_X),
+                    .ROUTER_Y(ROUTER_Y),
+                    .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+                ) algorithm_selector (
+                    .target_x_i(target_x_i),
+                    .target_y_i(target_y_i),
+                    .selector_o(ctrl_logical)
+                );
+            end
+            else begin
+                $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
+            end
+        end
+        else if(TOPOLOGY == "Torus") begin
+            if (ALGORITHM == "XY") begin
+                algorithm_selector_torus_XY #(
+                    .MAX_ROUTERS_X(MAX_ROUTERS_X), 
+                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
+                    .ROUTER_X(ROUTER_X),
+                    .ROUTER_Y(ROUTER_Y),
+                    .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+                ) algorithm_selector (
+                    .target_x_i(target_x_i),
+                    .target_y_i(target_y_i),
+                    .selector_o(ctrl_logical)
+                );
+            end
+            else if (ALGORITHM == "EWn_SNe") begin
+                algorithm_selector_torus_EWn_SNe #(
+                    .MAX_ROUTERS_X(MAX_ROUTERS_X), 
+                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
+                    .ROUTER_X(ROUTER_X),
+                    .ROUTER_Y(ROUTER_Y),
+                    .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+                ) algorithm_selector (
+                    .target_x_i(target_x_i),
+                    .target_y_i(target_y_i),
+                    .selector_o(ctrl_logical)
+                );
+            end
+            else begin
+                $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
+            end
+        end
+        else if(TOPOLOGY == "Circulant") begin
+            if (ALGORITHM == "Clockwise") begin
+                algorithm_selector_clockwise #(
+                .ROUTER_N(ROUTER_N),
+                .ROUTERS_COUNT(ROUTERS_COUNT),
+                .GENERATICS_COUNT(GENERATICS_COUNT),
+                .GENERATICS(GENERATICS),
+                .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+                ) algorithm_selector (
+                    .target_i(target_i),
+                    .selector_o(ctrl_logical)
+                );
+            end
+            else begin
+                $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
+            end
         end else begin
-             initial begin
-                $error("No algorithm specified!");
-             end
+            $error("Wrong topology! (TOPOLOGY == %s)", TOPOLOGY);
         end
 
     endgenerate
-
-    always_comb begin
-        ctrl = '0;
-        for (int i = 0; i < CHANNEL_NUMBER; i++) begin
-            int channel;
-            channel = CHANNEL_NUMBER - 1 - i;
-            if(selector[channel] && (channel[0] == current_grant_i[0])) begin
-                ctrl = channel;
-            end
-        end
-    end
 
     always_comb begin
         for (int i = 0; i < CHANNEL_NUMBER; i++) begin

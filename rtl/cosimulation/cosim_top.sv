@@ -1,33 +1,34 @@
 `include "defines.svh"
 
 module cosim_top #(
-    parameter BAUD_RATE      = 10_000_000,
-    parameter CLK_FREQ       = 50_000_000,
+    parameter        BAUD_RATE      = 10_000_000,
+    parameter        CLK_FREQ       = 50_000_000,
 
-    parameter AXI_DATA_WIDTH = 32,
-    parameter AXI_ID_W_WIDTH = 5,
-    parameter AXI_ID_R_WIDTH = 5,
-    parameter AXI_ADDR_WIDTH = 16,
+    parameter        AXI_DATA_WIDTH = 32,
+    parameter        AXI_ID_W_WIDTH = 5,
+    parameter        AXI_ID_R_WIDTH = 5,
+    parameter        AXI_ADDR_WIDTH = 16,
 
-    parameter AXIS_DATA_WIDTH = 40,
-    parameter AXIS_ID_WIDTH = 3,
-    parameter AXIS_DEST_WIDTH = 4,
-    parameter AXIS_USER_WIDTH = 4,
+    parameter        AXIS_DATA_WIDTH = 40,
+    parameter        AXIS_ID_WIDTH = 3,
+    parameter        AXIS_DEST_WIDTH = 4,
+    parameter        AXIS_USER_WIDTH = 4,
     
-    parameter AXI_MASTER_LOADER_FIFO_DEPTH = 64,
+    parameter        AXI_MASTER_LOADER_FIFO_DEPTH = 64,
 
-    parameter MAX_ROUTERS_X = 4,
-    parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
-    parameter MAX_ROUTERS_Y = 4,
-    parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
+    parameter        MAX_ROUTERS_X = 4,
+    parameter        MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
+    parameter        MAX_ROUTERS_Y = 4,
+    parameter        MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
 
-    parameter BUFFER_DEPTH = 16,
+    parameter        BUFFER_DEPTH = 16,
+    parameter string ALGORITHM       = "XY",
 
-    parameter ROUTERS_COUNT = MAX_ROUTERS_X*MAX_ROUTERS_Y,
-    parameter CORE_COUNT = ROUTERS_COUNT,
-    parameter AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH,
+    parameter        ROUTERS_COUNT = MAX_ROUTERS_X*MAX_ROUTERS_Y,
+    parameter        CORE_COUNT = ROUTERS_COUNT,
+    parameter        AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH,
 
-    parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
+    parameter        AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
 ) (
     input  logic clk_i,
     input  logic arstn_i,
@@ -78,6 +79,7 @@ module cosim_top #(
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
 
         .BUFFER_DEPTH(BUFFER_DEPTH),
+        .ALGORITHM   ("XY"),
 
         .AXI_MASTER_LOADER_FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH)
     ) mesh_with_loaders (
