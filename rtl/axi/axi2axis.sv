@@ -3,24 +3,31 @@
 `include "axis_defines.svh"
 `include "axi2axis_typedef.svh"
 
-module axi2axis_XY #(
-    parameter AXI_DATA_WIDTH  = 32,
-    parameter AXI_ADDR_WIDTH  = 16,
-    parameter AXI_ID_W_WIDTH  = 4,
-    parameter AXI_ID_R_WIDTH  = 4,
+module axi2axis #(
+    parameter        AXI_DATA_WIDTH  = 32,
+    parameter        AXI_ADDR_WIDTH  = 16,
+    parameter        AXI_ID_W_WIDTH  = 4,
+    parameter        AXI_ID_R_WIDTH  = 4,
     
-    parameter AXIS_DATA_WIDTH = 40,
-    parameter AXIS_ID_WIDTH   = 4,
-    parameter AXIS_DEST_WIDTH = 4,
-    parameter AXIS_USER_WIDTH = 4,
+    parameter        AXIS_DATA_WIDTH = 40,
+    parameter        AXIS_ID_WIDTH   = 4,
+    parameter        AXIS_DEST_WIDTH = 4,
+    parameter        AXIS_USER_WIDTH = 4,
 
-    parameter ROUTER_X      = 0,
-    parameter ROUTER_Y      = 0,
-    parameter MAX_ROUTERS_X = 4,
-    parameter MAX_ROUTERS_Y = 4,
+    parameter string COORDINATES = "N",
 
-    parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
-    parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y)
+    parameter        ROUTER_X      = 0,
+    parameter        ROUTER_Y      = 0,
+    parameter        MAX_ROUTERS_X = 4,
+    parameter        MAX_ROUTERS_Y = 4,
+
+    parameter        ROUTER_N = 0,
+    parameter        ROUTERS_COUNT = 16,
+
+    parameter        MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
+    parameter        MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
+
+    parameter        ROUTERS_COUNT_WIDTH = $clog2(ROUTERS_COUNT)
 ) (
     input ACLK, ARESETn,
 
@@ -85,9 +92,15 @@ module axi2axis_XY #(
         logic [MAX_ROUTERS_Y_WIDTH-1:0] SOURCE_Y;
         logic [MAX_ROUTERS_X_WIDTH-1:0] DESTINATION_X;
         logic [MAX_ROUTERS_Y_WIDTH-1:0] DESTINATION_Y;
-    } routing_header_t;
+    } routing_header_XY_t;
 
-    // response coordinate logic
+    typedef struct packed {
+        logic [AXIS_DATA_WIDTH - (ROUTERS_COUNT_WIDTH * 2) - 1:0] RESERVED;
+        logic [ROUTERS_COUNT_WIDTH-1:0] SOURCE_N;
+        logic [ROUTERS_COUNT_WIDTH-1:0] DESTINATION_N;
+    } routing_header_N_t;
+
+    // response coordinate logic XY
     logic [MAX_ROUTERS_X_WIDTH-1:0] TEMP_X, TEMP_X_next;
     logic [MAX_ROUTERS_X_WIDTH-1:0] TEMP_Y, TEMP_Y_next;
     logic [MAX_ROUTERS_X_WIDTH-1:0] RRESP_DESTINATION_X, RRESP_DESTINATION_X_next;
@@ -95,11 +108,18 @@ module axi2axis_XY #(
     logic [MAX_ROUTERS_X_WIDTH-1:0] BRESP_DESTINATION_X, BRESP_DESTINATION_X_next;
     logic [MAX_ROUTERS_Y_WIDTH-1:0] BRESP_DESTINATION_Y, BRESP_DESTINATION_Y_next;
 
+    // response coordinate logic N
+    logic [ROUTERS_COUNT_WIDTH-1:0] TEMP_N, TEMP_N_next;
+    logic [ROUTERS_COUNT_WIDTH-1:0] RRESP_DESTINATION_N, RRESP_DESTINATION_N_next;
+    logic [ROUTERS_COUNT_WIDTH-1:0] BRESP_DESTINATION_N, BRESP_DESTINATION_N_next;
+
+
     logic [2:0] request_data_o, response_data_o;
     logic request_valid_o, response_valid_o;
     logic request_ready_i, response_ready_i;
 
-    routing_header_t routing_header_req_o, routing_header_resp_o;
+    routing_header_XY_t routing_header_req_XY_o, routing_header_resp_XY_o;
+    routing_header_N_t routing_header_req_N_o, routing_header_resp_N_o;
 
     logic w_send, w_send_next;
     logic [63:0] aw_send_bits_count, aw_send_bits_count_next;
@@ -207,16 +227,18 @@ module axi2axis_XY #(
     end
 
     always_comb begin
-        routing_header_req_o = '0;
         aw_send_bits_count_next = aw_send_bits_count;
         w_send_bits_count_next = w_send_bits_count;
         ar_send_bits_count_next = ar_send_bits_count;
         w_send_next = w_send;
 
+        routing_header_req_XY_o = '0;
+        routing_header_req_N_o = '0;
+
         s_axi_o.AWREADY = '0;
         s_axi_o.ARREADY = '0;
         s_axi_o.WREADY = '0;
-
+        
         m_axis_req_o.data.TDATA = '0;
         m_axis_req_o.TVALID = '0;
         m_axis_req_o.data.TID = ROUTING_HEADER_READ;
@@ -231,19 +253,28 @@ module axi2axis_XY #(
                 if (request_valid_o) begin
                     if (request_data_o == AW) begin
                         m_axis_req_o.data.TID = ROUTING_HEADER_WRITE;
-                        routing_header_req_o.DESTINATION_X = (s_axi_i.data.aw.AWID - 1) % MAX_ROUTERS_X;
-                        routing_header_req_o.DESTINATION_Y = (s_axi_i.data.aw.AWID - 1) / MAX_ROUTERS_X;
+                        routing_header_req_XY_o.DESTINATION_X = (s_axi_i.data.aw.AWID - 1) % MAX_ROUTERS_X;
+                        routing_header_req_XY_o.DESTINATION_Y = (s_axi_i.data.aw.AWID - 1) / MAX_ROUTERS_X;
+                        routing_header_req_N_o.DESTINATION_N = s_axi_i.data.aw.AWID - 1;
                     end
                     else if (request_data_o == AR) begin
                         m_axis_req_o.data.TID = ROUTING_HEADER_READ;
-                        routing_header_req_o.DESTINATION_X = (s_axi_i.data.ar.ARID - 1) % MAX_ROUTERS_X;
-                        routing_header_req_o.DESTINATION_Y = (s_axi_i.data.ar.ARID - 1) / MAX_ROUTERS_X;
+                        routing_header_req_XY_o.DESTINATION_X = (s_axi_i.data.ar.ARID - 1) % MAX_ROUTERS_X;
+                        routing_header_req_XY_o.DESTINATION_Y = (s_axi_i.data.ar.ARID - 1) / MAX_ROUTERS_X;
+                        routing_header_req_N_o.DESTINATION_N = s_axi_i.data.ar.ARID - 1;
                     end
 
-                    routing_header_req_o.SOURCE_X = ROUTER_X;
-                    routing_header_req_o.SOURCE_Y = ROUTER_Y;
+                    routing_header_req_XY_o.SOURCE_X = ROUTER_X;
+                    routing_header_req_XY_o.SOURCE_Y = ROUTER_Y;
+                    routing_header_req_N_o.SOURCE_N = ROUTER_N;
 
-                    m_axis_req_o.data.TDATA = routing_header_req_o;
+                    if (COORDINATES == "XY") begin
+                        m_axis_req_o.data.TDATA = routing_header_req_XY_o;
+                    end
+                    else if (COORDINATES == "N") begin
+                        m_axis_req_o.data.TDATA = routing_header_req_N_o;
+                    end
+                    
                     m_axis_req_o.TVALID = '1;
                     m_axis_req_o.data.TLAST = '0;
                 end
@@ -365,9 +396,11 @@ module axi2axis_XY #(
     end
 
     always_comb begin
-        routing_header_resp_o = '0;
         b_send_bits_count_next = b_send_bits_count;
         r_send_bits_count_next = r_send_bits_count;
+
+        routing_header_resp_XY_o = '0;
+        routing_header_resp_N_o = '0;
 
         m_axi_o.BREADY = '0;
         m_axi_o.RREADY = '0;
@@ -386,19 +419,28 @@ module axi2axis_XY #(
                 if (response_valid_o) begin
                     if (response_data_o == B) begin
                         m_axis_resp_o.data.TID = ROUTING_HEADER_WRITE;
-                        routing_header_resp_o.DESTINATION_X = BRESP_DESTINATION_X;
-                        routing_header_resp_o.DESTINATION_Y = BRESP_DESTINATION_Y;
+                        routing_header_resp_XY_o.DESTINATION_X = BRESP_DESTINATION_X;
+                        routing_header_resp_XY_o.DESTINATION_Y = BRESP_DESTINATION_Y;
+                        routing_header_resp_N_o.DESTINATION_N = BRESP_DESTINATION_N;
                     end
                     else if (response_data_o == R) begin
                         m_axis_resp_o.data.TID = ROUTING_HEADER_READ;
-                        routing_header_resp_o.DESTINATION_X = RRESP_DESTINATION_X;
-                        routing_header_resp_o.DESTINATION_Y = RRESP_DESTINATION_Y;
+                        routing_header_resp_XY_o.DESTINATION_X = RRESP_DESTINATION_X;
+                        routing_header_resp_XY_o.DESTINATION_Y = RRESP_DESTINATION_Y;
+                        routing_header_resp_N_o.DESTINATION_N = RRESP_DESTINATION_N;
                     end
 
-                    routing_header_resp_o.SOURCE_X = ROUTER_X;
-                    routing_header_resp_o.SOURCE_Y = ROUTER_Y;
+                    routing_header_resp_XY_o.SOURCE_X = ROUTER_X;
+                    routing_header_resp_XY_o.SOURCE_Y = ROUTER_Y;
+                    routing_header_resp_N_o.SOURCE_N = ROUTER_N;
 
-                    m_axis_resp_o.data.TDATA = routing_header_resp_o;
+                    if (COORDINATES == "XY") begin
+                        m_axis_resp_o.data.TDATA = routing_header_resp_XY_o;
+                    end
+                    else if (COORDINATES == "N") begin
+                        m_axis_resp_o.data.TDATA = routing_header_resp_N_o;
+                    end
+
                     m_axis_resp_o.TVALID = '1;
                     m_axis_resp_o.data.TLAST = '0;
                 end
@@ -452,7 +494,8 @@ module axi2axis_XY #(
 
     // --- axis in logic ---
 
-    routing_header_t routing_header_req_i, routing_header_resp_i;
+    routing_header_XY_t routing_header_req_XY_i, routing_header_resp_XY_i;
+    routing_header_N_t routing_header_req_N_i, routing_header_resp_N_i;
 
     always_ff @(posedge ACLK or negedge ARESETn) begin
         if (!ARESETn) begin
@@ -462,6 +505,10 @@ module axi2axis_XY #(
             RRESP_DESTINATION_Y <= '0;
             BRESP_DESTINATION_X <= '0;
             BRESP_DESTINATION_Y <= '0;
+
+            TEMP_N <= '0;
+            RRESP_DESTINATION_N <= '0;
+            BRESP_DESTINATION_N <= '0;
 
             aw_receive_bits_count <= '0;
             w_receive_bits_count <= '0;
@@ -478,6 +525,10 @@ module axi2axis_XY #(
             RRESP_DESTINATION_Y <= RRESP_DESTINATION_Y_next;
             BRESP_DESTINATION_X <= BRESP_DESTINATION_X_next;
             BRESP_DESTINATION_Y <= BRESP_DESTINATION_Y_next;
+
+            TEMP_N <= TEMP_N_next;
+            RRESP_DESTINATION_N <= RRESP_DESTINATION_N_next;
+            BRESP_DESTINATION_N <= BRESP_DESTINATION_N_next;
 
             aw_receive_bits_count <= aw_receive_bits_count_next;
             w_receive_bits_count <= w_receive_bits_count_next;
@@ -544,8 +595,15 @@ module axi2axis_XY #(
 
 
     always_comb begin
-        routing_header_req_i = s_axis_req_i.data.TDATA;
-        routing_header_resp_i = s_axis_resp_i.data.TDATA;
+        if (COORDINATES == "XY") begin
+            routing_header_req_XY_i = s_axis_req_i.data.TDATA;
+            routing_header_resp_XY_i = s_axis_resp_i.data.TDATA;
+        end
+        else if (COORDINATES == "N") begin
+            routing_header_req_N_i = s_axis_req_i.data.TDATA;
+            routing_header_resp_N_i = s_axis_resp_i.data.TDATA;
+        end
+
         m_axi_o.data.aw[AW_WIDTH-1 -: AW_REMAINDER] = s_axis_req_i.data.TDATA[0 +: AW_REMAINDER];
         m_axi_o.data.w[W_WIDTH-1 -: W_REMAINDER] = s_axis_req_i.data.TDATA[0 +: W_REMAINDER];
         s_axi_o.data.b[B_WIDTH-1 -: B_REMAINDER] = s_axis_resp_i.data.TDATA[0 +: B_REMAINDER];
@@ -560,6 +618,10 @@ module axi2axis_XY #(
         RRESP_DESTINATION_Y_next = RRESP_DESTINATION_Y;
         BRESP_DESTINATION_X_next = BRESP_DESTINATION_X;
         BRESP_DESTINATION_Y_next = BRESP_DESTINATION_Y;
+
+        TEMP_N_next = TEMP_N;
+        RRESP_DESTINATION_N_next = RRESP_DESTINATION_N;
+        BRESP_DESTINATION_N_next = BRESP_DESTINATION_N;
 
         aw_receive_bits_count_next = aw_receive_bits_count;
         w_receive_bits_count_next = w_receive_bits_count;
@@ -581,8 +643,13 @@ module axi2axis_XY #(
             case (s_axis_req_i.data.TID)
                 ROUTING_HEADER_WRITE, ROUTING_HEADER_READ: begin
                     s_axis_req_o.TREADY = '1;
-                    TEMP_X_next = routing_header_req_i.SOURCE_X;
-                    TEMP_Y_next = routing_header_req_i.SOURCE_Y;
+                    if (COORDINATES == "XY") begin
+                        TEMP_X_next = routing_header_req_XY_i.SOURCE_X;
+                        TEMP_Y_next = routing_header_req_XY_i.SOURCE_Y;
+                    end
+                    else if (COORDINATES == "N") begin
+                        TEMP_N_next = routing_header_req_N_i.SOURCE_N;
+                    end
                 end
                 WRITE_REQUEST: begin
                     if (!w_receive) begin
@@ -592,8 +659,13 @@ module axi2axis_XY #(
                             s_axis_req_o.TREADY = m_axi_i.AWREADY;
 
                             if (s_axis_req_o.TREADY) begin
-                                BRESP_DESTINATION_X_next = TEMP_X;
-                                BRESP_DESTINATION_Y_next = TEMP_Y;
+                                if (COORDINATES == "XY") begin
+                                    BRESP_DESTINATION_X_next = TEMP_X;
+                                    BRESP_DESTINATION_Y_next = TEMP_Y;
+                                end
+                                else if (COORDINATES == "N") begin
+                                    BRESP_DESTINATION_N_next = TEMP_N;
+                                end
                             end
 
                             w_receive_next = s_axis_req_o.TREADY && s_axis_req_i.TVALID;
@@ -634,8 +706,13 @@ module axi2axis_XY #(
                         s_axis_req_o.TREADY = m_axi_i.ARREADY;
 
                         if (s_axis_req_o.TREADY) begin
-                            RRESP_DESTINATION_X_next = TEMP_X;
-                            RRESP_DESTINATION_Y_next = TEMP_Y;
+                            if (COORDINATES == "XY") begin
+                                RRESP_DESTINATION_X_next = TEMP_X;
+                                RRESP_DESTINATION_Y_next = TEMP_Y;
+                            end
+                            else if (COORDINATES == "N") begin
+                                RRESP_DESTINATION_N_next = TEMP_N;
+                            end
                         end
 
                         ar_receive_bits_count_next = s_axis_req_i.TVALID && s_axis_req_o.TREADY ? '0 : ar_receive_bits_count;

@@ -158,7 +158,7 @@ module tb_bridge (
         axi_to_bridge[1].RREADY = b_rready;
     end
 
-    axi2axis_XY #(
+    axi2axis #(
         .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
         .AXI_ADDR_WIDTH(ADDR_WIDTH),
         .AXI_ID_W_WIDTH(ID_W_WIDTH),

@@ -70,7 +70,7 @@ module XY_mesh_dual_parallel #(
         for (i = 0; i < MAX_ROUTERS_Y; i++) begin : Y
             for (j = 0; j < MAX_ROUTERS_X; j++) begin : X
                 
-                axi2axis_XY #(
+                axi2axis #(
                     .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
                     .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
                     .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
@@ -80,6 +80,8 @@ module XY_mesh_dual_parallel #(
                     .AXIS_ID_WIDTH(AXIS_ID_WIDTH),
                     .AXIS_DEST_WIDTH(AXIS_DEST_WIDTH),
                     .AXIS_USER_WIDTH(AXIS_USER_WIDTH),
+
+                    .COORDINATES("XY"),
 
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),

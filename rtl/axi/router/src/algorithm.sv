@@ -44,6 +44,12 @@ module algorithm #(
     axis_miso_t in_miso_o, out_miso_i[CHANNEL_NUMBER];
 
     `AXIS_INTERFACE_SLAVE2TYPEDEF(s_axis_i, in_mosi_i, in_miso_o)
+    generate
+        genvar i;
+        for (i = 0; i < CHANNEL_NUMBER; i++) begin : typedef_to_interface
+            `AXIS_INTERFACE_MASTER2TYPEDEF(m_axis_o[i], out_mosi_o[i], out_miso_i[i])
+        end
+    endgenerate
 
     logic [MAX_ROUTERS_Y_WIDTH-1:0] target_y_i;
     logic [MAX_ROUTERS_X_WIDTH-1:0] target_x_i;
@@ -68,72 +74,72 @@ module algorithm #(
     logic [CHANNEL_NUMBER-1:0] busy_next;
 
     generate
-        if(TOPOLOGY == "Mesh") begin
-            if (ALGORITHM == "XY") begin
+        if(TOPOLOGY == "Mesh") begin : mesh_topology
+            if (ALGORITHM == "XY") begin : xy_alg
                 algorithm_selector_mesh_XY #(
                     .MAX_ROUTERS_X(MAX_ROUTERS_X), 
                     .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
                     .ROUTER_X(ROUTER_X),
                     .ROUTER_Y(ROUTER_Y),
-                    .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+                    .CHANNEL_NUMBER(CHANNEL_NUMBER)
                 ) algorithm_selector (
                     .target_x_i(target_x_i),
                     .target_y_i(target_y_i),
                     .selector_o(ctrl)
                 );
             end
-            else begin
+            else begin : mesh_alg_error
                 $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
             end
         end
-        else if(TOPOLOGY == "Torus") begin
-            if (ALGORITHM == "XY") begin
+        else if(TOPOLOGY == "Torus") begin : torus_topology
+            if (ALGORITHM == "XY") begin : xy_alg
                 algorithm_selector_torus_XY #(
                     .MAX_ROUTERS_X(MAX_ROUTERS_X), 
                     .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
                     .ROUTER_X(ROUTER_X),
                     .ROUTER_Y(ROUTER_Y),
-                    .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+                    .CHANNEL_NUMBER(CHANNEL_NUMBER)
                 ) algorithm_selector (
                     .target_x_i(target_x_i),
                     .target_y_i(target_y_i),
                     .selector_o(ctrl)
                 );
             end
-            else if (ALGORITHM == "EWn_SNe") begin
+            else if (ALGORITHM == "EWn_SNe") begin : ewn_sne_alg
                 algorithm_selector_torus_EWn_SNe #(
                     .MAX_ROUTERS_X(MAX_ROUTERS_X), 
                     .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
                     .ROUTER_X(ROUTER_X),
                     .ROUTER_Y(ROUTER_Y),
-                    .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+                    .CHANNEL_NUMBER(CHANNEL_NUMBER)
                 ) algorithm_selector (
                     .target_x_i(target_x_i),
                     .target_y_i(target_y_i),
                     .selector_o(ctrl)
                 );
             end
-            else begin
+            else begin : torus_alg_error
                 $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
             end
         end
-        else if(TOPOLOGY == "Circulant") begin
-            if (ALGORITHM == "Clockwise") begin
+        else if(TOPOLOGY == "Circulant") begin : circulant_topology
+            if (ALGORITHM == "Clockwise") begin : clockwise_alg
                 algorithm_selector_clockwise #(
                 .ROUTER_N(ROUTER_N),
                 .ROUTERS_COUNT(ROUTERS_COUNT),
                 .GENERATICS_COUNT(GENERATICS_COUNT),
                 .GENERATICS(GENERATICS),
-                .CHANNEL_NUMBER(CHANNEL_NUMBER/2)
+                .CHANNEL_NUMBER(CHANNEL_NUMBER)
                 ) algorithm_selector (
                     .target_i(target_i),
                     .selector_o(ctrl)
                 );
             end
-            else begin
+            else begin : circulant_alg_error
                 $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
             end
-        end else begin
+        end else begin : topology_error
             $error("Wrong topology! (TOPOLOGY == %s)", TOPOLOGY);
         end
 
