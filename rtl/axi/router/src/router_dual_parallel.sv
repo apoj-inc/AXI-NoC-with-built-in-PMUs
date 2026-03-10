@@ -53,6 +53,7 @@ module router_dual_parallel #(
         alg_o_req_axis_if  [CHANNEL_NUMBER/2] (),
         alg_o_resp_axis_if [CHANNEL_NUMBER/2] ();
     
+    logic [CHANNEL_NUMBER_WIDTH-1-1:0] current_grant_req, current_grant_resp;
     logic [TARGET_LEN-1:0] target_resp, target_req;
 
     generate
@@ -95,7 +96,7 @@ module router_dual_parallel #(
         .s_axis_i(arb_i_req_axis_if),
         .m_axis_o(arb_o_req_if),
 
-        // Mesh and Torus
+        .current_grant_o(current_grant_req),
         .target_o(target_req)
     ), arb_resp (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
@@ -103,6 +104,7 @@ module router_dual_parallel #(
         .s_axis_i(arb_i_resp_axis_if),
         .m_axis_o(arb_o_resp_if),
 
+        .current_grant_o(current_grant_resp),
         .target_o(target_resp)
     );
 
@@ -137,6 +139,7 @@ module router_dual_parallel #(
         .s_axis_i(arb_o_req_if),
         .m_axis_o(alg_o_req_axis_if),
 
+        .current_grant_i(current_grant_req),
         .target_i(target_req)
     ), alg_resp (
         .clk_i(clk_i), .rst_n_i(rst_n_i),
@@ -144,6 +147,7 @@ module router_dual_parallel #(
         .s_axis_i(arb_o_resp_if),
         .m_axis_o(alg_o_resp_axis_if),
 
+        .current_grant_i(current_grant_resp),
         .target_i(target_resp)
     );
 

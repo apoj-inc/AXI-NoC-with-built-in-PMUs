@@ -44,7 +44,7 @@ class AxiWrapper:
 async def axi_read_write(dut, axi_master, addr, data, id, channel):
     
     await axi_master.write(addr, data, awid=id)
-    await axi_master.read(addr, 25, arid=id)
+    await axi_master.read(addr, 16, arid=id)
 
 
 @cocotb.test
@@ -131,11 +131,11 @@ async def deadlock_inducer(dut):
                 b'1515151515151515']
     addrs = [32 * i for i in range(25)]
     for j in range(16):
-        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[0], addrs[j % 25], datas[j % 16] * 10, 2 + 1, 0)))
-        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[1], addrs[j % 25], datas[j % 16] * 10, 3 + 1, 0)))
-        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[2], addrs[j % 25], datas[j % 16] * 10, 4 + 1, 0)))
-        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[3], addrs[j % 25], datas[j % 16] * 10, 0 + 1, 0)))
-        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[4], addrs[j % 25], datas[j % 16] * 10, 1 + 1, 0)))
+        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[5], addrs[j % 25], datas[j % 16] * 10, 7 + 1, 0)))
+        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[6], addrs[j % 25], datas[j % 16] * 10, 8 + 1, 0)))
+        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[7], addrs[j % 25], datas[j % 16] * 10, 9 + 1, 0)))
+        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[8], addrs[j % 25], datas[j % 16] * 10, 0 + 1, 0)))
+        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[9], addrs[j % 25], datas[j % 16] * 10, 1 + 1, 0)))
 
     timeout = Timer(200_000, unit='ns')
 

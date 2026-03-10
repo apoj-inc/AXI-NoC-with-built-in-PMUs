@@ -37,7 +37,6 @@ module algorithm_dual #(
     axis_if.m m_axis_o [CHANNEL_NUMBER],
 
     input logic [CHANNEL_NUMBER_WIDTH-1:0] current_grant_i,
-
     input logic [TARGET_LEN-1:0] target_i
 );
 
@@ -125,6 +124,7 @@ module algorithm_dual #(
                 ) algorithm_selector (
                     .target_x_i(target_x_i),
                     .target_y_i(target_y_i),
+                    .incoming_channel_i(current_grant_i[CHANNEL_NUMBER_WIDTH-1:1]),
                     .selector_o(ctrl_logical)
                 );
             end

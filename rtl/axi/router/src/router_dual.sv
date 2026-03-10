@@ -115,7 +115,6 @@ module router_dual #(
         .m_axis_o(m_axis_o),
 
         .current_grant_i(current_grant),
-
         .target_i(target)
     );
     

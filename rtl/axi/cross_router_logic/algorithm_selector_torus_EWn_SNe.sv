@@ -12,6 +12,7 @@ module algorithm_selector_torus_EWn_SNe #(
 ) (
     input  logic [MAX_ROUTERS_X_WIDTH-1:0]  target_x_i,
     input  logic [MAX_ROUTERS_Y_WIDTH-1:0]  target_y_i,
+    input  logic [CHANNEL_NUMBER_WIDTH-1:0] incoming_channel_i,
     output logic [CHANNEL_NUMBER_WIDTH-1:0] selector_o
 );
 
@@ -48,6 +49,12 @@ module algorithm_selector_torus_EWn_SNe #(
         end
         else if (ROUTER_X < target_x_i && ROUTER_Y > target_y_i && take_arc_y) begin
             selector_o = SOUTH;
+        end
+        else if (ROUTER_X == 0 && incoming_channel_i == WEST) begin
+            selector_o = NORTH;
+        end
+        else if (ROUTER_Y == 0 && incoming_channel_i == NORTH) begin
+            selector_o = EAST;
         end
         else begin
             selector_o = selector_XY;
