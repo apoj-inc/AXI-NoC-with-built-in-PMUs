@@ -2,21 +2,22 @@
 `include "axis_defines.svh"
 
 module circulant_dual #(
-    parameter AXI_DATA_WIDTH  = 32,
-    parameter AXI_ADDR_WIDTH  = 16,
-    parameter AXI_ID_W_WIDTH  = 5,
-    parameter AXI_ID_R_WIDTH  = 5,
+    parameter        AXI_DATA_WIDTH  = 32,
+    parameter        AXI_ADDR_WIDTH  = 16,
+    parameter        AXI_ID_W_WIDTH  = 5,
+    parameter        AXI_ID_R_WIDTH  = 5,
 
-    parameter AXIS_DATA_WIDTH = 40,
-    parameter AXIS_ID_WIDTH   = 4,
-    parameter AXIS_DEST_WIDTH = 4,
-    parameter AXIS_USER_WIDTH = 4,
+    parameter        AXIS_DATA_WIDTH = 40,
+    parameter        AXIS_ID_WIDTH   = 4,
+    parameter        AXIS_DEST_WIDTH = 4,
+    parameter        AXIS_USER_WIDTH = 4,
     
-    parameter BUFFER_DEPTH = 16,
+    parameter        BUFFER_DEPTH    = 16,
+    parameter string ALGORITHM       = "Clockwise",
 
-    parameter ROUTERS_COUNT = 6,
-    parameter GENERATICS_COUNT = 2,
-    parameter int GENERATICS[GENERATICS_COUNT] = '{2, 1}
+    parameter        ROUTERS_COUNT = 6,
+    parameter        GENERATICS_COUNT = 2,
+    parameter int    GENERATICS[GENERATICS_COUNT] = '{2, 1}
 ) (
     input ACLK, ARESETn,
 
@@ -60,7 +61,7 @@ module circulant_dual #(
     generate
         for (i = 0; i < ROUTERS_COUNT; i++) begin : router_iteration
 
-            axi2axis_N #(
+            axi2axis #(
                 .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
                 .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
                 .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
@@ -70,6 +71,8 @@ module circulant_dual #(
                 .AXIS_ID_WIDTH(AXIS_ID_WIDTH),
                 .AXIS_DEST_WIDTH(AXIS_DEST_WIDTH),
                 .AXIS_USER_WIDTH(AXIS_USER_WIDTH),
+
+                .COORDINATES("N"),
 
                 .ROUTER_N(i),
                 .ROUTERS_COUNT(ROUTERS_COUNT)
@@ -100,18 +103,19 @@ module circulant_dual #(
             end
             
             router_dual #(
-                .CHANNEL_NUMBER(CHANNEL_NUMBER),
-                .USE_N_COORDINATES(1),
-                .USE_CLOCKWISE(1),
-                .ROUTER_N(i),
-                .ROUTERS_COUNT(ROUTERS_COUNT),
-
                 .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
                 .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
                 .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                 .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
 
-                .BUFFER_DEPTH(BUFFER_DEPTH),
+                .CHANNEL_NUMBER  (CHANNEL_NUMBER),
+                .BUFFER_DEPTH    (BUFFER_DEPTH),
+                .TOPOLOGY        ("Circulant"),
+                .ALGORITHM       (ALGORITHM),
+                .COORDINATES     ("N"),
+
+                .ROUTER_N(i),
+                .ROUTERS_COUNT(ROUTERS_COUNT),
                 .GENERATICS_COUNT(GENERATICS_COUNT),
                 .GENERATICS(GENERATICS)
             ) router (

@@ -36,19 +36,19 @@ $(QUARTUS_BUILD_PATH)/$(TOPLEVEL)/NoC.qpf: $(shell find $(CURDIR)/rtl -type f | 
 create_releases: $(RELEASE_FILES)
 
 $(RELEASE_FILES):\
-		$(foreach file,$(shell cat $(wildcard $(RELEASE_DIR)/*/sources.lst)),$(CURDIR)/$(file))\
-		$(foreach file,$(shell cat $(wildcard $(RELEASE_DIR)/*/incfiles.lst)),$(CURDIR)/$(file))\
+		$(foreach file,$(shell cat $(wildcard $(RELEASE_DIR)/*/sources.lst) | grep -v "#"),$(CURDIR)/$(file))\
+		$(foreach file,$(shell cat $(wildcard $(RELEASE_DIR)/*/incfiles.lst) | grep -v "#"),$(CURDIR)/$(file))\
 		$(wildcard $(RELEASE_DIR)/*/sources.lst)\
 		$(wildcard $(RELEASE_DIR)/*/incfiles.lst)
 	@mkdir -p $(dir $@)package
 	@rm -r $(dir $@)package
 	@mkdir -p $(dir $@)package $(dir $@)package/src $(dir $@)package/inc
-	@$(foreach file,$(shell cat $(abspath $(dir $@)sources.lst)) , cp $(CURDIR)/$(file) $(dir $@)package/src;)
-	@$(foreach file,$(shell cat $(abspath $(dir $@)incfiles.lst)), cp $(CURDIR)/$(file) $(dir $@)package/inc;)
+	@$(foreach file,$(shell cat $(abspath $(dir $@)sources.lst) | grep -v "#") , cp $(CURDIR)/$(file) $(dir $@)package/src;)
+	@$(foreach file,$(shell cat $(abspath $(dir $@)incfiles.lst) | grep -v "#"), cp $(CURDIR)/$(file) $(dir $@)package/inc;)
 
 	@mkdir -p $(VARS_TCL_PATH)
 	@echo set TOPLEVEL $(notdir $(basename $@)) > $(VARS_TCL)
-	@echo set RTL_FILES {$(foreach file,$(shell cat $(abspath $(dir $@)sources.lst)), src/$(notdir $(file))) } >> $(VARS_TCL)
+	@echo set RTL_FILES {$(foreach file,$(shell cat $(abspath $(dir $@)sources.lst) | grep -v "#"), src/$(notdir $(file))) } >> $(VARS_TCL)
 	@echo set INCDIR inc >> $(VARS_TCL)
 	@echo set DEVICE_FAMILY \"$(DEVICE_FAMILY)\" >> $(VARS_TCL)
 	@echo set DEVICE_PART $(DEVICE_PART) >> $(VARS_TCL)

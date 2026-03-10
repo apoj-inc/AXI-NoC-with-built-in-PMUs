@@ -3,23 +3,24 @@
 `include "XY_compas.svh"
 
 module XY_mesh_dual #(
-    parameter AXI_DATA_WIDTH  = 32,
-    parameter AXI_ADDR_WIDTH  = 16,
-    parameter AXI_ID_W_WIDTH  = 5,
-    parameter AXI_ID_R_WIDTH  = 5,
+    parameter        AXI_DATA_WIDTH  = 32,
+    parameter        AXI_ADDR_WIDTH  = 16,
+    parameter        AXI_ID_W_WIDTH  = 5,
+    parameter        AXI_ID_R_WIDTH  = 5,
 
-    parameter AXIS_DATA_WIDTH = 40,
-    parameter AXIS_ID_WIDTH   = 4,
-    parameter AXIS_DEST_WIDTH = 4,
-    parameter AXIS_USER_WIDTH = 4,
+    parameter        AXIS_DATA_WIDTH = 40,
+    parameter        AXIS_ID_WIDTH   = 4,
+    parameter        AXIS_DEST_WIDTH = 4,
+    parameter        AXIS_USER_WIDTH = 4,
 
-    parameter MAX_ROUTERS_X   = 4,
-    parameter MAX_ROUTERS_Y   = 4,
+    parameter        MAX_ROUTERS_X   = 4,
+    parameter        MAX_ROUTERS_Y   = 4,
     
-    parameter BUFFER_DEPTH = 16,
+    parameter        BUFFER_DEPTH    = 16,
+    parameter string ALGORITHM       = "XY",
 
-    parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
-    parameter MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y)
+    parameter        MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
+    parameter        MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y)
 ) (
     input ACLK, ARESETn,
 
@@ -69,7 +70,7 @@ module XY_mesh_dual #(
         for (i = 0; i < MAX_ROUTERS_Y; i++) begin : Y
             for (j = 0; j < MAX_ROUTERS_X; j++) begin : X
                 
-                axi2axis_XY #(
+                axi2axis #(
                     .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
                     .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
                     .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
@@ -79,6 +80,8 @@ module XY_mesh_dual #(
                     .AXIS_ID_WIDTH(AXIS_ID_WIDTH),
                     .AXIS_DEST_WIDTH(AXIS_DEST_WIDTH),
                     .AXIS_USER_WIDTH(AXIS_USER_WIDTH),
+
+                    .COORDINATES("XY"),
 
                     .ROUTER_X(j),
                     .MAX_ROUTERS_X(MAX_ROUTERS_X),
@@ -114,20 +117,21 @@ module XY_mesh_dual #(
                 `AXIS_INTERFACE2INTERFACE(router_if[i+1][j][EAST_RESP], router_in[i][j][WEST_RESP])
                 
                 router_dual #(
-                    .CHANNEL_NUMBER(10),
-                    .USE_XY_COORDINATES(1),
-                    .USE_MESH_XY(1),
-                    .ROUTER_X(j),
-                    .MAX_ROUTERS_X(MAX_ROUTERS_X),
-                    .ROUTER_Y(i),
-                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-
                     .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
                     .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
                     .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                     .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
 
-                    .BUFFER_DEPTH(BUFFER_DEPTH)
+                    .CHANNEL_NUMBER  (10),
+                    .BUFFER_DEPTH    (BUFFER_DEPTH),
+                    .TOPOLOGY        ("Mesh"),
+                    .ALGORITHM       (ALGORITHM),
+                    .COORDINATES     ("XY"),
+
+                    .MAX_ROUTERS_X   (MAX_ROUTERS_X),
+                    .MAX_ROUTERS_Y   (MAX_ROUTERS_Y),
+                    .ROUTER_X        (j),
+                    .ROUTER_Y        (i)
                 ) router (
                     .clk_i(ACLK),
                     .rst_n_i(ARESETn),

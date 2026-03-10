@@ -1,6 +1,6 @@
 `include "XY_compas.svh"
 
-module algorithm_selector_torus_XY #(
+module algorithm_selector_torus_EWn_SNe #(
     parameter MAX_ROUTERS_X = 4,
     parameter MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
     parameter MAX_ROUTERS_Y = 4,
@@ -12,6 +12,7 @@ module algorithm_selector_torus_XY #(
 ) (
     input  logic [MAX_ROUTERS_X_WIDTH-1:0]  target_x_i,
     input  logic [MAX_ROUTERS_Y_WIDTH-1:0]  target_y_i,
+    input  logic [CHANNEL_NUMBER_WIDTH-1:0] incoming_channel_i,
     output logic [CHANNEL_NUMBER_WIDTH-1:0] selector_o
 );
 
@@ -28,22 +29,36 @@ module algorithm_selector_torus_XY #(
     assign take_arc_x = distance_x > CRITICAL_X;
     assign take_arc_y = distance_y > CRITICAL_Y;
 
+    logic [CHANNEL_NUMBER_WIDTH-1:0] selector_XY;
+
+    algorithm_selector_mesh_XY #(
+        .MAX_ROUTERS_X  (MAX_ROUTERS_X ),
+        .MAX_ROUTERS_Y  (MAX_ROUTERS_Y ),
+        .ROUTER_X       (ROUTER_X      ),
+        .ROUTER_Y       (ROUTER_Y      ),
+        .CHANNEL_NUMBER (CHANNEL_NUMBER)
+    ) XY_selector (
+        .target_x_i(target_x_i),
+        .target_y_i(target_y_i),
+        .selector_o(selector_XY)
+    );
+
     always_comb begin
-        if (target_x_i > ROUTER_X || (target_x_i < ROUTER_X && take_arc_x)) begin
+        if (ROUTER_X > target_x_i && ROUTER_Y > target_y_i && take_arc_x) begin
             selector_o = EAST;
         end
-        else if (target_x_i < ROUTER_X || (target_x_i > ROUTER_X && take_arc_x)) begin
-            selector_o = WEST;
-        end
-        else if (target_y_i > ROUTER_Y || (target_y_i < ROUTER_Y && take_arc_y)) begin
+        else if (ROUTER_X < target_x_i && ROUTER_Y > target_y_i && take_arc_y) begin
             selector_o = SOUTH;
         end
-        else if (target_y_i < ROUTER_Y || (target_y_i > ROUTER_Y && take_arc_y)) begin
+        else if (ROUTER_X == 0 && incoming_channel_i == WEST) begin
             selector_o = NORTH;
         end
+        else if (ROUTER_Y == 0 && incoming_channel_i == NORTH) begin
+            selector_o = EAST;
+        end
         else begin
-            selector_o = HOME;
+            selector_o = selector_XY;
         end
     end
 
-endmodule: algorithm_selector_torus_XY
+endmodule

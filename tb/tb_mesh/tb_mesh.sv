@@ -89,7 +89,8 @@ module tb_mesh (
     endgenerate
 
     XY_mesh_dual #(
-        .AXI_ADDR_WIDTH(12)
+        .AXI_ADDR_WIDTH(12),
+        .AXIS_DATA_WIDTH(40)
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),

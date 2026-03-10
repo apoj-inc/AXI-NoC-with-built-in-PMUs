@@ -19,11 +19,12 @@ async def axi_read_write(dut, axi_master, data, id, channel):
 async def test(dut):
     cocotb.start_soon(Clock(dut.aclk, 2, units="ns").start())
 
-    axi_master_1 = AxiMaster(AxiBus.from_prefix(dut, "a"), dut.aclk, reset=dut.aresetn, reset_active_level=False)
-    axi_master_2 = AxiMaster(AxiBus.from_prefix(dut, "b"), dut.aclk, reset=dut.aresetn, reset_active_level=False)
-
     dut.aresetn.value = 0
     await RisingEdge(dut.aclk)
+
+    axi_master_1 = AxiMaster(AxiBus.from_prefix(dut, "a"), dut.aclk, reset=dut.aresetn, reset_active_level=False)
+    axi_master_2 = AxiMaster(AxiBus.from_prefix(dut, "b"), dut.aclk, reset=dut.aresetn, reset_active_level=False)
+    
     await RisingEdge(dut.aclk)
     dut.aresetn.value = 1
     await RisingEdge(dut.aclk)

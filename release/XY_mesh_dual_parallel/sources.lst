@@ -1,7 +1,7 @@
 rtl/axi/axi_if.sv
 rtl/axi/axis_if.sv
 rtl/axi/XY_mesh/XY_mesh_dual_parallel.sv
-rtl/axi/axi2axis_XY.sv
+rtl/axi/axi2axis.sv
 rtl/axi/cross_router_logic/algorithm_selector_mesh_XY.sv
 rtl/axi/router/src/router_dual_parallel.sv
 rtl/axi/stream_arbiter.sv

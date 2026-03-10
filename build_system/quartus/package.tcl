@@ -3,6 +3,7 @@ source ../../../.cache/quartus/vars.tcl
 project_new $TOPLEVEL -overwrite
 
 set_global_assignment -name TOP_LEVEL_ENTITY $TOPLEVEL
+set_global_assignment -name VERILOG_MACRO QUARTUS
 
 foreach rtl $RTL_FILES {
     set_global_assignment -name SYSTEMVERILOG_FILE $rtl

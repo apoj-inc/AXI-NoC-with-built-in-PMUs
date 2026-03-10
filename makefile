@@ -11,11 +11,11 @@ VENV_DIR ?= $(CACHE_DIR)/.venv
 COCOTB_DIR ?= $(CACHE_DIR)/cctb
 
 INCDIRS_PATH ?= $(RTL_PATH)/lists/incdirs.lst
-INCLUDE_DIRS ?= $(foreach file,$(shell cat $(INCDIRS_PATH)),$(CURDIR)/$(file))
+INCLUDE_DIRS ?= $(foreach file,$(shell cat $(INCDIRS_PATH) | grep -v "#"),$(CURDIR)/$(file))
 
 LIST_DIR ?= $(RTL_PATH)/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
-VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL)),$(CURDIR)/$(file))
+VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL) | grep -v "#"),$(CURDIR)/$(file))
 
 TB_DIR ?= $(CURDIR)/tb
 TESTS_DIRS ?= $(sort $(dir $(wildcard $(TB_DIR)/tb_*/)))

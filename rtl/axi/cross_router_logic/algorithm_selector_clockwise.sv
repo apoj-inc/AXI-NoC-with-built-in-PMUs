@@ -4,10 +4,11 @@ module algorithm_selector_clockwise #(
     parameter ROUTER_N = 0,
     parameter CHANNEL_NUMBER = 5,
     parameter GENERATICS_COUNT = 2,
-    parameter int GENERATICS[GENERATICS_COUNT] = '{2, 1}
+    parameter int GENERATICS[GENERATICS_COUNT] = '{2, 1},
+    parameter CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER)
 ) (
     input  logic [ROUTERS_COUNT_WIDTH-1:0]       target_i,
-    output logic [CHANNEL_NUMBER-1:0]      selector_o
+    output logic [CHANNEL_NUMBER_WIDTH-1:0]      selector_o
 );
     logic [ROUTERS_COUNT_WIDTH:0] extended_target;
     logic [ROUTERS_COUNT_WIDTH-1:0] target_dif;
@@ -19,12 +20,12 @@ module algorithm_selector_clockwise #(
         selector_o = '0;
 
         if(target_dif == 0) begin
-            selector_o[0] = 1'b1;
+            selector_o = 0;
         end
 
-        for (int i = 0; i < GENERATICS_COUNT; i++) begin
+        for (int i = GENERATICS_COUNT-1; i >= 0; i--) begin
             if(GENERATICS[i] <= target_dif) begin
-                selector_o[i+1] = 1'b1;
+                selector_o = i + 1;
             end
         end
     end

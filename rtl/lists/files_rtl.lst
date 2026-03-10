@@ -8,6 +8,7 @@ rtl/axi/cross_router_logic/algorithm_selector_clockwise.sv
 rtl/axi/cross_router_logic/algorithm_selector_mesh_XY.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_XY.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_XY_one_way.sv
+rtl/axi/cross_router_logic/algorithm_selector_torus_EWn_SNe.sv
 rtl/axi/router/src/algorithm.sv
 rtl/axi/router/src/algorithm_dual.sv
 rtl/axi/router/src/arbiter.sv
@@ -22,8 +23,7 @@ rtl/axi/axi_if.sv
 rtl/axi/axi_master_loader.sv
 rtl/axi/axi_mux.sv
 rtl/axi/axi_ram.sv
-rtl/axi/axi2axis_XY.sv
-rtl/axi/axi2axis_N.sv
+rtl/axi/axi2axis.sv
 rtl/axi/axi2ram.sv
 rtl/axi/axis_if_demux.sv
 rtl/axi/axis_if_mux.sv
