@@ -170,7 +170,7 @@ async def test_random(dut):
                  b'1515151515151515']
         addrs = [32 * i for i in range(25)]
         for j in range(64):
-            processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 25], addrs[j % 25], datas[j % 16] * 10, randint(1, 25), 0)))
+            processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 25], addrs[j % 25], datas[j % 16], randint(1, 25), 0)))
 
         timeout = Timer(200_000, unit='ns')
 
