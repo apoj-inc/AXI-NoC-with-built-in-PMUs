@@ -64,7 +64,9 @@ module algorithm #(
         else if (COORDINATES == "N") begin
         end
         else begin
-            $error("Wrong coordinate system! (COORDINATES == %s)", COORDINATES);
+            `ifndef QUARTUS
+                $error("Wrong coordinate system! (COORDINATES == %s)", COORDINATES);
+            `endif
         end
     endgenerate
 
@@ -89,7 +91,9 @@ module algorithm #(
                 );
             end
             else begin : mesh_alg_error
-                $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
+                `ifndef QUARTUS
+                    $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
+                `endif
             end
         end
         else if(TOPOLOGY == "Torus") begin : torus_topology
@@ -120,7 +124,9 @@ module algorithm #(
                 );
             end
             else begin : torus_alg_error
-                $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
+                `ifndef QUARTUS
+                    $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
+                `endif
             end
         end
         else if(TOPOLOGY == "Circulant") begin : circulant_topology
@@ -137,10 +143,14 @@ module algorithm #(
                 );
             end
             else begin : circulant_alg_error
-                $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
+                `ifndef QUARTUS
+                    $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
+                `endif
             end
         end else begin : topology_error
-            $error("Wrong topology! (TOPOLOGY == %s)", TOPOLOGY);
+            `ifndef QUARTUS
+                $error("Wrong topology! (TOPOLOGY == %s)", TOPOLOGY);
+            `endif
         end
 
     endgenerate

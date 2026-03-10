@@ -90,7 +90,7 @@ module tb_mesh (
 
     XY_mesh_dual #(
         .AXI_ADDR_WIDTH(12),
-        .AXIS_DATA_WIDTH(16)
+        .AXIS_DATA_WIDTH(40)
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
