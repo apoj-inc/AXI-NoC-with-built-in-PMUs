@@ -8,7 +8,11 @@ module algorithm #(
     parameter        AXIS_DEST_WIDTH = 4,
     parameter        AXIS_USER_WIDTH = 4,
 
-    parameter        CHANNEL_NUMBER = 10,
+    parameter        PHISICAL_CHANNEL_NUMBER = 5,
+    parameter        PHISICAL_CHANNEL_NUMBER_WIDTH = $clog2(PHISICAL_CHANNEL_NUMBER),
+    parameter        VIRTUAL_CHANNEL_NUMBER = 2,
+    parameter        VIRTUAL_NUMBER_WIDTH = $clog2(VIRTUAL_CHANNEL_NUMBER),
+    parameter        CHANNEL_NUMBER = PHISICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
     parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
     parameter string TOPOLOGY = "Mesh",
     parameter string ALGORITHM = "XY",
@@ -71,6 +75,7 @@ module algorithm #(
         end
     endgenerate
 
+    logic [PHISICAL_CHANNEL_NUMBER_WIDTH-1:0] ctrl_logical;
     logic [CHANNEL_NUMBER_WIDTH-1:0] ctrl;
 
     logic [CHANNEL_NUMBER-1:0] busy;
@@ -84,11 +89,11 @@ module algorithm #(
                     .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
                     .ROUTER_X(ROUTER_X),
                     .ROUTER_Y(ROUTER_Y),
-                    .CHANNEL_NUMBER(CHANNEL_NUMBER)
+                    .CHANNEL_NUMBER(PHISICAL_CHANNEL_NUMBER_WIDTH)
                 ) algorithm_selector (
                     .target_x_i(target_x_i),
                     .target_y_i(target_y_i),
-                    .selector_o(ctrl)
+                    .selector_o(ctrl_logical)
                 );
             end
             else begin : mesh_alg_error
@@ -108,7 +113,7 @@ module algorithm #(
                 ) algorithm_selector (
                     .target_x_i(target_x_i),
                     .target_y_i(target_y_i),
-                    .selector_o(ctrl)
+                    .selector_o(ctrl_logical)
                 );
             end
             else if (ALGORITHM == "EWn_SNe") begin : ewn_sne_alg
@@ -122,7 +127,7 @@ module algorithm #(
                     .target_x_i(target_x_i),
                     .target_y_i(target_y_i),
                     .incoming_channel_i(current_grant_i),
-                    .selector_o(ctrl)
+                    .selector_o(ctrl_logical)
                 );
             end
             else begin : torus_alg_error
@@ -141,7 +146,7 @@ module algorithm #(
                 .CHANNEL_NUMBER(CHANNEL_NUMBER)
                 ) algorithm_selector (
                     .target_i(target_i),
-                    .selector_o(ctrl)
+                    .selector_o(ctrl_logical)
                 );
             end
             else begin : circulant_alg_error
@@ -156,6 +161,32 @@ module algorithm #(
         end
 
     endgenerate
+
+    logic [VIRTUAL_NUMBER_WIDTH-1:0] virtual_channel;
+    channel_decoder #(
+        .PHISICAL_CHANNEL_NUMBER(PHISICAL_CHANNEL_NUMBER),
+        .PHISICAL_CHANNEL_NUMBER_WIDTH(PHISICAL_CHANNEL_NUMBER_WIDTH),
+        .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+        .VIRTUAL_NUMBER_WIDTH(VIRTUAL_NUMBER_WIDTH),
+        .CHANNEL_NUMBER(CHANNEL_NUMBER),
+        .CHANNEL_NUMBER_WIDTH(CHANNEL_NUMBER_WIDTH)
+    ) dec (
+        .channel_number(current_grant_i),
+        .virtual_channel_number(virtual_channel)
+    );
+
+    channel_encoder #(
+        .PHISICAL_CHANNEL_NUMBER(PHISICAL_CHANNEL_NUMBER),
+        .PHISICAL_CHANNEL_NUMBER_WIDTH(PHISICAL_CHANNEL_NUMBER_WIDTH),
+        .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+        .VIRTUAL_NUMBER_WIDTH(VIRTUAL_NUMBER_WIDTH),
+        .CHANNEL_NUMBER(CHANNEL_NUMBER),
+        .CHANNEL_NUMBER_WIDTH(CHANNEL_NUMBER_WIDTH)
+    ) enc (
+        .phisical_channel_number(ctrl_logical),
+        .virtual_channel_number(virtual_channel),
+        .channel_number(ctrl)
+    );
 
     always_comb begin
         for (int i = 0; i < CHANNEL_NUMBER; i++) begin

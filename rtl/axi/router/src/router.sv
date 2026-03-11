@@ -1,5 +1,6 @@
 `include "defines.svh"
 `include "axis_defines.svh"
+`include "virtual_networks_utils.svh"
 
 module router #(
     parameter        AXIS_DATA_WIDTH = 40,
@@ -82,21 +83,13 @@ module router #(
         .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
         .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
         .BUFFER_ALLOCATOR(BUFFER_ALLOCATOR)
-    ) q (
+    ) buffer (
         .ACLK(clk_i),
         .ARESETn(rst_n_i),
 
         .s_axis_i(s_axis_i),
         .m_axis_o(queue_o_if)
     );
-
-    function int calculate_virtual_network_offset(int current_virtual_network);
-        automatic int res = 0;
-        for (int i = 0; i < current_virtual_network; i++) begin
-            res += VIRTUAL_NETWORKS[i];
-        end
-        return res;
-    endfunction
 
     genvar current_virtual_network, current_phisical_channel, current_virtual_channel;
     generate
@@ -115,7 +108,7 @@ module router #(
                     arb_o_if [VIRTUAL_NETWORKS[current_virtual_network]*PHISICAL_CHANNEL_NUMBER] (),
                     alg_o_if [VIRTUAL_NETWORKS[current_virtual_network]*PHISICAL_CHANNEL_NUMBER] ();
 
-                localparam int virtual_network_offset = calculate_virtual_network_offset(current_virtual_network);
+                localparam int virtual_network_offset = calculate_virtual_network_offset(current_virtual_network, VIRTUAL_NETWORKS);
                 for(current_phisical_channel = 0; current_phisical_channel < PHISICAL_CHANNEL_NUMBER; current_phisical_channel++) begin : phisical_channels_mapping
                     for(current_virtual_channel = 0; current_virtual_channel + virtual_network_offset < virtual_network_offset+VIRTUAL_NETWORKS[current_virtual_network]; current_virtual_channel++) begin : virtual_channels_mapping
                         `AXIS_INTERFACE2INTERFACE(queue_o_if[current_phisical_channel*VIRTUAL_CHANNEL_NUMBER+virtual_network_offset+current_virtual_channel], arb_i_if[current_virtual_channel])
@@ -212,6 +205,8 @@ module router #(
                 .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                 .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
 
+                .PHISICAL_CHANNEL_NUMBER(PHISICAL_CHANNEL_NUMBER),
+                .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
                 .CHANNEL_NUMBER(CHANNEL_NUMBER),
                 .TOPOLOGY(TOPOLOGY),
                 .ALGORITHM(ALGORITHM),
