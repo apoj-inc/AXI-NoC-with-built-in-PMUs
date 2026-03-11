@@ -9,12 +9,17 @@ rtl/axi/cross_router_logic/algorithm_selector_mesh_XY.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_XY.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_XY_one_way.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_EWn_SNe.sv
+rtl/axi/cross_router_logic/buffer_allocator_straight.sv
 rtl/axi/router/src/algorithm.sv
 rtl/axi/router/src/algorithm_dual.sv
+rtl/axi/router/src/router_buffer.sv
 rtl/axi/router/src/arbiter.sv
+rtl/axi/router/src/arbiter.sv
+rtl/axi/router/src/router.sv
 rtl/axi/router/src/router_dual.sv
 rtl/axi/router/src/router_dual_parallel.sv
 rtl/axi/circulant/circulant_dual.sv
+rtl/axi/XY_mesh/XY_mesh.sv
 rtl/axi/XY_mesh/XY_mesh_dual.sv
 rtl/axi/XY_mesh/XY_mesh_dual_parallel.sv
 rtl/axi/torus/torus_dual.sv
