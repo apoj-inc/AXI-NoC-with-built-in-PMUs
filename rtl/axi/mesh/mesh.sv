@@ -123,7 +123,7 @@ module mesh #(
                     .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                     .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
 
-                    .PHISICAL_CHANNEL_NUMBER  (5),
+                    .PHYSICAL_CHANNEL_NUMBER  (5),
                     .VIRTUAL_CHANNEL_NUMBER  (VIRTUAL_CHANNEL_NUMBER),
                     .BUFFER_DEPTH    (BUFFER_DEPTH),
                     .TOPOLOGY        ("Mesh"),

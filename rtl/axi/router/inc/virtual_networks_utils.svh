@@ -9,7 +9,7 @@ function int calculate_virtual_network_offset(int current_virtual_network, int V
     return res;
 endfunction
 
-function int calculate_phisical_channel(int general_channel, int VIRTUAL_CHANNEL_NUMBER);
+function int calculate_physical_channel(int general_channel, int VIRTUAL_CHANNEL_NUMBER);
     return general_channel / (VIRTUAL_CHANNEL_NUMBER);
 endfunction
 
@@ -17,8 +17,8 @@ function int calculate_virtual_channel(int general_channel, int VIRTUAL_CHANNEL_
     return general_channel % (VIRTUAL_CHANNEL_NUMBER);
 endfunction
 
-function int calculate_general_channel(int phisical_channel, int virtual_channel, int VIRTUAL_CHANNEL_NUMBER);
-    return phisical_channel*VIRTUAL_CHANNEL_NUMBER+virtual_channel;
+function int calculate_general_channel(int physical_channel, int virtual_channel, int VIRTUAL_CHANNEL_NUMBER);
+    return physical_channel*VIRTUAL_CHANNEL_NUMBER+virtual_channel;
 endfunction
 
 `endif

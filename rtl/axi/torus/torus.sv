@@ -87,10 +87,10 @@ module torus #(
 
                 for (current_virtual_channel = 0; current_virtual_channel < VIRTUAL_CHANNEL_NUMBER; current_virtual_channel++) begin : assigning_channels
                     `AXIS_INTERFACE2INTERFACE(from_home[i][j][HOME*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel], router_in[i][j][HOME*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
-                    `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i-1)%MAX_ROUTERS_Y][j][SOUTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel] , router_in[i][j][NORTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
-                    `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j+1)%MAX_ROUTERS_X][WEST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel] , router_in[i][j][EAST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
-                    `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i+1)%MAX_ROUTERS_Y][j][NORTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel] , router_in[i][j][SOUTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
-                    `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j-1)%MAX_ROUTERS_X][EAST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel] , router_in[i][j][WEST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
+                    `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i-1)%MAX_ROUTERS_Y][j][SOUTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel], router_in[i][j][NORTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
+                    `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j+1)%MAX_ROUTERS_X][WEST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel], router_in[i][j][EAST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
+                    `AXIS_INTERFACE2INTERFACE(router_if[(MAX_ROUTERS_Y+i+1)%MAX_ROUTERS_Y][j][NORTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel], router_in[i][j][SOUTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
+                    `AXIS_INTERFACE2INTERFACE(router_if[i][(MAX_ROUTERS_X+j-1)%MAX_ROUTERS_X][EAST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel], router_in[i][j][WEST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
                 end
                 
                 router #(
@@ -99,7 +99,7 @@ module torus #(
                     .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                     .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
 
-                    .PHISICAL_CHANNEL_NUMBER  (5),
+                    .PHYSICAL_CHANNEL_NUMBER  (5),
                     .VIRTUAL_CHANNEL_NUMBER  (VIRTUAL_CHANNEL_NUMBER),
                     .BUFFER_DEPTH    (BUFFER_DEPTH),
                     .TOPOLOGY        ("Torus"),

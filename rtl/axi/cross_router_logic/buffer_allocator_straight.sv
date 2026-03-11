@@ -2,9 +2,9 @@
 `include "axis_defines.svh"
 
 module buffer_allocator_straight #(
-    parameter        PHISICAL_CHANNEL_NUMBER = 8,
+    parameter        PHYSICAL_CHANNEL_NUMBER = 8,
     parameter        VIRTUAL_CHANNEL_NUMBER = 2,
-    parameter        CHANNEL_NUMBER = PHISICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
+    parameter        CHANNEL_NUMBER = PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
     parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
 
     parameter        AXIS_DATA_WIDTH = 40,

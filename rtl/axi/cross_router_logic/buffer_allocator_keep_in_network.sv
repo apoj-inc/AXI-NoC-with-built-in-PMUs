@@ -3,9 +3,9 @@
 
 // TODO Not tested, just a blueprint. Tesbench before use!
 module buffer_allocator_keep_in_network #(
-    parameter        PHISICAL_CHANNEL_NUMBER = 8,
+    parameter        PHYSICAL_CHANNEL_NUMBER = 8,
     parameter        VIRTUAL_CHANNEL_NUMBER = 2,
-    parameter        CHANNEL_NUMBER = PHISICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
+    parameter        CHANNEL_NUMBER = PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
     parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
 
     parameter        VIRTUAL_NETWORK_NUMBER = 2,
@@ -27,14 +27,14 @@ module buffer_allocator_keep_in_network #(
     logic [CHANNEL_NUMBER_WIDTH-1:0] allocated_to_next[CHANNEL_NUMBER];
 
     int current_virtual_network;
-    int current_phisical_channel, current_first_channel, current_channel, target_channel;
+    int current_physical_channel, current_first_channel, current_channel, target_channel;
     int done;
     always_comb begin
         busy_next = busy;
         current_channel = 0;
         current_first_channel = 0;
         allocated_to_next = allocated_to;
-        for(current_phisical_channel = 0; current_phisical_channel < PHISICAL_CHANNEL_NUMBER; current_phisical_channel++) begin
+        for(current_physical_channel = 0; current_physical_channel < PHYSICAL_CHANNEL_NUMBER; current_physical_channel++) begin
             for(current_virtual_network = 0; current_virtual_network < VIRTUAL_NETWORK_NUMBER; current_virtual_network++) begin
                 target_channel = current_first_channel;
                 for(current_channel = current_first_channel; current_channel < current_first_channel + VIRTUAL_NETWORKS[current_virtual_network]; current_channel++) begin

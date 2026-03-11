@@ -2,9 +2,9 @@
 `include "axis_defines.svh"
 
 module router_buffer #(
-    parameter        PHISICAL_CHANNEL_NUMBER = 8,
+    parameter        PHYSICAL_CHANNEL_NUMBER = 8,
     parameter        VIRTUAL_CHANNEL_NUMBER = 2,
-    parameter        CHANNEL_NUMBER = PHISICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
+    parameter        CHANNEL_NUMBER = PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
     parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
 
     parameter        VIRTUAL_NETWORK_NUMBER = 2,
@@ -38,7 +38,7 @@ module router_buffer #(
     generate
         if(BUFFER_ALLOCATOR == "Straight") begin : router_buffer_alloc_buffer_allocator_straight
             buffer_allocator_straight #(
-                .PHISICAL_CHANNEL_NUMBER(PHISICAL_CHANNEL_NUMBER),
+                .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
                 .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
                 .CHANNEL_NUMBER(CHANNEL_NUMBER),
                 .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
@@ -51,7 +51,7 @@ module router_buffer #(
             );
         end else if(BUFFER_ALLOCATOR == "KeepInNetwork") begin : router_buffer_alloc_keep_in_network
             buffer_allocator_keep_network #(
-                .PHISICAL_CHANNEL_NUMBER(PHISICAL_CHANNEL_NUMBER),
+                .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
                 .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
                 .CHANNEL_NUMBER(CHANNEL_NUMBER),
                 .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),

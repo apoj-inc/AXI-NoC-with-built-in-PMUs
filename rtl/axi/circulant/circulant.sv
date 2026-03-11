@@ -21,8 +21,8 @@ module circulant #(
     parameter int    GENERATICS[GENERATICS_COUNT] = '{2, 1},
 
     
-    parameter        PHISICAL_CHANNEL_NUMBER = GENERATICS_COUNT*2 + 1,
-    parameter        PHISICAL_CHANNEL_NUMBER_WIDTH = $clog2(PHISICAL_CHANNEL_NUMBER),
+    parameter        PHYSICAL_CHANNEL_NUMBER = GENERATICS_COUNT*2 + 1,
+    parameter        PHYSICAL_CHANNEL_NUMBER_WIDTH = $clog2(PHYSICAL_CHANNEL_NUMBER),
 
     parameter        VIRTUAL_CHANNEL_NUMBER = 2,
     parameter        VIRTUAL_CHANNEL_NUMBER_WIDTH = $clog2(VIRTUAL_CHANNEL_NUMBER),
@@ -52,7 +52,7 @@ module circulant #(
     assert (test_previous_generatic > 0) else $error("Incorrect genetarics format: nonpositive!");
     end
 
-    localparam CHANNEL_NUMBER = PHISICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER;
+    localparam CHANNEL_NUMBER = PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER;
 
     typedef enum logic {
         HOME_REQ,
@@ -121,7 +121,7 @@ module circulant #(
                 .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                 .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
 
-                .PHISICAL_CHANNEL_NUMBER  (PHISICAL_CHANNEL_NUMBER),
+                .PHYSICAL_CHANNEL_NUMBER  (PHYSICAL_CHANNEL_NUMBER),
                 .VIRTUAL_CHANNEL_NUMBER  (VIRTUAL_CHANNEL_NUMBER),
                 .BUFFER_DEPTH    (BUFFER_DEPTH),
                 .TOPOLOGY        ("Circulant"),
