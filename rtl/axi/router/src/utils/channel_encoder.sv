@@ -4,16 +4,16 @@ module channel_encoder #(
     parameter        PHISICAL_CHANNEL_NUMBER = 8,
     parameter        PHISICAL_CHANNEL_NUMBER_WIDTH = $clog2(PHISICAL_CHANNEL_NUMBER),
     parameter        VIRTUAL_CHANNEL_NUMBER = 2,
-    parameter        VIRTUAL_NUMBER_WIDTH = $clog2(VIRTUAL_CHANNEL_NUMBER),
+    parameter        VIRTUAL_CHANNEL_NUMBER_WIDTH = $clog2(VIRTUAL_CHANNEL_NUMBER),
     parameter        CHANNEL_NUMBER = PHISICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
     parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER)
 ) (
     input  logic[PHISICAL_CHANNEL_NUMBER_WIDTH-1:0] phisical_channel_number,
-    input  logic[VIRTUAL_NUMBER_WIDTH-1:0] virtual_channel_number,
+    input  logic[VIRTUAL_CHANNEL_NUMBER_WIDTH-1:0] virtual_channel_number,
     output logic[CHANNEL_NUMBER_WIDTH-1:0] channel_number
 );
 
-    logic[CHANNEL_NUMBER_WIDTH-1:0] channel_number_lookup [PHISICAL_CHANNEL_NUMBER_WIDTH-1:0][VIRTUAL_NUMBER_WIDTH-1:0];
+    logic[CHANNEL_NUMBER_WIDTH-1:0] channel_number_lookup [PHISICAL_CHANNEL_NUMBER][VIRTUAL_CHANNEL_NUMBER];
 
     genvar current_phisical_channel, current_virtual_channel;
     generate

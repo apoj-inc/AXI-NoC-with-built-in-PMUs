@@ -4,17 +4,17 @@ module channel_decoder #(
     parameter        PHISICAL_CHANNEL_NUMBER = 8,
     parameter        PHISICAL_CHANNEL_NUMBER_WIDTH = $clog2(PHISICAL_CHANNEL_NUMBER),
     parameter        VIRTUAL_CHANNEL_NUMBER = 2,
-    parameter        VIRTUAL_NUMBER_WIDTH = $clog2(VIRTUAL_CHANNEL_NUMBER),
+    parameter        VIRTUAL_CHANNEL_NUMBER_WIDTH = $clog2(VIRTUAL_CHANNEL_NUMBER),
     parameter        CHANNEL_NUMBER = PHISICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
     parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER)
 ) (
     input  logic[CHANNEL_NUMBER_WIDTH-1:0] channel_number,
     output logic[PHISICAL_CHANNEL_NUMBER_WIDTH-1:0] phisical_channel_number,
-    output logic[VIRTUAL_NUMBER_WIDTH-1:0] virtual_channel_number
+    output logic[VIRTUAL_CHANNEL_NUMBER_WIDTH-1:0] virtual_channel_number
 );
 
-    logic[PHISICAL_CHANNEL_NUMBER_WIDTH-1:0] phisical_channel_number_lookup [CHANNEL_NUMBER_WIDTH-1:0];
-    logic[VIRTUAL_NUMBER_WIDTH-1:0]          virtual_channel_number_lookup  [CHANNEL_NUMBER_WIDTH-1:0];
+    logic[PHISICAL_CHANNEL_NUMBER_WIDTH-1:0] phisical_channel_number_lookup [CHANNEL_NUMBER];
+    logic[VIRTUAL_CHANNEL_NUMBER_WIDTH-1:0]  virtual_channel_number_lookup  [CHANNEL_NUMBER];
 
     genvar current_channel;
     generate
