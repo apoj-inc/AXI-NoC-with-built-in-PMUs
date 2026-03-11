@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module tb_virtual_mesh_parallel (
+module tb_mesh_parallel (
     input aresetn,
 
     output logic awready[16],
@@ -88,7 +88,7 @@ module tb_virtual_mesh_parallel (
         end
     endgenerate
 
-    XY_mesh #(
+    mesh #(
         .AXI_ADDR_WIDTH(12),
         .AXIS_DATA_WIDTH(40),
         .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(1)

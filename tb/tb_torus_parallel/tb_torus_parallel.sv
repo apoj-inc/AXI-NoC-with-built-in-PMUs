@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module tb_torus (
+module tb_torus_parallel (
     input aresetn,
 
     output logic awready[25],
@@ -92,7 +92,8 @@ module tb_torus (
         .AXI_ADDR_WIDTH(12),
         .BUFFER_DEPTH(4),
 
-        .ALGORITHM("EWn_SNe")
+        .ALGORITHM("EWn_SNe"),
+        .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(1)
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),

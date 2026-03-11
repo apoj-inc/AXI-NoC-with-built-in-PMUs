@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module tb_virtual_mesh (
+module tb_circulant_parallel (
     input aresetn,
 
     output logic awready[16],
@@ -88,9 +88,12 @@ module tb_virtual_mesh (
         end
     endgenerate
 
-    XY_mesh #(
+    circulant #(
         .AXI_ADDR_WIDTH(12),
-        .AXIS_DATA_WIDTH(40)
+        .ROUTERS_COUNT(16),
+        .GENERATICS_COUNT(3),
+        .GENERATICS('{5,2,1}),
+        .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(1)
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
