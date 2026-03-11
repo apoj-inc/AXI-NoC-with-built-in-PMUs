@@ -1,6 +1,7 @@
 `include "defines.svh"
 `include "axis_defines.svh"
 
+// TODO Not tested, just a blueprint. Tesbench before use!
 module buffer_allocator_keep_in_network #(
     parameter        PHISICAL_CHANNEL_NUMBER = 8,
     parameter        VIRTUAL_CHANNEL_NUMBER = 2,
