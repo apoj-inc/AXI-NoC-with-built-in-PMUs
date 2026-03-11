@@ -3,21 +3,29 @@
 `include "XY_compas.svh"
 
 module XY_mesh #(
-    parameter        AXI_DATA_WIDTH  = 32,
-    parameter        AXI_ADDR_WIDTH  = 16,
-    parameter        AXI_ID_W_WIDTH  = 5,
-    parameter        AXI_ID_R_WIDTH  = 5,
+    parameter        AXI_DATA_WIDTH   = 32,
+    parameter        AXI_ADDR_WIDTH   = 16,
+    parameter        AXI_ID_W_WIDTH   = 5,
+    parameter        AXI_ID_R_WIDTH   = 5,
 
-    parameter        AXIS_DATA_WIDTH = 40,
-    parameter        AXIS_ID_WIDTH   = 4,
-    parameter        AXIS_DEST_WIDTH = 4,
-    parameter        AXIS_USER_WIDTH = 4,
+    parameter        AXIS_DATA_WIDTH  = 40,
+    parameter        AXIS_ID_WIDTH    = 4,
+    parameter        AXIS_DEST_WIDTH  = 4,
+    parameter        AXIS_USER_WIDTH  = 4,
 
-    parameter        MAX_ROUTERS_X   = 4,
-    parameter        MAX_ROUTERS_Y   = 4,
+    parameter        MAX_ROUTERS_X    = 4,
+    parameter        MAX_ROUTERS_Y    = 4,
+
+    parameter        VIRTUAL_CHANNEL_NUMBER = 2,
+    parameter        VIRTUAL_CHANNEL_NUMBER_WIDTH = $clog2(VIRTUAL_CHANNEL_NUMBER),
+
+    parameter        SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING = 0,
+    parameter        VIRTUAL_NETWORK_NUMBER = 2,
+    parameter int    VIRTUAL_NETWORKS[VIRTUAL_NETWORK_NUMBER] = '{1, 1},
     
-    parameter        BUFFER_DEPTH    = 16,
-    parameter string ALGORITHM       = "XY",
+    parameter        BUFFER_DEPTH     = 16,
+    parameter string ALGORITHM        = "XY",
+    parameter string BUFFER_ALLOCATOR = "Straight",
 
     parameter        MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
     parameter        MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y)
@@ -38,8 +46,7 @@ module XY_mesh #(
         router_in[MAX_ROUTERS_Y][MAX_ROUTERS_X][10]();
 
     generate
-        genvar i;
-        genvar j;
+        genvar i, j;
 
         for (i = 0; i < MAX_ROUTERS_Y; i++) begin : zeroing_Y
             assign router_if[i][0][WEST_REQ].TVALID = '0;
@@ -67,6 +74,7 @@ module XY_mesh #(
     endgenerate
 
     generate
+        genvar current_virtual_channel;
         for (i = 0; i < MAX_ROUTERS_Y; i++) begin : Y
             for (j = 0; j < MAX_ROUTERS_X; j++) begin : X
                 
@@ -101,21 +109,14 @@ module XY_mesh #(
                     .m_axis_if_req_o(from_home[i][j][HOME_REQ])
                 );
 
-                `AXIS_INTERFACE2INTERFACE(from_home[i][j][HOME_REQ], router_in[i][j][HOME_REQ])
-                `AXIS_INTERFACE2INTERFACE(from_home[i][j][HOME_RESP], router_in[i][j][HOME_RESP])
+                for (current_virtual_channel = 0; current_virtual_channel < VIRTUAL_CHANNEL_NUMBER; current_virtual_channel++) begin : assigning_channels
+                    `AXIS_INTERFACE2INTERFACE(from_home[i][j][HOME*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel], router_in[i][j][HOME*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
+                    `AXIS_INTERFACE2INTERFACE(router_if[i][j+1][SOUTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel], router_in[i][j][NORTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
+                    `AXIS_INTERFACE2INTERFACE(router_if[i+1][j+2][WEST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel], router_in[i][j][EAST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
+                    `AXIS_INTERFACE2INTERFACE(router_if[i+2][j+1][NORTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel], router_in[i][j][SOUTH*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
+                    `AXIS_INTERFACE2INTERFACE(router_if[i+1][j][EAST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel], router_in[i][j][WEST*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
+                end
 
-                `AXIS_INTERFACE2INTERFACE(router_if[i][j+1][SOUTH_REQ] , router_in[i][j][NORTH_REQ])
-                `AXIS_INTERFACE2INTERFACE(router_if[i][j+1][SOUTH_RESP], router_in[i][j][NORTH_RESP])
-
-                `AXIS_INTERFACE2INTERFACE(router_if[i+1][j+2][WEST_REQ] , router_in[i][j][EAST_REQ])
-                `AXIS_INTERFACE2INTERFACE(router_if[i+1][j+2][WEST_RESP], router_in[i][j][EAST_RESP])
-
-                `AXIS_INTERFACE2INTERFACE(router_if[i+2][j+1][NORTH_REQ] , router_in[i][j][SOUTH_REQ])
-                `AXIS_INTERFACE2INTERFACE(router_if[i+2][j+1][NORTH_RESP], router_in[i][j][SOUTH_RESP])
-
-                `AXIS_INTERFACE2INTERFACE(router_if[i+1][j][EAST_REQ] , router_in[i][j][WEST_REQ])
-                `AXIS_INTERFACE2INTERFACE(router_if[i+1][j][EAST_RESP], router_in[i][j][WEST_RESP])
-                
                 router #(
                     .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
                     .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
@@ -123,12 +124,16 @@ module XY_mesh #(
                     .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
 
                     .PHISICAL_CHANNEL_NUMBER  (5),
-                    .VIRTUAL_CHANNEL_NUMBER  (2),
+                    .VIRTUAL_CHANNEL_NUMBER  (VIRTUAL_CHANNEL_NUMBER),
                     .BUFFER_DEPTH    (BUFFER_DEPTH),
                     .TOPOLOGY        ("Mesh"),
                     .ALGORITHM       (ALGORITHM),
                     .COORDINATES     ("XY"),
-                    .BUFFER_ALLOCATOR("Straight"),
+                    .BUFFER_ALLOCATOR(BUFFER_ALLOCATOR),
+
+                    .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING),
+                    .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
+                    .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS),
 
                     .MAX_ROUTERS_X   (MAX_ROUTERS_X),
                     .MAX_ROUTERS_Y   (MAX_ROUTERS_Y),
