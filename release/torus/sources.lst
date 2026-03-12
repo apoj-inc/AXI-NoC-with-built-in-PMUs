@@ -13,5 +13,6 @@ rtl/axi/axis_fifo_buffer.sv
 rtl/axi/router/src/router_buffer.sv
 rtl/axi/router/src/utils/channel_decoder.sv
 rtl/axi/router/src/utils/channel_encoder.sv
+rtl/axi/router/src/utils/network_channel_picker.sv
 rtl/axi/router/src/algorithm.sv
 rtl/axi/router/src/arbiter.sv

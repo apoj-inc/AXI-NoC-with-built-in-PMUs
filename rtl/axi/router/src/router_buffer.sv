@@ -66,9 +66,7 @@ module router_buffer #(
                 .m_axis_o(alloc_if.m)
             );
         end*/ else begin : router_buffer_alloc_error
-            `ifndef QUARTUS
-                $error("No buffer allocator proveided! %s", BUFFER_ALLOCATOR);
-            `endif
+            initial $error("No buffer allocator proveided! %s", BUFFER_ALLOCATOR);
         end
     endgenerate
 
