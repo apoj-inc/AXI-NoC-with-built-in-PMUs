@@ -1,7 +1,5 @@
 `include "virtual_channels_utils.svh"
 
-import virtualChannelsUtils::calculate_general_channel;
-
 module channel_encoder #(
     parameter        PHYSICAL_CHANNEL_NUMBER = 8,
     parameter        PHYSICAL_CHANNEL_NUMBER_WIDTH = $clog2(PHYSICAL_CHANNEL_NUMBER),
@@ -14,6 +12,8 @@ module channel_encoder #(
     input  logic[VIRTUAL_CHANNEL_NUMBER_WIDTH-1:0] virtual_channel_number,
     output logic[CHANNEL_NUMBER_WIDTH-1:0] channel_number
 );
+
+    `GENERATE_CALCULATE_GENERAL_CHANNEL
 
     logic[CHANNEL_NUMBER_WIDTH-1:0] channel_number_lookup [PHYSICAL_CHANNEL_NUMBER][VIRTUAL_CHANNEL_NUMBER];
 
