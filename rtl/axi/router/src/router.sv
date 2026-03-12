@@ -2,6 +2,8 @@
 `include "axis_defines.svh"
 `include "virtual_networks_utils.svh"
 
+import virtualNetworksUtils::calculate_virtual_network_offset;
+
 module router #(
     parameter        AXIS_DATA_WIDTH = 40,
     parameter        AXIS_ID_WIDTH = 4,
@@ -108,7 +110,7 @@ module router #(
                     arb_o_if (),
                     alg_o_if [VIRTUAL_NETWORKS[current_virtual_network]*PHYSICAL_CHANNEL_NUMBER] ();
 
-                localparam int virtual_network_offset = calculate_virtual_network_offset(current_virtual_network, VIRTUAL_NETWORKS);
+                localparam int virtual_network_offset = calculate_virtual_network_offset(current_virtual_network);
                 for(current_physical_channel = 0; current_physical_channel < PHYSICAL_CHANNEL_NUMBER; current_physical_channel++) begin : physical_channels_mapping
                     for(current_virtual_channel = 0; current_virtual_channel < VIRTUAL_NETWORKS[current_virtual_network]; current_virtual_channel++) begin : virtual_channels_mapping
                         `AXIS_INTERFACE2INTERFACE(queue_o_if[current_physical_channel*VIRTUAL_CHANNEL_NUMBER+virtual_network_offset+current_virtual_channel], arb_i_if[current_physical_channel*VIRTUAL_NETWORKS[current_virtual_network]+current_virtual_channel])

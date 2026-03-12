@@ -1,4 +1,6 @@
-`include "virtual_networks_utils.svh"
+`include "virtual_channels_utils.svh"
+
+import virtualChannelsUtils::calculate_general_channel;
 
 module channel_encoder #(
     parameter        PHYSICAL_CHANNEL_NUMBER = 8,
@@ -19,7 +21,7 @@ module channel_encoder #(
     generate
         for(current_physical_channel = 0; current_physical_channel < PHYSICAL_CHANNEL_NUMBER; current_physical_channel++) begin : case_physical_channel
             for(current_virtual_channel = 0; current_virtual_channel < VIRTUAL_CHANNEL_NUMBER; current_virtual_channel++) begin : case_virtual_channel
-                assign channel_number_lookup[current_physical_channel][current_virtual_channel] = calculate_general_channel(current_physical_channel, current_virtual_channel, VIRTUAL_CHANNEL_NUMBER);
+                assign channel_number_lookup[current_physical_channel][current_virtual_channel] = calculate_general_channel(current_physical_channel, current_virtual_channel);
             end
         end
     endgenerate

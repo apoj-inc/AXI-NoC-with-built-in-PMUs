@@ -111,7 +111,7 @@ module mesh_with_loaders # (
         end
     endgenerate
 
-    XY_mesh_dual_parallel #(
+    mesh #(
         .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
         .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
         .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
@@ -125,7 +125,8 @@ module mesh_with_loaders # (
         .ALGORITHM   ("XY"),
 
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
-        .MAX_ROUTERS_Y(MAX_ROUTERS_Y)
+        .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
+        .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(1)
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
