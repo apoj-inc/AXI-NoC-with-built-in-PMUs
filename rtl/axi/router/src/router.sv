@@ -102,8 +102,8 @@ module router #(
                 .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
                 .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                 .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-            )   arb_i_if [CHANNEL_NUMBER] (),
-                alg_o_if [CHANNEL_NUMBER] ();
+            )   arb_i_if [VIRTUAL_NETWORK_NUMBER][CHANNEL_NUMBER] (),
+                alg_o_if [VIRTUAL_NETWORK_NUMBER][CHANNEL_NUMBER] ();
 
             network_channel_picker # (
                 .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
@@ -124,7 +124,6 @@ module router #(
             );
 
             for (current_virtual_network = 0; current_virtual_network < VIRTUAL_NETWORK_NUMBER; current_virtual_network++) begin : simultainious_network_routing_gen
-                localparam VIRTUAL_NETWORKS_OFFSET = calculate_virtual_network_offset(current_virtual_network)*PHYSICAL_CHANNEL_NUMBER;
                 localparam VIRTUAL_NETWORK_CHANNELS = VIRTUAL_NETWORKS[current_virtual_network];
                 localparam CHANNELS_IN_NETWORK = VIRTUAL_NETWORK_CHANNELS*PHYSICAL_CHANNEL_NUMBER;
 
@@ -149,7 +148,7 @@ module router #(
                 ) arb (
                     .clk_i(clk_i), .rst_n_i(rst_n_i),
 
-                    .s_axis_i(arb_i_if[VIRTUAL_NETWORKS_OFFSET +: CHANNELS_IN_NETWORK]),
+                    .s_axis_i(arb_i_if[current_virtual_network][0:CHANNELS_IN_NETWORK-1]),
                     .m_axis_o(arb_o_if),
 
                     .current_grant_o(current_grant),
@@ -186,7 +185,7 @@ module router #(
                     .clk_i(clk_i), .rst_n_i(rst_n_i),
 
                     .s_axis_i(arb_o_if),
-                    .m_axis_o(alg_o_if[VIRTUAL_NETWORKS_OFFSET +: CHANNELS_IN_NETWORK]),
+                    .m_axis_o(alg_o_if[current_virtual_network][0:CHANNELS_IN_NETWORK-1]),
 
                     .current_grant_i(current_grant),
                     .target_i(target)

@@ -17,10 +17,10 @@ module network_channel_picker #(
     parameter        VIRTUAL_NETWORK_NUMBER = 2,
     parameter int    VIRTUAL_NETWORKS[VIRTUAL_NETWORK_NUMBER] = '{1, 1}
     ) (
-        axis_if.m m_axis_dem [CHANNEL_NUMBER],
-        axis_if.s s_axis_dem [CHANNEL_NUMBER],
-        axis_if.m m_axis_mux [CHANNEL_NUMBER],
-        axis_if.s s_axis_mux [CHANNEL_NUMBER]
+        axis_if.s s_axis_dem[CHANNEL_NUMBER],
+        axis_if.m m_axis_dem[VIRTUAL_NETWORK_NUMBER][CHANNEL_NUMBER],
+        axis_if.s s_axis_mux[VIRTUAL_NETWORK_NUMBER][CHANNEL_NUMBER],
+        axis_if.m m_axis_mux[CHANNEL_NUMBER]
     );
 
     `GENERATE_CALCULATE_VIRTUAL_NETWORK_OFFSET
@@ -29,17 +29,16 @@ module network_channel_picker #(
     generate
         for (current_virtual_network = 0; current_virtual_network < VIRTUAL_NETWORK_NUMBER; current_virtual_network++) begin : simultainious_network_routing_gen
                 localparam VIRTUAL_NETWORK_OFFSET = calculate_virtual_network_offset(current_virtual_network);
-                localparam VIRTUAL_NETWORKS_OFFSET = VIRTUAL_NETWORK_OFFSET*PHYSICAL_CHANNEL_NUMBER;
                 localparam VIRTUAL_NETWORK_CHANNELS = VIRTUAL_NETWORKS[current_virtual_network];
                 localparam CHANNELS_IN_NETWORK = VIRTUAL_NETWORK_CHANNELS*PHYSICAL_CHANNEL_NUMBER;
                 
                 for(current_physical_channel = 0; current_physical_channel < PHYSICAL_CHANNEL_NUMBER; current_physical_channel++) begin : physical_channels_mapping
                     for(current_virtual_channel = 0; current_virtual_channel < VIRTUAL_NETWORK_CHANNELS; current_virtual_channel++) begin : virtual_channels_mapping
                         localparam ORIGINAL_CHANNEL = current_physical_channel * VIRTUAL_CHANNEL_NUMBER+VIRTUAL_NETWORK_OFFSET + current_virtual_channel;
-                        localparam MAPPED_CHANNEL   = VIRTUAL_NETWORKS_OFFSET + current_physical_channel * VIRTUAL_NETWORK_CHANNELS + current_virtual_channel;
+                        localparam MAPPED_CHANNEL   = current_physical_channel * VIRTUAL_NETWORK_CHANNELS + current_virtual_channel;
                         
-                        `AXIS_INTERFACE2INTERFACE(m_axis_dem[ORIGINAL_CHANNEL], s_axis_dem[MAPPED_CHANNEL]  )
-                        `AXIS_INTERFACE2INTERFACE(m_axis_mux[MAPPED_CHANNEL],   s_axis_mux[ORIGINAL_CHANNEL])
+                        `AXIS_INTERFACE2INTERFACE(s_axis_dem[ORIGINAL_CHANNEL], m_axis_dem[current_virtual_network][MAPPED_CHANNEL]  )
+                        `AXIS_INTERFACE2INTERFACE(s_axis_mux[current_virtual_network][MAPPED_CHANNEL],   m_axis_mux[ORIGINAL_CHANNEL])
                     end
                 end
         end
