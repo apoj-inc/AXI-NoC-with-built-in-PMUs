@@ -17,6 +17,7 @@ rtl/axi/router/src/router.sv
 rtl/axi/router/src/utils/channel_encoder.sv
 rtl/axi/router/src/utils/channel_decoder.sv
 rtl/axi/router/src/utils/network_channel_picker.sv
+rtl/axi/router/src/utils/network_channel_narrower.sv
 rtl/axi/circulant/circulant.sv
 rtl/axi/mesh/mesh.sv
 rtl/axi/torus/torus.sv

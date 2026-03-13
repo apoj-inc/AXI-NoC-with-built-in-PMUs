@@ -135,7 +135,22 @@ module router #(
                     .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
                     .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                     .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-                )   arb_o_if ();
+                )   arb_o_if (),
+                    arb_i_if_n [CHANNELS_IN_NETWORK] (),
+                    alg_o_if_n [CHANNELS_IN_NETWORK] ();
+
+                network_channel_narrower #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+
+                    .WIDTH_IN(CHANNEL_NUMBER),
+                    .WIDTH_OUT(CHANNELS_IN_NETWORK)
+                ) ncn1 (
+                    .s_axis_i(arb_i_if[current_virtual_network]),
+                    .m_axis_o(arb_i_if_n)
+                );
 
                 arbiter #(
                     .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
@@ -148,7 +163,7 @@ module router #(
                 ) arb (
                     .clk_i(clk_i), .rst_n_i(rst_n_i),
 
-                    .s_axis_i(arb_i_if[current_virtual_network][0:CHANNELS_IN_NETWORK-1]),
+                    .s_axis_i(arb_i_if_n),
                     .m_axis_o(arb_o_if),
 
                     .current_grant_o(current_grant),
@@ -185,10 +200,23 @@ module router #(
                     .clk_i(clk_i), .rst_n_i(rst_n_i),
 
                     .s_axis_i(arb_o_if),
-                    .m_axis_o(alg_o_if[current_virtual_network][0:CHANNELS_IN_NETWORK-1]),
+                    .m_axis_o(alg_o_if_n),
 
                     .current_grant_i(current_grant),
                     .target_i(target)
+                );
+
+                network_channel_narrower #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+
+                    .WIDTH_IN(CHANNELS_IN_NETWORK),
+                    .WIDTH_OUT(CHANNEL_NUMBER)
+                ) ncn2 (
+                    .s_axis_i(alg_o_if_n),
+                    .m_axis_o(alg_o_if[current_virtual_network])
                 );
 
             end
