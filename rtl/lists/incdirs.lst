@@ -1,4 +1,5 @@
 rtl/axi/inc
+rtl/axi/router/inc
 rtl/inc
 rtl/cores/data_mem
 rtl/cores/instr_mem

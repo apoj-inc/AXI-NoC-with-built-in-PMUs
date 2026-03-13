@@ -88,7 +88,7 @@ module tb_mesh (
         end
     endgenerate
 
-    XY_mesh_dual #(
+    mesh #(
         .AXI_ADDR_WIDTH(12),
         .AXIS_DATA_WIDTH(40)
     ) dut (

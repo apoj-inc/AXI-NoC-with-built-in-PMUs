@@ -92,7 +92,9 @@ module mesh_throughput (
         end
     endgenerate
 
-    XY_mesh_dual_parallel dut (
+    mesh # (
+        .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(1)
+    ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
 

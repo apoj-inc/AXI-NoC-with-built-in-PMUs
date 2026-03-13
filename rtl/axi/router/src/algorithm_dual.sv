@@ -65,9 +65,7 @@ module algorithm_dual #(
         else if (COORDINATES == "N") begin
         end
         else begin
-            `ifndef QUARTUS
-                $error("Wrong coordinate system! (COORDINATES == %s)", COORDINATES);
-            `endif
+            initial $error("Wrong coordinate system! (COORDINATES == %s)", COORDINATES);
         end
     endgenerate
 
@@ -95,9 +93,7 @@ module algorithm_dual #(
                 );
             end
             else begin : mesh_alg_error
-                `ifndef QUARTUS
-                    $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
-                `endif
+                initial $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
             end
         end
         else if(TOPOLOGY == "Torus") begin : torus_topology
@@ -129,9 +125,7 @@ module algorithm_dual #(
                 );
             end
             else begin : torus_alg_error
-                `ifndef QUARTUS
-                    $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
-                `endif
+                initial $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
             end
         end
         else if(TOPOLOGY == "Circulant") begin : circulant_topology
@@ -148,14 +142,10 @@ module algorithm_dual #(
                 );
             end
             else begin : circulant_alg_error
-                `ifndef QUARTUS
-                    $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
-                `endif
+                initial $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
             end
         end else begin : topology_error
-            `ifndef QUARTUS
-                $error("Wrong topology! (TOPOLOGY == %s)", TOPOLOGY);
-            `endif
+            initial $error("Wrong topology! (TOPOLOGY == %s)", TOPOLOGY);
         end
 
     endgenerate

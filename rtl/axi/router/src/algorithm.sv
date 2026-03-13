@@ -8,7 +8,11 @@ module algorithm #(
     parameter        AXIS_DEST_WIDTH = 4,
     parameter        AXIS_USER_WIDTH = 4,
 
-    parameter        CHANNEL_NUMBER = 10,
+    parameter        PHYSICAL_CHANNEL_NUMBER = 5,
+    parameter        PHYSICAL_CHANNEL_NUMBER_WIDTH = $clog2(PHYSICAL_CHANNEL_NUMBER),
+    parameter        VIRTUAL_CHANNEL_NUMBER = 2,
+    parameter        VIRTUAL_CHANNEL_NUMBER_WIDTH = $clog2(VIRTUAL_CHANNEL_NUMBER),
+    parameter        CHANNEL_NUMBER = PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
     parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
     parameter string TOPOLOGY = "Mesh",
     parameter string ALGORITHM = "XY",
@@ -65,16 +69,18 @@ module algorithm #(
         else if (COORDINATES == "N") begin
         end
         else begin
-            `ifndef QUARTUS
-                $error("Wrong coordinate system! (COORDINATES == %s)", COORDINATES);
-            `endif
+            initial $error("Wrong coordinate system! (COORDINATES == %s)", COORDINATES);
         end
     endgenerate
 
+    logic [PHYSICAL_CHANNEL_NUMBER_WIDTH-1:0] ctrl_logical;
     logic [CHANNEL_NUMBER_WIDTH-1:0] ctrl;
 
     logic [CHANNEL_NUMBER-1:0] busy;
     logic [CHANNEL_NUMBER-1:0] busy_next;
+
+    logic [PHYSICAL_CHANNEL_NUMBER_WIDTH-1:0] physical_channel;
+    logic [VIRTUAL_CHANNEL_NUMBER_WIDTH-1:0] virtual_channel;
 
     generate
         if(TOPOLOGY == "Mesh") begin : mesh_topology
@@ -84,17 +90,15 @@ module algorithm #(
                     .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
                     .ROUTER_X(ROUTER_X),
                     .ROUTER_Y(ROUTER_Y),
-                    .CHANNEL_NUMBER(CHANNEL_NUMBER)
+                    .CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER)
                 ) algorithm_selector (
                     .target_x_i(target_x_i),
                     .target_y_i(target_y_i),
-                    .selector_o(ctrl)
+                    .selector_o(ctrl_logical)
                 );
             end
             else begin : mesh_alg_error
-                `ifndef QUARTUS
-                    $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
-                `endif
+                initial $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
             end
         end
         else if(TOPOLOGY == "Torus") begin : torus_topology
@@ -104,11 +108,11 @@ module algorithm #(
                     .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
                     .ROUTER_X(ROUTER_X),
                     .ROUTER_Y(ROUTER_Y),
-                    .CHANNEL_NUMBER(CHANNEL_NUMBER)
+                    .CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER)
                 ) algorithm_selector (
                     .target_x_i(target_x_i),
                     .target_y_i(target_y_i),
-                    .selector_o(ctrl)
+                    .selector_o(ctrl_logical)
                 );
             end
             else if (ALGORITHM == "EWn_SNe") begin : ewn_sne_alg
@@ -117,18 +121,16 @@ module algorithm #(
                     .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
                     .ROUTER_X(ROUTER_X),
                     .ROUTER_Y(ROUTER_Y),
-                    .CHANNEL_NUMBER(CHANNEL_NUMBER)
+                    .CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER)
                 ) algorithm_selector (
                     .target_x_i(target_x_i),
                     .target_y_i(target_y_i),
-                    .incoming_channel_i(current_grant_i),
-                    .selector_o(ctrl)
+                    .incoming_channel_i(physical_channel),
+                    .selector_o(ctrl_logical)
                 );
             end
             else begin : torus_alg_error
-                `ifndef QUARTUS
-                    $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
-                `endif
+                initial $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
             end
         end
         else if(TOPOLOGY == "Circulant") begin : circulant_topology
@@ -141,21 +143,43 @@ module algorithm #(
                 .CHANNEL_NUMBER(CHANNEL_NUMBER)
                 ) algorithm_selector (
                     .target_i(target_i),
-                    .selector_o(ctrl)
+                    .selector_o(ctrl_logical)
                 );
             end
             else begin : circulant_alg_error
-                `ifndef QUARTUS
-                    $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
-                `endif
+                initial $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
             end
         end else begin : topology_error
-            `ifndef QUARTUS
-                $error("Wrong topology! (TOPOLOGY == %s)", TOPOLOGY);
-            `endif
+            initial $error("Wrong topology! (TOPOLOGY == %s)", TOPOLOGY);
         end
 
     endgenerate
+
+    channel_decoder #(
+        .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
+        .PHYSICAL_CHANNEL_NUMBER_WIDTH(PHYSICAL_CHANNEL_NUMBER_WIDTH),
+        .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+        .VIRTUAL_CHANNEL_NUMBER_WIDTH(VIRTUAL_CHANNEL_NUMBER_WIDTH),
+        .CHANNEL_NUMBER(CHANNEL_NUMBER),
+        .CHANNEL_NUMBER_WIDTH(CHANNEL_NUMBER_WIDTH)
+    ) dec (
+        .channel_number(current_grant_i),
+        .physical_channel_number(physical_channel),
+        .virtual_channel_number(virtual_channel)
+    );
+
+    channel_encoder #(
+        .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
+        .PHYSICAL_CHANNEL_NUMBER_WIDTH(PHYSICAL_CHANNEL_NUMBER_WIDTH),
+        .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+        .VIRTUAL_CHANNEL_NUMBER_WIDTH(VIRTUAL_CHANNEL_NUMBER_WIDTH),
+        .CHANNEL_NUMBER(CHANNEL_NUMBER),
+        .CHANNEL_NUMBER_WIDTH(CHANNEL_NUMBER_WIDTH)
+    ) enc (
+        .physical_channel_number(ctrl_logical),
+        .virtual_channel_number(virtual_channel),
+        .channel_number(ctrl)
+    );
 
     always_comb begin
         for (int i = 0; i < CHANNEL_NUMBER; i++) begin

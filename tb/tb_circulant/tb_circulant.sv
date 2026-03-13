@@ -88,7 +88,7 @@ module tb_circulant (
         end
     endgenerate
 
-    circulant_dual #(
+    circulant #(
         .AXI_ADDR_WIDTH(12),
         .ROUTERS_COUNT(16),
         .GENERATICS_COUNT(3),

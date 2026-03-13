@@ -1,43 +1,43 @@
 `timescale 1ns/1ps
 
-module tb_torus (
+module tb_mesh_parallel (
     input aresetn,
 
-    output logic awready[25],
-    input  logic awvalid[25],
-    input  logic [4:0] awid[25],
-    input  logic [11:0] awaddr[25],
-    input  logic [7:0] awlen[25],
-    input  logic [2:0] awsize[25],
-    input  logic [1:0] awburst[25],
+    output logic awready[16],
+    input  logic awvalid[16],
+    input  logic [4:0] awid[16],
+    input  logic [11:0] awaddr[16],
+    input  logic [7:0] awlen[16],
+    input  logic [2:0] awsize[16],
+    input  logic [1:0] awburst[16],
 
-    output logic wready[25],
-    input  logic wvalid[25],
-    input  logic [7:0] wdata[25],
-    input  logic wstrb[25],
-    input  logic wlast[25],
+    output logic wready[16],
+    input  logic wvalid[16],
+    input  logic [7:0] wdata[16],
+    input  logic wstrb[16],
+    input  logic wlast[16],
 
-    output logic bvalid[25],
-    output logic [4:0] bid[25],
-    input  logic bready[25],
+    output logic bvalid[16],
+    output logic [4:0] bid[16],
+    input  logic bready[16],
 
-    output logic arready[25],
-    input  logic arvalid[25],
-    input  logic [4:0] arid[25],
-    input  logic [11:0] araddr[25],
-    input  logic [7:0] arlen[25],
-    input  logic [2:0] arsize[25],
-    input  logic [1:0] arburst[25],
+    output logic arready[16],
+    input  logic arvalid[16],
+    input  logic [4:0] arid[16],
+    input  logic [11:0] araddr[16],
+    input  logic [7:0] arlen[16],
+    input  logic [2:0] arsize[16],
+    input  logic [1:0] arburst[16],
 
-    output logic rvalid[25],
-    output logic [4:0] rid[25],
-    output logic [7:0] rdata[25],
-    output logic rlast[25],
-    input  logic rready[25]
+    output logic rvalid[16],
+    output logic [4:0] rid[16],
+    output logic [7:0] rdata[16],
+    output logic rlast[16],
+    input  logic rready[16]
     
 );
 
-    axi_if axi_if[25](), axi_if_ram[25]();
+    axi_if axi_if[16](), axi_if_ram[16]();
 
     logic aclk;
 
@@ -48,7 +48,7 @@ module tb_torus (
     end
 
     generate
-        for (genvar i = 0; i < 25; i++) begin : map_wires
+        for (genvar i = 0; i < 16; i++) begin : map_wires
             always_comb begin
                 axi_if[i].AWVALID = awvalid[i];
                 axi_if[i].AWID    = awid[i];
@@ -88,11 +88,10 @@ module tb_torus (
         end
     endgenerate
 
-    torus #(
+    mesh #(
         .AXI_ADDR_WIDTH(12),
-        .BUFFER_DEPTH(4),
-
-        .ALGORITHM("EWn_SNe")
+        .AXIS_DATA_WIDTH(40),
+        .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(1)
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
@@ -103,7 +102,7 @@ module tb_torus (
 
     
     generate
-        for (genvar i = 0; i < 25; i++) begin : map_rams
+        for (genvar i = 0; i < 16; i++) begin : map_rams
             axi_ram #(.AXI_ADDR_WIDTH(12)) ram (
                 .clk_i     (aclk),
                 .rst_n_i   (aresetn),

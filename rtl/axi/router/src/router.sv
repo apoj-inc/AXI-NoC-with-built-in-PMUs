@@ -1,175 +1,291 @@
 `include "defines.svh"
 `include "axis_defines.svh"
+`include "virtual_networks_utils.svh"
 
 module router #(
-    parameter AXIS_DATA_WIDTH = 40,
-    parameter AXIS_ID_WIDTH = 4,
-    parameter AXIS_DEST_WIDTH = 4,
-    parameter AXIS_USER_WIDTH = 4,
+    parameter        AXIS_DATA_WIDTH = 40,
+    parameter        AXIS_ID_WIDTH = 4,
+    parameter        AXIS_DEST_WIDTH = 4,
+    parameter        AXIS_USER_WIDTH = 4,
 
-    parameter CHANNEL_NUMBER = 5,
-    parameter BUFFER_DEPTH = 16,
-    parameter MAXIMUM_PACKAGES_NUMBER = 5,
-    parameter MAXIMUM_PACKAGES_NUMBER_WIDTH
-    = $clog2(MAXIMUM_PACKAGES_NUMBER - 1),
+    parameter        PHYSICAL_CHANNEL_NUMBER = 5,
+    parameter        PHYSICAL_CHANNEL_NUMBER_WIDTH = $clog2(PHYSICAL_CHANNEL_NUMBER),
+    parameter        VIRTUAL_CHANNEL_NUMBER = 2,
+    parameter        CHANNEL_NUMBER = PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
+    parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
 
-    parameter USE_XY_COORDINATES = 0,
-    parameter USE_N_COORDINATES   = 0,
+    parameter        SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING = 0,
+    parameter        VIRTUAL_NETWORK_NUMBER = 2,
+    parameter int    VIRTUAL_NETWORKS[VIRTUAL_NETWORK_NUMBER] = '{1, 1},
+
+    parameter        BUFFER_DEPTH = 16,
+    parameter string BUFFER_ALLOCATOR = "Straight",
+    parameter string TOPOLOGY = "Mesh",
+    parameter string ALGORITHM = "XY",
+    parameter string COORDINATES = "XY",
     
     // Algorithm and topology specific parameters
     // Mesh and Torus
-    parameter MAX_ROUTERS_X = 4,
-    parameter MAX_ROUTERS_X_WIDTH
-    = $clog2(MAX_ROUTERS_X),
-    parameter MAX_ROUTERS_Y = 4,
-    parameter MAX_ROUTERS_Y_WIDTH
-    = $clog2(MAX_ROUTERS_Y),
-    parameter MAX_PACKAGES = 4,
-    parameter ROUTER_X = 0,
-    parameter ROUTER_Y = 0,
-    parameter USE_MESH_XY = 0,
-    parameter USE_TORUS_XY = 0,
+    parameter        MAX_ROUTERS_X = 4,
+    parameter        MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
+    parameter        MAX_ROUTERS_Y = 4,
+    parameter        MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
+    parameter        ROUTER_X = 0,
+    parameter        ROUTER_Y = 0,
     
     // Circulant
-    parameter ROUTER_N = 0,
-    parameter ROUTERS_COUNT = 6,
-    parameter USE_CLOCKWISE = 0,
-    parameter GENERATICS_COUNT = 2,
-    parameter int GENERATICS[GENERATICS_COUNT] = '{2, 1}
+    parameter        ROUTER_N = 0,
+    parameter        ROUTERS_COUNT = 6,
+    parameter        GENERATICS_COUNT = 2,
+    parameter int    GENERATICS[GENERATICS_COUNT] = '{2, 1}
 )(
     input  clk_i, rst_n_i,
     axis_if.s s_axis_i [CHANNEL_NUMBER],
     axis_if.m m_axis_o [CHANNEL_NUMBER]
-
 );
+    
+    `GENERATE_CALCULATE_VIRTUAL_NETWORK_OFFSET
 
-    `GENERATE_AXIS_TYPEDEFS
-    axis_mosi_t in_mosi_i[CHANNEL_NUMBER], out_mosi_o[CHANNEL_NUMBER];
-    axis_miso_t in_miso_o[CHANNEL_NUMBER], out_miso_o[CHANNEL_NUMBER];
+    int testing_iterator, a0;
 
-    generate
-        genvar i;
-        for (i = 0; i < CHANNEL_NUMBER; i++) begin : typedef_to_interface
-            `AXIS_INTERFACE_SLAVE2TYPEDEF(s_axis_i[i], in_mosi_i[i], in_miso_o[i])
-            `AXIS_INTERFACE_MASTER2TYPEDEF(m_axis_o[i], out_mosi_o[i], out_miso_o[i])
-        end
-    endgenerate
-
-    localparam TARGET_LEN = USE_XY_COORDINATES ?    MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
-                            USE_N_COORDINATES  ?    $clog2(ROUTERS_COUNT)                       :
-                                                    0                                           ;
+    localparam TARGET_LEN = COORDINATES == "XY" ?    MAX_ROUTERS_X_WIDTH + MAX_ROUTERS_Y_WIDTH   :
+                            COORDINATES == "N"  ?    $clog2(ROUTERS_COUNT)                       :
+                                                     0                                           ;
 
     initial assert (TARGET_LEN != 0) else $error("Wrong coordintes configuration");
 
-    axis_mosi_t queue_o_mosi [CHANNEL_NUMBER];
-    axis_miso_t queue_o_miso [CHANNEL_NUMBER];
+    initial assert (CHANNEL_NUMBER == PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER) 
+        else $error("Channels misalligned! Virtual channels: %d, physical channels: %d, general channels: %d",
+        VIRTUAL_NETWORK_NUMBER, PHYSICAL_CHANNEL_NUMBER, CHANNEL_NUMBER);
 
-    axis_mosi_t arbiter_o_mosi;
-    axis_miso_t arbiter_o_miso;
+    initial begin
+        a0 = 0;
+        for(testing_iterator = 0; testing_iterator  < VIRTUAL_NETWORK_NUMBER; testing_iterator++) begin
+            a0 = a0 + VIRTUAL_NETWORKS[testing_iterator];
+        end
+        assert (a0 == VIRTUAL_CHANNEL_NUMBER) else $error("Incorrect virtual channels allocation!");
+    end
 
-    logic [TARGET_LEN-1:0] target;
+    axis_if #(
+        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+        .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+    )   queue_o_if       [CHANNEL_NUMBER  ] ();
 
-    axis_fifo_buffer #(
+    router_buffer #(
+        .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
+        .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
+        .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
+        .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS),
         .BUFFER_DEPTH(BUFFER_DEPTH),
-        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif
-    ) q (
+        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+        .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+        .BUFFER_ALLOCATOR(BUFFER_ALLOCATOR)
+    ) buffer (
         .ACLK(clk_i),
         .ARESETn(rst_n_i),
 
-        .in_mosi_i(in_mosi_i),
-        .in_miso_o(in_miso_o),
-        .out_mosi_o(queue_o_mosi),
-        .out_miso_i(queue_o_miso)
+        .s_axis_i(s_axis_i),
+        .m_axis_o(queue_o_if)
     );
 
-    arbiter #(
-        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif,
-        .CHANNEL_NUMBER(CHANNEL_NUMBER),
-        .MAXIMUM_PACKAGES_NUMBER(MAXIMUM_PACKAGES_NUMBER),
+    genvar current_virtual_network;
+    generate
+        if(SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING) begin : simultanious_virtual_network_routing
 
-        .TARGET_LEN(TARGET_LEN)
-    ) arb (
-        .clk_i(clk_i), .rst_n_i(rst_n_i),
+            axis_if #(
+                .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+            )   arb_i_if [VIRTUAL_NETWORK_NUMBER][CHANNEL_NUMBER] (),
+                alg_o_if [VIRTUAL_NETWORK_NUMBER][CHANNEL_NUMBER] ();
 
-        .in_mosi_i(queue_o_mosi),
-        .in_miso_o(queue_o_miso),
+            network_channel_picker # (
+                .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+                
+                .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
+                .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+                .CHANNEL_NUMBER(CHANNEL_NUMBER),
+                .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
+                .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
+            ) ncp (
+                .s_axis_dem(queue_o_if),
+                .m_axis_dem(arb_i_if),
+                .s_axis_mux(alg_o_if),
+                .m_axis_mux(m_axis_o)
+            );
 
-        .out_mosi_o(arbiter_o_mosi),
-        .out_miso_i(arbiter_o_miso),
+            for (current_virtual_network = 0; current_virtual_network < VIRTUAL_NETWORK_NUMBER; current_virtual_network++) begin : simultainious_network_routing_gen
+                localparam VIRTUAL_NETWORK_CHANNELS = VIRTUAL_NETWORKS[current_virtual_network];
+                localparam CHANNELS_IN_NETWORK = VIRTUAL_NETWORK_CHANNELS*PHYSICAL_CHANNEL_NUMBER;
 
-        .target_o(target)
-    );
+                logic [PHYSICAL_CHANNEL_NUMBER_WIDTH-1:0] current_grant;
+                logic [TARGET_LEN-1:0] target;
 
-    algorithm #(
-        .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH)
-        `ifdef TID_PRESENT
-         ,
-        .ID_WIDTH(ID_WIDTH)
-        `endif
-        `ifdef TDEST_PRESENT
-         ,
-        .DEST_WIDTH(DEST_WIDTH)
-        `endif
-        `ifdef TUSER_PRESENT
-         ,
-        .USER_WIDTH(USER_WIDTH)
-        `endif,
-        .CHANNEL_NUMBER(CHANNEL_NUMBER),
+                axis_if #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+                )   arb_o_if (),
+                    arb_i_if_n [CHANNELS_IN_NETWORK] (),
+                    alg_o_if_n [CHANNELS_IN_NETWORK] ();
 
-        .TARGET_LEN(TARGET_LEN),
+                network_channel_narrower #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
 
-        // Algorithm and topology specific parameters
-        // Mesh and Torus
-        .MAX_ROUTERS_X(MAX_ROUTERS_X),
-        .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
-        .ROUTER_X(ROUTER_X),
-        .ROUTER_Y(ROUTER_Y),
-        .USE_MESH_XY(USE_MESH_XY),
-        .USE_TORUS_XY(USE_TORUS_XY),
-        .USE_XY_COORDINATES(USE_XY_COORDINATES),
-        
-        // Circulant
-        .ROUTER_N(ROUTER_N),
-        .ROUTERS_COUNT(ROUTERS_COUNT),
-        .USE_CLOCKWISE(USE_CLOCKWISE),
-        .GENERATICS_COUNT(GENERATICS_COUNT),
-        .GENERATICS(GENERATICS)
-    ) alg (
-        .clk_i(clk_i), .rst_n_i(rst_n_i),
+                    .WIDTH_IN(CHANNEL_NUMBER),
+                    .WIDTH_OUT(CHANNELS_IN_NETWORK)
+                ) ncn1 (
+                    .s_axis_i(arb_i_if[current_virtual_network]),
+                    .m_axis_o(arb_i_if_n)
+                );
 
-        .in_mosi_i(arbiter_o_mosi),
-        .in_miso_o(arbiter_o_miso),
+                arbiter #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+                    .CHANNEL_NUMBER  (CHANNELS_IN_NETWORK),
 
-        .out_mosi_o(out_mosi_o),
-        .out_miso_i(out_miso_i),
+                    .TARGET_LEN(TARGET_LEN)
+                ) arb (
+                    .clk_i(clk_i), .rst_n_i(rst_n_i),
 
-        .target_i(target)
-    );
+                    .s_axis_i(arb_i_if_n),
+                    .m_axis_o(arb_o_if),
 
+                    .current_grant_o(current_grant),
+                    .target_o(target)
+                );
+
+                algorithm #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+
+                    .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
+                    .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_NETWORK_CHANNELS),
+                    .TOPOLOGY(TOPOLOGY),
+                    .ALGORITHM(ALGORITHM),
+                    .COORDINATES(COORDINATES),
+
+                    .TARGET_LEN(TARGET_LEN),
+
+                    // Algorithm and topology specific parameters
+                    // Mesh and Torus
+                    .MAX_ROUTERS_X(MAX_ROUTERS_X),
+                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
+                    .ROUTER_X(ROUTER_X),
+                    .ROUTER_Y(ROUTER_Y),
+                    
+                    // Circulant
+                    .ROUTER_N(ROUTER_N),
+                    .ROUTERS_COUNT(ROUTERS_COUNT),
+                    .GENERATICS_COUNT(GENERATICS_COUNT),
+                    .GENERATICS(GENERATICS)
+                ) alg (
+                    .clk_i(clk_i), .rst_n_i(rst_n_i),
+
+                    .s_axis_i(arb_o_if),
+                    .m_axis_o(alg_o_if_n),
+
+                    .current_grant_i(current_grant),
+                    .target_i(target)
+                );
+
+                network_channel_narrower #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+
+                    .WIDTH_IN(CHANNELS_IN_NETWORK),
+                    .WIDTH_OUT(CHANNEL_NUMBER)
+                ) ncn2 (
+                    .s_axis_i(alg_o_if_n),
+                    .m_axis_o(alg_o_if[current_virtual_network])
+                );
+
+            end
+        end else begin : non_simultanious_virtual_network_routing
+            logic [CHANNEL_NUMBER_WIDTH-1:0] current_grant;
+            logic [TARGET_LEN-1:0] target;
+    
+            axis_if #(
+                .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+            )   arb_o_if                        ();
+
+            arbiter #(
+                .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+                .CHANNEL_NUMBER  (CHANNEL_NUMBER),
+
+                .TARGET_LEN(TARGET_LEN)
+            ) arb (
+                .clk_i(clk_i), .rst_n_i(rst_n_i),
+
+                .s_axis_i(queue_o_if),
+                .m_axis_o(arb_o_if),
+
+                .current_grant_o(current_grant),
+                .target_o(target)
+            );
+
+            algorithm #(
+                .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+
+                .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
+                .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+                .CHANNEL_NUMBER(CHANNEL_NUMBER),
+                .TOPOLOGY(TOPOLOGY),
+                .ALGORITHM(ALGORITHM),
+                .COORDINATES(COORDINATES),
+
+                .TARGET_LEN(TARGET_LEN),
+
+                // Algorithm and topology specific parameters
+                // Mesh and Torus
+                .MAX_ROUTERS_X(MAX_ROUTERS_X),
+                .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
+                .ROUTER_X(ROUTER_X),
+                .ROUTER_Y(ROUTER_Y),
+                
+                // Circulant
+                .ROUTER_N(ROUTER_N),
+                .ROUTERS_COUNT(ROUTERS_COUNT),
+                .GENERATICS_COUNT(GENERATICS_COUNT),
+                .GENERATICS(GENERATICS)
+            ) alg (
+                .clk_i(clk_i), .rst_n_i(rst_n_i),
+
+                .s_axis_i(arb_o_if),
+                .m_axis_o(m_axis_o),
+
+                .current_grant_i(current_grant),
+                .target_i(target)
+            );
+        end
+    endgenerate
     
 endmodule
