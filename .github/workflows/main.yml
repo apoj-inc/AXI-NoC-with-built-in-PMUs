@@ -64,7 +64,7 @@ jobs:
           make run_pytest TESTS_DIRS=tb/tb_example"
         timeout-minutes: 15
 
-  build_altera_tools_and_push:
+  build_altera_tools:
     runs-on: ubuntu-latest
     needs: build_docker_test_image
     steps:
@@ -94,7 +94,7 @@ jobs:
           ${{ secrets.DOCKER_USERNAME }}/altera_tools:${{ steps.meta.outputs.SHORT_SHA }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        push: true
+        push: false
         outputs: type=docker,dest=${{ runner.temp }}/altera_tools.tar
 
     - name: Upload artifact
@@ -127,7 +127,7 @@ jobs:
   
   check_releases:
     runs-on: ubuntu-latest
-    needs: build_altera_tools_and_push
+    needs: build_altera_tools
     steps:
     - uses: actions/checkout@v4
 
