@@ -77,7 +77,11 @@ jobs:
 
         - name: Prepare releases for artifacts
           shell: bash
-          run: find release -name "*tar" | xargs -I {} -t tar -czf ${{ runner.temp }}/release.tar.gz {}
+          run: |
+            mkdir -p ${{ runner.temp }}/release
+            find release -name "*tar" | xargs -I {} -t mv {} ${{ runner.temp }}/release
+            cd ${{ runner.temp }}
+            tar -czf release.tar.gz release
 
         - name: Upload releases artifact
           uses: actions/upload-artifact@v4
@@ -93,13 +97,11 @@ jobs:
           uses: actions/download-artifact@v4
           with:
             name: release
-            path: ${{ runner.temp }}/release.tar.gz
+            path: ${{ runner.temp }}
 
         - name: Unpack artifacts for releases
           shell: bash
-          run: |
-            mkdir ${{ runner.temp }}/relese_dir
-            tar -xzf ${{ runner.temp }}/release.tar.gz -C ${{ runner.temp }}/relese_dir
+          run: tar -xzf ${{ runner.temp }}/release.tar.gz -C ${{ runner.temp }}
 
         - name: Create Release
           uses: softprops/action-gh-release@v2
@@ -109,7 +111,7 @@ jobs:
             body: |
                 ## HDLNoCGeN ${{ github.event.inputs.version }}
             files: |
-                ${{ runner.temp }}/relese_dir/*
+                ${{ runner.temp }}/release/*
             draft: false
             prerelease: false
         env:
