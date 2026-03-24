@@ -62,6 +62,21 @@ if {$revision_name eq ""} {
 # Apply defines as VERILOG_MACRO assignments
 # Quartus expects: set_global_assignment -name VERILOG_MACRO "NAME" or "NAME=VALUE"
 # Note: repeated calls create multiple macros.
+
+puts "Clearing existing VERILOG_MACRO assignments..."
+set existing_macros [get_all_global_assignments -name VERILOG_MACRO]
+foreach assignment $existing_macros {
+    # Each assignment is a list: {name value section_id tag entity}
+    set macro [lindex $assignment 1]
+    if {$macro eq ""} {
+        puts "  Skipping empty macro assignment (no value to remove)"
+        continue
+    }
+    puts "  Removing: $macro"
+    # Correct removal: no -value flag, value is positional
+    set_global_assignment -remove -name VERILOG_MACRO $macro
+}
+
 foreach d $defines {
     # Basic sanity (optional)
     if {[string trim $d] eq ""} {
