@@ -36,6 +36,8 @@ module torus #(
     axi_if.m m_axi_o[MAX_ROUTERS_X*MAX_ROUTERS_Y]
 );
 
+    initial assert(MAX_ROUTERS_X >= MAX_ROUTERS_Y) else $error("Mismatched dimensions(X:%d, Y:%d, Y > X)", MAX_ROUTERS_X, MAX_ROUTERS_Y);
+
     genvar i, j;
     genvar current_virtual_channel;
     
@@ -126,7 +128,5 @@ module torus #(
             end
         end
     endgenerate
-
-
 
 endmodule

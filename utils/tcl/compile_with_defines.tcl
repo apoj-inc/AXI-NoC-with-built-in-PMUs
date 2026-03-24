@@ -1,8 +1,3 @@
-# compile_with_defines.tcl
-# Usage examples:
-#   quartus_sh -t compile_with_defines.tcl --project myproj --rev myrev --define FOO --define BAR=3
-#   quartus_sh -t compile_with_defines.tcl --project myproj --define SIM
-
 package require ::quartus::project
 package require ::quartus::flow
 
@@ -12,7 +7,6 @@ proc usage {} {
     exit 2
 }
 
-# Simple CLI parse
 set project_name ""
 set revision_name ""
 set defines {}
@@ -52,41 +46,53 @@ if {$project_name eq ""} {
     usage
 }
 
-# Open the project (optionally with revision)
+if {$revision_name eq ""} {
+    set revision_name $project_name
+}
+
+set qsf_file "${revision_name}.qsf"
+
+if {![file exists $qsf_file]} {
+    puts "ERROR: QSF file not found: $qsf_file"
+    exit 1
+}
+
+puts "Removing all existing VERILOG_MACRO lines from $qsf_file ..."
+set fin [open $qsf_file r]
+set qsf_data [read $fin]
+close $fin
+
+set new_lines {}
+foreach line [split $qsf_data "\n"] {
+    if {[regexp {VERILOG_MACRO} $line]} {
+        puts "  Removing line: $line"
+        continue
+    }
+    lappend new_lines $line
+}
+
+set fout [open $qsf_file w]
+puts -nonewline $fout [join $new_lines "\n"]
+close $fout
+
 if {$revision_name eq ""} {
     project_open $project_name
 } else {
     project_open $project_name -revision $revision_name
 }
 
-# Apply defines as VERILOG_MACRO assignments
-# Quartus expects: set_global_assignment -name VERILOG_MACRO "NAME" or "NAME=VALUE"
-# Note: repeated calls create multiple macros.
-
-puts "Clearing existing VERILOG_MACRO assignments..."
-set existing_macros [get_all_global_assignments -name VERILOG_MACRO]
-foreach assignment $existing_macros {
-    # Each assignment is a list: {name value section_id tag entity}
-    set macro [lindex $assignment 1]
-    if {$macro eq ""} {
-        puts "  Skipping empty macro assignment (no value to remove)"
-        continue
-    }
-    puts "  Removing: $macro"
-    # Correct removal: no -value flag, value is positional
-    set_global_assignment -remove -name VERILOG_MACRO $macro
-}
-
 foreach d $defines {
-    # Basic sanity (optional)
-    if {[string trim $d] eq ""} {
+    set d [string trim $d]
+    if {$d eq ""} {
         continue
     }
     puts "Applying define: $d"
     set_global_assignment -name VERILOG_MACRO $d
 }
 
-# Run a full compile (Analysis & Synthesis, Fitter, Assembler, Timing, etc.)
+# Persist the updated assignments into the .qsf
+export_assignments
+
 puts "Starting Quartus compile for project '$project_name'..."
 if {[catch {execute_flow -compile} err]} {
     puts "ERROR: Compilation failed:"
@@ -96,9 +102,15 @@ if {[catch {execute_flow -compile} err]} {
 puts "Compile finished."
 
 puts "Extracting database."
-
 set_global_assignment -name VER_COMPATIBLE_DB_DIR db_export
-execute_flow -flow export_database
+export_assignments
+
+if {[catch {execute_flow -flow export_database} err]} {
+    puts "ERROR: Database export failed:"
+    puts $err
+    project_close
+    exit 1
+}
 
 puts "Extracted database successfully."
 project_close
