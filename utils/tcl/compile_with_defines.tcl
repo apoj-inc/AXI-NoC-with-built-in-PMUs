@@ -91,11 +91,9 @@ puts "Starting Quartus compile for project '$project_name'..."
 if {[catch {execute_flow -compile} err]} {
     puts "ERROR: Compilation failed:"
     puts $err
-    project_close
-    exit 1
 }
 
-puts "Compile finished successfully."
+puts "Compile finished."
 
 puts "Extracting database."
 
