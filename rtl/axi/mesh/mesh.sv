@@ -35,6 +35,8 @@ module mesh #(
     axi_if.s s_axi_i[MAX_ROUTERS_X*MAX_ROUTERS_Y],
     axi_if.m m_axi_o[MAX_ROUTERS_X*MAX_ROUTERS_Y]
 );
+
+    initial assert(MAX_ROUTERS_X >= MAX_ROUTERS_Y) else $error("Mismatched dimensions(X:%d, Y:%d, Y > X)", MAX_ROUTERS_X, MAX_ROUTERS_Y);
     
     axis_if #(
         .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
@@ -150,7 +152,5 @@ module mesh #(
             end
         end
     endgenerate
-
-
 
 endmodule

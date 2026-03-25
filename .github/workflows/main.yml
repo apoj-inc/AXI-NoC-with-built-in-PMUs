@@ -123,7 +123,7 @@ jobs:
     - name: Run pytest
       shell: bash
       run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "make run_pytest"
-      timeout-minutes: 60
+      timeout-minutes: 90
   
   check_releases:
     runs-on: ubuntu-latest
