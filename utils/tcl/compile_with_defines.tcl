@@ -101,17 +101,9 @@ if {[catch {execute_flow -compile} err]} {
 
 puts "Compile finished."
 
-puts "Extracting database."
-set_global_assignment -name VER_COMPATIBLE_DB_DIR db_export
-export_assignments
+puts "Exporting project."
+project_archive $project_name.qar -overwrite -include_outputs -include_libraries
 
-if {[catch {execute_flow -flow export_database} err]} {
-    puts "ERROR: Database export failed:"
-    puts $err
-    project_close
-    exit 1
-}
-
-puts "Extracted database successfully."
+puts "Project exported successfully."
 project_close
 exit 0

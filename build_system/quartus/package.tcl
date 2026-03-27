@@ -17,4 +17,6 @@ set_global_assignment -name DEVICE $DEVICE_PART
 load_package flow
 execute_flow -analysis_and_elaboration
 
+project_archive $TOPLEVEL.qar -overwrite -include_libraries
+
 project_close

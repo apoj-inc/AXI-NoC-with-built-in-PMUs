@@ -79,7 +79,7 @@ jobs:
           shell: bash
           run: |
             mkdir -p ${{ runner.temp }}/release
-            find release -name "*tar" | xargs -I {} -t mv {} ${{ runner.temp }}/release
+            find release -name "*qar" | xargs -I {} -t mv {} ${{ runner.temp }}/release
             cd ${{ runner.temp }}
             tar -czf release.tar.gz release
 
