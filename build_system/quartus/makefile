@@ -11,7 +11,7 @@ DEVICE_PART ?= "5CGXFC9E7F35C8"
 
 RELEASE_DIR 	?= $(CURDIR)/release
 RELEASE_DIRS 	?= $(wildcard $(RELEASE_DIR)/*/) 
-RELEASE_FILES	?= $(foreach directory,$(RELEASE_DIRS), $(directory)$(shell basename $(directory)).tar)
+RELEASE_FILES	?= $(foreach directory,$(RELEASE_DIRS), $(directory)$(shell basename $(directory)).qar)
 
 .PHONY: all compile clean create_releases clean_releases
 
@@ -56,15 +56,12 @@ $(RELEASE_FILES):\
 	@cd $(dir $@)package;\
 		quartus_sh -t $(QUARTUS_BUILD_PATH)/package.tcl
 	
-	@mv $(dir $@)package $(basename $@)
+	@mv $(dir $@)package/$(notdir $(basename $@)).qar $(dir $@)
 	
-	@cd $(dir $@);\
-		tar -acf $@ $(notdir $(basename $@))
-	
-	@rm -rf $(basename $@)
+	@rm -rf $(dir $@)package
 
 clean_releases:
-	@rm -f $(wildcard $(RELEASE_DIR)/*/*.tar)
+	@rm -f $(wildcard $(RELEASE_DIR)/*/*.qar)
 
 clean:
 	@rm -rf $(QUARTUS_BUILD_PATH)/$(TOPLEVEL)
