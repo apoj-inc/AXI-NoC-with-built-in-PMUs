@@ -12,8 +12,8 @@ module tb_axi_loader (
 
     input  logic        wready,
     output logic        wvalid,
-    output logic [7:0]  wdata,
-    output logic        wstrb,
+    output logic [31:0] wdata,
+    output logic [3:0]  wstrb,
     output logic        wlast,
 
     input  logic        bvalid,
@@ -30,7 +30,7 @@ module tb_axi_loader (
 
     input  logic        rvalid,
     input  logic [4:0]  rid,
-    input  logic [7:0]  rdata,
+    input  logic [31:0] rdata,
     input  logic        rlast,
     output logic        rready,
 
@@ -39,12 +39,14 @@ module tb_axi_loader (
     input  logic        write_i,
     input  logic [11:0] axaddr_i,
     input  logic [7:0]  axlen_i,
-    input  logic [8:0]  wdata_i,
-    input  logic        wstrb_i,
+    input  logic [31:0] wdata_i,
+    input  logic [3:0]  wstrb_i,
     input  logic        fifo_push_i,
     input  logic        start_i,
     output logic        idle_o,
-    output logic        rdata_o
+    output logic [31:0] rdata_o,
+    input  logic        inj_period_en_i,
+    input  logic [31:0] inj_period_val_i
 );
 
 
@@ -86,31 +88,34 @@ module tb_axi_loader (
     end
 
     axi_master_loader #(
-        .AXI_DATA_WIDTH(8),
+        .AXI_DATA_WIDTH(32),
         .AXI_ADDR_WIDTH(12),
         .AXI_ID_W_WIDTH(5),
         .AXI_ID_R_WIDTH(5),
-        .FIFO_DEPTH(32),
-        .LOADER_ID(1)
+        .FIFO_DEPTH    (64),
+        .LOADER_ID     (1)
     ) dut (
-        .clk_i       (clk_i),
-        .arstn_i     (arstn_i),
+        .clk_i            (clk_i            ),
+        .arstn_i          (arstn_i          ),
 
-        .resp_wait_i (resp_wait_i ),
-        .id_i        (id_i        ),
-        .write_i     (write_i     ),
-        .axaddr_i    (axaddr_i    ),
-        .axlen_i     (axlen_i     ),
-        .wdata_i     (wdata_i     ),
-        .wstrb_i     (wstrb_i     ),
-        .fifo_push_i (fifo_push_i ),
+        .resp_wait_i      (resp_wait_i      ),
+        .id_i             (id_i             ),
+        .write_i          (write_i          ),
+        .axaddr_i         (axaddr_i         ),
+        .axlen_i          (axlen_i          ),
+        .wdata_i          (wdata_i          ),
+        .wstrb_i          (wstrb_i          ),
+        .fifo_push_i      (fifo_push_i      ),
 
-        .start_i     (start_i     ),
-        .idle_o      (idle_o      ),
+        .start_i          (start_i          ),
+        .idle_o           (idle_o           ),
 
-        .rdata_o     (rdata_o     ),
+        .rdata_o          (rdata_o          ),
 
-        .m_axi_if_o  (axi_if    )
+        .inj_period_en_i  (inj_period_en_i  ),
+        .inj_period_val_i (inj_period_val_i ),
+
+        .m_axi_if_o       (axi_if           )
     );
     
 endmodule

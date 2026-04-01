@@ -61,10 +61,8 @@ module algorithm #(
     
     generate
         if(COORDINATES == "XY") begin
-            assign target_y_i =
-                target_i[MAX_ROUTERS_Y_WIDTH-1:0];
-            assign target_x_i =
-                target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
+            assign target_y_i = target_i[MAX_ROUTERS_Y_WIDTH-1:0];
+            assign target_x_i = target_i[MAX_ROUTERS_Y_WIDTH+MAX_ROUTERS_X_WIDTH-1 -: MAX_ROUTERS_X_WIDTH];
         end
         else if (COORDINATES == "N") begin
         end

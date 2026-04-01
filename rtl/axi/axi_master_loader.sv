@@ -7,8 +7,8 @@ module axi_master_loader #(
     parameter AXI_ID_W_WIDTH = 5,
     parameter AXI_ID_R_WIDTH = 5,
     parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0),
-    parameter FIFO_DEPTH   = 64,
-    parameter LOADER_ID    = 0,
+    parameter FIFO_DEPTH     = 64,
+    parameter LOADER_ID      = 0,
 
     parameter AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH
 ) (
@@ -28,6 +28,9 @@ module axi_master_loader #(
     output logic                        idle_o,
 
     output logic [AXI_DATA_WIDTH-1:0]   rdata_o,
+
+    input  logic [31:0]                 inj_period_val_i,
+    input  logic                        inj_period_en_i,
 
     axi_if.m                            m_axi_if_o
 );
@@ -64,6 +67,13 @@ module axi_master_loader #(
     logic awlen_resp_wait_rd, awlen_wait;
     logic [7:0] awlen_current;
 
+    logic [31:0] inj_period;
+    logic [63:0] inj_read_counter;
+    logic [63:0] inj_write_counter;
+    logic [63:0] inj_timer;
+
+    logic [$clog2(FIFO_DEPTH):0] awlen_fifo_count, r_fifo_count;
+
 
     assign m_axi_o.data.aw.AWID    = awid_rd;
     assign m_axi_o.data.aw.AWADDR  = awaddr_rd;
@@ -97,11 +107,49 @@ module axi_master_loader #(
         end
     end
 
+    always_ff @(posedge clk_i or negedge arstn_i) begin
+        if (!arstn_i) begin
+            inj_period <= '0;
+            inj_read_counter <= '0;
+            inj_write_counter <= '0;
+            inj_timer <= '0;
+        end
+        else begin
+            inj_period <= inj_period_en_i ? inj_period_val_i : inj_period;
+
+            inj_timer <= (inj_timer + 1 == inj_period) || start_i ? '0 : inj_timer + 1;
+
+            if (start_i) begin
+                inj_read_counter <= '0;
+                inj_write_counter <= '0;
+            end
+            else begin
+                if (m_axi_o.ARVALID && m_axi_i.ARREADY) begin
+                    if (inj_timer != 0) begin
+                        inj_read_counter <= inj_read_counter - 1;
+                    end
+                end
+                else if (inj_timer == 0) begin
+                    inj_read_counter <= inj_read_counter + 1;
+                end
+
+                if (m_axi_o.WVALID && m_axi_i.WREADY && m_axi_o.data.w.WLAST) begin
+                    if (inj_timer != 0) begin
+                        inj_write_counter <= inj_write_counter - 1;
+                    end
+                end
+                else if (inj_timer == 0) begin
+                    inj_write_counter <= inj_write_counter + 1;
+                end
+            end
+        end
+    end
+
     /* --- W SECTION --- */
 
     stream_fifo #(
         .DATA_WIDTH (AXI_ADDR_WIDTH + AXI_MAX_ID_WIDTH + 1 + 8),
-        .FIFO_DEPTH   (FIFO_DEPTH)
+        .FIFO_DEPTH (FIFO_DEPTH)
     ) u_stream_fifo_w (
         .ACLK    (clk_i),
         .ARESETn (arstn_i),
@@ -175,9 +223,9 @@ module axi_master_loader #(
                 w_idle = '1;
             end
             MOSI: begin
-                w_fifo_ready_rd = m_axi_i.AWREADY;
+                w_fifo_ready_rd = m_axi_i.AWREADY & (inj_write_counter > 0);
 
-                if (w_fifo_valid_rd) begin
+                if (w_fifo_valid_rd && (inj_write_counter > 0)) begin
                     m_axi_o.AWVALID = '1;
                 end
 
@@ -193,7 +241,7 @@ module axi_master_loader #(
 
     stream_fifo #(
         .DATA_WIDTH (1 + 8 + AXI_DATA_WIDTH + AXI_DATA_BYTES),
-        .FIFO_DEPTH   (FIFO_DEPTH)
+        .FIFO_DEPTH (FIFO_DEPTH)
     ) u_stream_fifo_awlen (
         .ACLK    (clk_i),
         .ARESETn (arstn_i),
@@ -204,10 +252,12 @@ module axi_master_loader #(
 
         .data_o  ({awlen_resp_wait_rd, awlen_current, wdata_rd, wstrb_rd}),
         .valid_o (awlen_fifo_valid_rd),
-        .ready_i (awlen_fifo_ready_rd)
+        .ready_i (awlen_fifo_ready_rd),
+
+        .count_o (awlen_fifo_count)
     );
 
-    assign m_axi_o.WVALID = awlen_fifo_valid_rd & ~awlen_wait & (state_w != IDLE);
+    assign m_axi_o.WVALID = awlen_fifo_valid_rd & ~awlen_wait & (state_w != IDLE) & (inj_write_counter > 0);
     assign m_axi_o.data.w.WLAST = (w_hand_counter == awlen_current);
     assign awlen_fifo_ready_rd = m_axi_o.WVALID & m_axi_i.WREADY & m_axi_o.data.w.WLAST;
 
@@ -246,7 +296,9 @@ module axi_master_loader #(
 
         .data_o  ({r_resp_wait_rd, araddr_rd, arlen_rd, arid_rd}),
         .valid_o (r_fifo_valid_rd),
-        .ready_i (r_fifo_ready_rd)
+        .ready_i (r_fifo_ready_rd),
+
+        .count_o (r_fifo_count)
     );
 
     always_ff @(posedge clk_i or negedge arstn_i) begin
@@ -309,9 +361,9 @@ module axi_master_loader #(
                 r_idle = '1;
             end
             MOSI: begin
-                r_fifo_ready_rd = m_axi_i.ARREADY;
+                r_fifo_ready_rd = m_axi_i.ARREADY & (inj_read_counter > 0);
 
-                if (r_fifo_valid_rd) begin
+                if (r_fifo_valid_rd && (inj_read_counter > 0)) begin
                     m_axi_o.ARVALID = '1;
                 end
 
