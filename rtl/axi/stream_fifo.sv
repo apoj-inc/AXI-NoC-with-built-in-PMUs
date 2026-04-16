@@ -1,20 +1,23 @@
 module stream_fifo #(
     parameter DATA_WIDTH = 32,
-    parameter FIFO_DEPTH = 16
-) (
-    input logic ACLK,
-    input logic ARESETn,
-    
-    input logic [DATA_WIDTH-1:0] data_i,
-    input logic valid_i,
-    output logic ready_o,
+    parameter FIFO_DEPTH = 16,
 
-    output logic [DATA_WIDTH-1:0]  data_o,
-    output logic valid_o,
-    input logic ready_i
+    parameter ADDR_WIDTH = $clog2(FIFO_DEPTH)
+) (
+    input  logic                  ACLK,
+    input  logic                  ARESETn,
     
+    input  logic [DATA_WIDTH-1:0] data_i,
+    input  logic                  valid_i,
+    output logic                  ready_o,
+    output logic [ADDR_WIDTH:0]   free_o,
+
+    output logic [DATA_WIDTH-1:0] data_o,
+    output logic                  valid_o,
+    input  logic                  ready_i,
+    output logic [ADDR_WIDTH:0]   count_o
 );
-    localparam ADDR_WIDTH = $clog2(FIFO_DEPTH);
+
 
     logic [DATA_WIDTH-1:0] fifo_mem [FIFO_DEPTH];
     logic [ADDR_WIDTH-1:0] read_ptr, read_ptr_reg;
@@ -25,6 +28,8 @@ module stream_fifo #(
 
     assign valid_o = (count > 0);
     assign ready_o = !(count == FIFO_DEPTH);
+    assign count_o = count;
+    assign free_o  = FIFO_DEPTH - count;
 
     always_ff @(posedge ACLK or negedge ARESETn) begin
         if (!ARESETn) begin
