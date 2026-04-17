@@ -4,15 +4,15 @@ module stream_fifo #(
 
     parameter ADDR_WIDTH = $clog2(FIFO_DEPTH)
 ) (
-    input  logic                  ACLK,
+    input  logic                  ACLK   ,
     input  logic                  ARESETn,
     
-    input  logic [DATA_WIDTH-1:0] data_i,
+    input  logic [DATA_WIDTH-1:0] data_i ,
     input  logic                  valid_i,
     output logic                  ready_o,
-    output logic [ADDR_WIDTH:0]   free_o,
+    output logic [ADDR_WIDTH:0]   free_o ,
 
-    output logic [DATA_WIDTH-1:0] data_o,
+    output logic [DATA_WIDTH-1:0] data_o ,
     output logic                  valid_o,
     input  logic                  ready_i,
     output logic [ADDR_WIDTH:0]   count_o

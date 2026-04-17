@@ -42,6 +42,14 @@ logic [DMA_BURST_WIDTH-1:0]         dma_task_burst_o     ;
 logic [DMA_OFFFSET_WIDTH-1:0]       dma_task_offset_o    ;
 logic                               dma_task_write_o     ;
 
+logic [DMA_CHANNEL_COUNT-1:0]       out_dma_task_valid_o                     ;
+logic [DMA_CHANNEL_COUNT-1:0]       out_dma_task_ready_i                     ;
+logic [DMA_BURST_WIDTH-1:0]         out_dma_task_burst_o  [DMA_CHANNEL_COUNT];
+logic [DMA_OFFFSET_WIDTH-1:0]       out_dma_task_offset_o [DMA_CHANNEL_COUNT];
+logic [DMA_CHANNEL_COUNT-1:0]       out_dma_task_write_o                     ;
+
+logic [DMA_CHANNEL_COUNT-1:0]       task_ready_mask;
+
 
 avmm_dma_decoder #(
     .BAR_DATA_WIDTH    (BAR_DATA_WIDTH    ),
@@ -72,20 +80,43 @@ avmm_dma_decoder #(
     .dma_task_write_o     (dma_task_write_o    )
 );
 
+avmm_dma_task_demux #(
+    .DMA_CHANNEL_COUNT (DMA_CHANNEL_COUNT),
+    .DMA_OFFFSET_WIDTH (DMA_OFFFSET_WIDTH),
+    .DMA_BYTES_WIDTH   (DMA_BYTES_WIDTH  )
+) u_avmm_dma_task_demux (
+    .clk                   (clk                  ),
+    .rst_n                 (rst_n                ),
+
+    .in_dma_task_valid_i   (dma_task_valid_o     ),
+    .in_dma_task_ready_o   (dma_task_ready_i     ),
+    .in_dma_task_channel_i (dma_task_channel_o   ),
+    .in_dma_task_burst_i   (dma_task_burst_o     ),
+    .in_dma_task_offset_i  (dma_task_offset_o    ),
+    .in_dma_task_write_i   (dma_task_write_o     ),
+
+    .out_dma_task_valid_o  (out_dma_task_valid_o ),
+    .out_dma_task_ready_i  (out_dma_task_ready_i ),
+    .out_dma_task_burst_o  (out_dma_task_burst_o ),
+    .out_dma_task_offset_o (out_dma_task_offset_o),
+    .out_dma_task_write_o  (out_dma_task_write_o )
+);
+
 
 always #10 clk = ~clk;
 
 always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-        dma_task_ready_i <= '0;
+        out_dma_task_ready_i <= '0;
     end
     else begin
-        dma_task_ready_i <= $urandom();
+        out_dma_task_ready_i <= $urandom() & task_ready_mask;
     end
 end
 
 initial begin
     test_done = '0;
+    task_ready_mask = '0;
 
     clk = '1;
     rst_n = '0;
@@ -148,6 +179,9 @@ initial begin
             @(posedge clk);
         end
     end
+
+    repeat(10) @(posedge clk);
+    task_ready_mask = '1;
 
     // Writes to DMA reads
     for (int i = 0; i < 16; i++) begin

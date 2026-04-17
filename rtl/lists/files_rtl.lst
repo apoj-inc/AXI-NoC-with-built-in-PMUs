@@ -43,6 +43,7 @@ rtl/cosimulation/mesh_with_loaders.sv
 rtl/cosimulation/cosim_top.sv
 rtl/de10standard_top.sv
 rtl/lib/dma/avmm_dma_decoder.sv
+rtl/lib/dma/avmm_dma_task_demux.sv
 rtl/lib/dma/avmm_dma_csr.sv
 rtl/lib/dma/avmm_dma_engine.sv
 rtl/lib/dma/avmm_dma_msix_table.sv

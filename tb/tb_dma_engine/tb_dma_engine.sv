@@ -18,37 +18,35 @@ parameter TX_DATA_BYTES_WIDTH = $clog2(TX_DATA_BYTES)                  ;
 parameter DMA_WQ_ADDR_WIDTH   = $clog2(DMA_WQ_DEPTH)                   ;
 parameter DMA_RQ_ADDR_WIDTH   = $clog2(DMA_RQ_DEPTH)                   ;
 
-logic                       test_done         ;
+logic                         test_done         ;
 
-logic                       clk               ;
-logic                       rst_n             ;
+logic                         clk               ;
+logic                         rst_n             ;
 
-logic                       pba_status_i      ;
-logic                       pba_control_o     ;
+logic                         dma_task_valid_i  ;
+logic                         dma_task_ready_o  ;
+logic [DMA_BURST_WIDTH-1:0]   dma_task_burst_i  ;
+logic [DMA_OFFFSET_WIDTH-1:0] dma_task_offset_i ;
+logic                         dma_task_write_i  ;
 
-logic                       dma_task_valid_i  ;
-logic                       dma_task_ready_o  ;
-logic [DMA_TASK_WIDTH-1:0]  dma_task_data_i   ;
+logic                         dma_wrdata_ready_o;
+logic [TX_DATA_WIDTH-1:0]     dma_wrdata_data_i ;
 
-logic                       dma_wrdata_ready_o;
-logic [TX_DATA_WIDTH-1:0]   dma_wrdata_data_i ;
+logic                         dma_rddata_valid_o;
+logic [TX_DATA_WIDTH-1:0]     dma_rddata_data_o ;
 
-logic                       dma_rddata_valid_o;
-logic [TX_DATA_WIDTH-1:0]   dma_rddata_data_o ;
-
-logic                       tx_chipselect     ;
-logic [TX_DATA_BYTES-1:0]   tx_byteenable     ;
-logic [TX_DATA_WIDTH-1:0]   tx_readdata       ;
-logic [TX_DATA_WIDTH-1:0]   tx_writedata      ;
-logic                       tx_read           ;
-logic                       tx_write          ;
-logic [TX_BURST_WIDTH-1:0]  tx_burstcount     ;
-logic                       tx_readdatavalid  ;
-logic                       tx_waitrequest    ;
-logic [TX_ADDR_WIDTH-1:0]   tx_address        ;
+logic                         tx_chipselect     ;
+logic [TX_DATA_BYTES-1:0]     tx_byteenable     ;
+logic [TX_DATA_WIDTH-1:0]     tx_readdata       ;
+logic [TX_DATA_WIDTH-1:0]     tx_writedata      ;
+logic                         tx_read           ;
+logic                         tx_write          ;
+logic [TX_BURST_WIDTH-1:0]    tx_burstcount     ;
+logic                         tx_readdatavalid  ;
+logic                         tx_waitrequest    ;
+logic [TX_ADDR_WIDTH-1:0]     tx_address        ;
 
 
-logic        pba_release    ;
 logic [31:0] reads_pipelined;
 logic        rdvalid_gate   ;
 
@@ -70,14 +68,13 @@ avmm_dma_engine #(
     .msix_data_i        (32'hDEADBEEF       ),
     .msix_addr_i        (64'h20202020       ),
 
-    .pba_status_i       (pba_status_i       ),
-    .pba_control_o      (pba_control_o      ),
-
     .dma_addr_i         (64'h10101010       ),
 
     .dma_task_valid_i   (dma_task_valid_i   ),
     .dma_task_ready_o   (dma_task_ready_o   ),
-    .dma_task_data_i    (dma_task_data_i    ),
+    .dma_task_burst_i   (dma_task_burst_i   ),
+    .dma_task_offset_i  (dma_task_offset_i  ),
+    .dma_task_write_i   (dma_task_write_i   ),
 
     .dma_wrdata_valid_i ('1                 ),
     .dma_wrdata_ready_o (dma_wrdata_ready_o ),
@@ -103,21 +100,6 @@ avmm_dma_engine #(
 
 
 always #10 clk = ~clk;
-
-
-always_ff @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-        pba_status_i <= '0;
-    end
-    else begin
-        if (pba_control_o) begin
-            pba_status_i <= '1;
-        end
-        else if (pba_release) begin
-            pba_status_i <= '0;
-        end
-    end
-end
 
 
 always @(posedge clk or negedge rst_n) begin
@@ -168,8 +150,7 @@ initial begin
     clk = '1;
     rst_n = '0;
     dma_task_valid_i = '0;
-    dma_task_data_i = '0;
-    pba_release = '0;
+    {dma_task_burst_i, dma_task_offset_i, dma_task_write_i} = '0;
 
     #15;
     rst_n = '1;
@@ -177,64 +158,41 @@ initial begin
     // Short write
     @(posedge clk);
     dma_task_valid_i = '1;
-    dma_task_data_i = {(DMA_BURST_WIDTH)'('h10), (DMA_OFFFSET_WIDTH)'('h200), 1'b1};
+    {dma_task_burst_i, dma_task_offset_i, dma_task_write_i} = {(DMA_BURST_WIDTH)'('h10), (DMA_OFFFSET_WIDTH)'('h200), 1'b1};
     @(posedge clk);
-    dma_task_valid_i = '0;
-
-    while (pba_control_o == 0) begin
+    while (!dma_task_ready_o) begin
         @(posedge clk);
     end
-    pba_release = '1;
-    @(posedge clk);
-    pba_release = '0;
-    @(posedge clk);
 
     // Short read
-    @(posedge clk);
     dma_task_valid_i = '1;
-    dma_task_data_i = {(DMA_BURST_WIDTH)'('h10), (DMA_OFFFSET_WIDTH)'('h200), 1'b0};
+    {dma_task_burst_i, dma_task_offset_i, dma_task_write_i} = {(DMA_BURST_WIDTH)'('h10), (DMA_OFFFSET_WIDTH)'('h200), 1'b0};
     @(posedge clk);
-    dma_task_valid_i = '0;
-
-    while (pba_control_o == 0) begin
+    while (!dma_task_ready_o) begin
         @(posedge clk);
     end
-    pba_release = '1;
-    @(posedge clk);
-    pba_release = '0;
-    @(posedge clk);
 
-    
 
     // Long write
-    @(posedge clk);
     dma_task_valid_i = '1;
-    dma_task_data_i = {(DMA_BURST_WIDTH)'('hFF), (DMA_OFFFSET_WIDTH)'('h200), 1'b1};
+    {dma_task_burst_i, dma_task_offset_i, dma_task_write_i} = {(DMA_BURST_WIDTH)'('hFF), (DMA_OFFFSET_WIDTH)'('h200), 1'b1};
     @(posedge clk);
-    dma_task_valid_i = '0;
-
-    while (pba_control_o == 0) begin
+    while (!dma_task_ready_o) begin
         @(posedge clk);
     end
-    pba_release = '1;
-    @(posedge clk);
-    pba_release = '0;
-    @(posedge clk);
 
     // Long read
-    @(posedge clk);
     dma_task_valid_i = '1;
-    dma_task_data_i = {(DMA_BURST_WIDTH)'('hFF), (DMA_OFFFSET_WIDTH)'('h200), 1'b0};
+    {dma_task_burst_i, dma_task_offset_i, dma_task_write_i} = {(DMA_BURST_WIDTH)'('hFF), (DMA_OFFFSET_WIDTH)'('h200), 1'b0};
     @(posedge clk);
-    dma_task_valid_i = '0;
-
-    while (pba_control_o == 0) begin
+    while (!dma_task_ready_o) begin
         @(posedge clk);
     end
-    pba_release = '1;
-    @(posedge clk);
-    pba_release = '0;
-    @(posedge clk);
+    dma_task_valid_i = '0;
+
+    while (!(tx_chipselect && !tx_waitrequest && tx_write && (tx_writedata == 32'hDEADBEEF) && (tx_address == 64'h20202020))) begin
+        @(posedge clk);
+    end
     
     test_done = '1;
 
