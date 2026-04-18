@@ -205,7 +205,7 @@ module avmm_dma_top #(
     stream_fifo #(
         .DATA_WIDTH (1 + DMA_CHANNEL_COUNT_WIDTH + DMA_BURST_WIDTH + DMA_OFFFSET_WIDTH),
         .FIFO_DEPTH (MAX_TQ_DEPTH)
-    ) u_stream_fifo (
+    ) u_stream_fifo_tasks (
        .ACLK    (clk                                                                            ),
        .ARESETn (rst_n                                                                          ),
 
@@ -245,7 +245,7 @@ module avmm_dma_top #(
     generate
         genvar i;
 
-        for (i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+        for (i = 0; i < DMA_CHANNEL_COUNT; i++) begin : dma_channels
             avmm_dma_engine #(
                 .DMA_OFFFSET_WIDTH (DMA_OFFFSET_WIDTH),
                 .DMA_BYTES_WIDTH   (DMA_BYTES_WIDTH  ),

@@ -51,7 +51,7 @@ module avmm_dma_task_demux #(
     
     always_comb begin
         
-        if (in_dma_task_valid_i && (out_dma_task_valid_o[in_dma_task_channel_i] != 1)) begin
+        if (!in_dma_task_ready_o && in_dma_task_valid_i && (out_dma_task_valid_o[in_dma_task_channel_i] != 1)) begin
             in_dma_task_ready_next = '1;
         end
         else begin

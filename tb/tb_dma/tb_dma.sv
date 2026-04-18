@@ -19,7 +19,7 @@ parameter     BAR_DATA_WIDTH                        = 128        ;
 parameter     BAR_ADDR_WIDTH                        = 12         ;
 
 parameter     TX_DATA_WIDTH                         = 128        ;
-parameter     TX_ADDR_WIDTH                         = 12         ;
+parameter     TX_ADDR_WIDTH                         = 64         ;
 parameter     TX_BURST_WIDTH                        = 6          ;
 
 parameter MSI_COUNT               = DMA_CHANNEL_COUNT                     ;
@@ -31,6 +31,10 @@ parameter DMA_TQ_ADDR_WIDTH       = $clog2(MAX_TQ_DEPTH)                  ;
 parameter PBA_COUNT               = MSI_COUNT / 64 + (MSI_COUNT % 64 != 0);
 parameter DMA_BURST_WIDTH         = DMA_BYTES_WIDTH - 4                   ;
 parameter DMA_CHANNEL_COUNT_WIDTH = $clog2(DMA_CHANNEL_COUNT)             ;
+
+
+logic        test_done     ;
+logic [15:0] current_struct;
 
 logic                       clk                                     ;
 logic                       rst_n                                   ;
@@ -86,6 +90,148 @@ logic                       dma_rddata_ready_i   [DMA_CHANNEL_COUNT];
 logic [DMA_RQ_ADDR_WIDTH:0] dma_rddata_free_i    [DMA_CHANNEL_COUNT];
 logic [TX_DATA_WIDTH-1:0]   dma_rddata_data_o    [DMA_CHANNEL_COUNT];
 
+generate
+    for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : dma_data_fifos
+
+        logic                       dma_wrdata_valid_wr;
+        logic                       dma_wrdata_ready_wr;
+        logic [TX_DATA_WIDTH-1:0]   dma_wrdata_data_wr ;
+
+        logic                       dma_rddata_valid_rd;
+        logic                       dma_rddata_ready_rd;
+        logic [TX_DATA_WIDTH-1:0]   dma_rddata_data_rd ;
+
+        always_ff @(posedge clk or negedge rst_n) begin
+            if (!rst_n) begin
+                dma_wrdata_valid_wr <= '0;
+                for (int i = 0; i < 4; i++) begin
+                    dma_wrdata_data_wr[i*32 +: 32] <= $urandom();
+                end
+
+                dma_rddata_ready_rd <= '0;
+            end
+            else begin
+                if (!dma_wrdata_valid_wr || (dma_wrdata_valid_wr && dma_wrdata_ready_wr)) begin
+                    dma_wrdata_valid_wr <= $urandom();
+                end
+                if (dma_wrdata_valid_wr && dma_wrdata_ready_wr) begin
+                    for (int i = 0; i < 4; i++) begin
+                        dma_wrdata_data_wr[i*32 +: 32] <= $urandom();
+                    end
+                end
+
+                dma_rddata_ready_rd <= $urandom();
+            end
+        end
+
+        stream_fifo #(
+            .DATA_WIDTH (TX_DATA_WIDTH  ),
+            .FIFO_DEPTH (DMA_WQ_DEPTH[i])
+        ) u_stream_fifo_dmawr (
+            .ACLK    (clk                   ),
+            .ARESETn (rst_n                 ),
+
+            .data_i  (dma_wrdata_data_wr    ),
+            .valid_i (dma_wrdata_valid_wr   ),
+            .ready_o (dma_wrdata_ready_wr   ),
+            .free_o  (                      ), // NC
+
+            .data_o  (dma_wrdata_data_i [i] ),
+            .valid_o (dma_wrdata_valid_i[i] ),
+            .ready_i (dma_wrdata_ready_o[i] ),
+            .count_o (dma_wrdata_count_i[i] )
+        );
+
+        stream_fifo #(
+            .DATA_WIDTH (TX_DATA_WIDTH  ),
+            .FIFO_DEPTH (DMA_WQ_DEPTH[i])
+        ) u_stream_fifo_dmard (
+            .ACLK    (clk                   ),
+            .ARESETn (rst_n                 ),
+
+            .data_i  (dma_rddata_data_o [i] ),
+            .valid_i (dma_rddata_valid_o[i] ),
+            .ready_o (dma_rddata_ready_i[i] ),
+            .free_o  (dma_rddata_free_i [i] ), // NC
+
+            .data_o  (dma_rddata_data_rd    ),
+            .valid_o (dma_rddata_valid_rd   ),
+            .ready_i (dma_rddata_ready_rd   ),
+            .count_o (                      )  // NC
+        );
+    end
+
+    for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : tx_read_logic
+        logic rdvalid_gate;
+        logic [31:0] reads_pipelined;
+
+        always @(posedge clk or negedge rst_n) begin
+            if (!rst_n) begin
+                tx_waitrequest[i] <= '1;
+                for (int j = 0; j < 4; j++) begin
+                    tx_readdata[i][j*32 +: 32] <= $urandom();
+                end
+            end
+            else begin
+                tx_waitrequest[i] <= $urandom();
+                if (tx_readdatavalid[i]) begin
+                    for (int j = 0; j < 4; j++) begin
+                        tx_readdata[i][j*32 +: 32] <= $urandom();
+                    end
+                end
+            end
+        end
+
+        always_ff @(posedge clk or negedge rst_n) begin
+            if (!rst_n) begin
+                reads_pipelined <= '0;
+            end
+            else begin
+                if (tx_chipselect[i] && tx_read[i] && !tx_waitrequest[i]) begin
+                    reads_pipelined <= reads_pipelined + tx_burstcount[i] - tx_readdatavalid[i];
+                end
+                else if (tx_readdatavalid[i]) begin
+                    reads_pipelined <= reads_pipelined - 1;
+                end
+            end
+        end
+
+        always_ff @(posedge clk or negedge rst_n) begin
+            if (!rst_n) begin
+                rdvalid_gate <= '0;
+            end
+            else begin
+                rdvalid_gate <= $urandom();
+            end
+        end
+
+        assign tx_readdatavalid[i] = (reads_pipelined != 0) & rdvalid_gate;
+    end
+
+    for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : convenience
+        logic                       loc_tx_chipselect   ;
+        logic [TX_DATA_BYTES-1:0]   loc_tx_byteenable   ;
+        logic [TX_DATA_WIDTH-1:0]   loc_tx_readdata     ;
+        logic [TX_DATA_WIDTH-1:0]   loc_tx_writedata    ;
+        logic                       loc_tx_read         ;
+        logic                       loc_tx_write        ;
+        logic [TX_BURST_WIDTH-1:0]  loc_tx_burstcount   ;
+        logic                       loc_tx_readdatavalid;
+        logic                       loc_tx_waitrequest  ;
+        logic [TX_ADDR_WIDTH-1:0]   loc_tx_address      ;
+
+        assign loc_tx_chipselect    = tx_chipselect   [i];
+        assign loc_tx_byteenable    = tx_byteenable   [i];
+        assign loc_tx_readdata      = tx_readdata     [i];
+        assign loc_tx_writedata     = tx_writedata    [i];
+        assign loc_tx_read          = tx_read         [i];
+        assign loc_tx_write         = tx_write        [i];
+        assign loc_tx_burstcount    = tx_burstcount   [i];
+        assign loc_tx_readdatavalid = tx_readdatavalid[i];
+        assign loc_tx_waitrequest   = tx_waitrequest  [i];
+        assign loc_tx_address       = tx_address      [i];
+    end
+endgenerate
 
 avmm_dma_top #(
     .DMA_CHANNEL_COUNT (DMA_CHANNEL_COUNT ),
@@ -108,7 +254,7 @@ avmm_dma_top #(
     .TX_DATA_WIDTH     (TX_DATA_WIDTH     ),
     .TX_ADDR_WIDTH     (TX_ADDR_WIDTH     ),
     .TX_BURST_WIDTH    (TX_BURST_WIDTH    )
-) u_avmm_dma_top (
+) dut (
     .clk                  (clk                  ),
     .rst_n                (rst_n                ),
 
@@ -163,5 +309,146 @@ avmm_dma_top #(
     .dma_rddata_free_i    (dma_rddata_free_i    ),
     .dma_rddata_data_o    (dma_rddata_data_o    )
 );
+
+always #10 clk = ~clk;
+
+initial begin
+    test_done = '0;
+
+    clk = '1;
+    rst_n = '0;
+
+    csr_s_chipselect  = '0;
+    csr_s_byteenable  = '0;
+    csr_s_writedata   = '0;
+    csr_s_read        = '0;
+    csr_s_write       = '0;
+    csr_s_address     = '0;
+
+    msix_s_chipselect = '0;
+    msix_s_byteenable = '0;
+    msix_s_writedata  = '0;
+    msix_s_read       = '0;
+    msix_s_write      = '0;
+    msix_s_address    = '0;
+
+    dec_s_chipselect  = '0;
+    dec_s_byteenable  = '0;
+    dec_s_writedata   = '0;
+    dec_s_read        = '0;
+    dec_s_write       = '0;
+    dec_s_address     = '0;
+
+    #15;
+    rst_n = '1;
+    @(posedge clk);
+
+    csr_s_chipselect = '1;
+    csr_s_byteenable = 'h000F;
+    csr_s_read       = '1;
+    csr_s_write      = '0;
+    csr_s_writedata  = '0;
+    csr_s_address    = '0;
+    @(posedge clk);
+    csr_s_read       = '0;
+    while (!csr_s_readdatavalid) begin
+        @(posedge clk);
+    end
+    current_struct = csr_s_readdata[31:16];
+    $display("DMA channels: %d;", csr_s_readdata[15:0]);
+    $display("Address of struct 0: 0x%x;", current_struct[31:16]);
+
+    // DMA configuration
+
+    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+        // Write DMA ADDR LO
+        csr_s_chipselect = '1;
+        csr_s_byteenable = 'h00F0;
+        csr_s_read       = '0;
+        csr_s_write      = '1;
+        csr_s_writedata  = '0;
+        csr_s_address    = current_struct;
+        @(posedge clk);
+        while (csr_s_waitrequest) begin
+            @(posedge clk);
+        end
+
+        // Write DMA ADDR HI
+        csr_s_chipselect = '1;
+        csr_s_byteenable = 'h0F00;
+        csr_s_read       = '0;
+        csr_s_write      = '1;
+        csr_s_writedata  = (i << 64) << 28;
+        csr_s_address    = current_struct;
+        @(posedge clk);
+        while (csr_s_waitrequest) begin
+            @(posedge clk);
+        end
+
+        csr_s_chipselect = '1;
+        csr_s_byteenable = 'h000F;
+        csr_s_read       = '1;
+        csr_s_write      = '0;
+        csr_s_writedata  = '0;
+        csr_s_address    = current_struct;
+        @(posedge clk);
+        csr_s_read       = '0;
+        while (!csr_s_readdatavalid) begin
+            @(posedge clk);
+        end
+        current_struct = csr_s_readdata[31:0];
+        $write("DMA address for channel %u: 0x%x; ", 4'(i), dut.dma_addr[i]);
+        $display("Next address: 0x%x;", current_struct);
+    end
+
+    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+        // Write DMA ADDR LO
+        msix_s_chipselect = '1;
+        msix_s_byteenable = 'hFFFF;
+        msix_s_read       = '0;
+        msix_s_write      = '1;
+        msix_s_writedata  = {32'(i % 2), 32'($urandom()), 32'('hFEE00000), 32'(i << 16)}; // ctrl, data, addr_hi, addr_lo
+        msix_s_address    = i * 'h10;
+        @(posedge clk);
+        while (csr_s_waitrequest) begin
+            @(posedge clk);
+        end
+        @(posedge clk);
+        $write("MSI-X for DMA channel %u: mask 0x%x, data 0x%x, addr 0x%x;\n", 4'(i), dut.msix_mask[i][0], dut.msix_data[i], dut.msix_addrs[i]);
+    end
+
+    
+    // DMA action
+
+    // Short operations
+    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+        dec_s_chipselect = '1;
+        dec_s_byteenable = 'h00FF;
+        dec_s_read       = '0;
+        dec_s_write      = '1;
+        dec_s_writedata  = ((22'(16*16)) << 32) | 22'('h0);
+        dec_s_address    = i << 4;
+        @(posedge clk);
+        while (dec_s_waitrequest) begin
+            @(posedge clk);
+        end
+        dec_s_chipselect = '1;
+        dec_s_byteenable = 'hFF00;
+        dec_s_read       = '0;
+        dec_s_write      = '1;
+        dec_s_writedata  = (((22'(16*16)) << 32) | 22'('h100)) << 64;
+        dec_s_address    = i << 4;
+        @(posedge clk);
+        while (dec_s_waitrequest) begin
+            @(posedge clk);
+        end
+    end
+    dec_s_write      = '0;
+
+    repeat(100) @(posedge clk);
+    
+    test_done = '1;
+    
+end
 
 endmodule

@@ -142,7 +142,12 @@ module avmm_dma_engine #(
             end
             WRITE   : begin
                 if (tx_chipselect && tx_write && !tx_waitrequest && dma_descriptor.bursts_left == 1) begin
-                    state_next = GEN_MSI;
+                    if (!msix_mask_i[0]) begin
+                        state_next = GEN_MSI;
+                    end
+                    else begin
+                        state_next = IDLE;
+                    end
                 end
                 else begin
                     state_next = state;
@@ -150,7 +155,12 @@ module avmm_dma_engine #(
             end
             READ    : begin
                 if (tx_chipselect && tx_readdatavalid && dma_descriptor.reads_left == 1) begin
-                    state_next = GEN_MSI;
+                    if (!msix_mask_i[0]) begin
+                        state_next = GEN_MSI;
+                    end
+                    else begin
+                        state_next = IDLE;
+                    end
                 end
                 else begin
                     state_next = state;

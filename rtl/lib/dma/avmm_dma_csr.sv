@@ -171,6 +171,7 @@ module avmm_dma_csr #(
             logic struct_addr_enable;
 
             assign struct_addr_enable = ((translated_addr >> DMA_STRUCT_ADDR_WIDTH) == (i+1));
+            assign dma_addr_o[i] = dma_csr_struct.dma_addr;
 
             // Read data logic
             always_ff @(posedge clk or negedge rst_n) begin
