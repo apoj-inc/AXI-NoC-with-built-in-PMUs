@@ -96,7 +96,7 @@ export_assignments
 puts "Starting Quartus compile for project '$project_name'..."
 if {[catch {execute_flow -compile} err]} {
     puts "ERROR: Compilation failed:"
-    puts $err
+    throw NONE $err
 }
 
 puts "Compile finished."
