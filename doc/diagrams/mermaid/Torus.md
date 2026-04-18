@@ -4,7 +4,7 @@ flowchart TB
     classDef hi fill:#fce4d6,stroke:#c55a11,color:#1f1f1f,stroke-width:2px;
     classDef note fill:#f4f6f8,stroke:#d9d9d9,color:#5b6573,stroke-width:1px;
 
-    OUT["Внешняя граница зациклена"]
+    OUT["Внешняя граница<br/>TVALID=0<br/>TREADY=1"]
 
     subgraph ROW0["Y=0"]
       R00["R(0,0)<br/>axi2axis + router"]
@@ -34,17 +34,17 @@ flowchart TB
       R33["R(3,3)<br/>axi2axis + router"]
     end
 
-    subgraph TORUS["Torus"]
+    subgraph MESH["MESH"]
       ROW0
       ROW1
       ROW2
       ROW3
     end
 
-    TORUS --- NOTE
-    TORUS --- OUT
+    MESH --- NOTE
+    MESH --- OUT
 
-    NOTE["На каждый узел `torus.sv` инстанцируется пара модулей:<br/>`axi2axis` bridge и `router`.<br/>Внутренние связи: `router_if` и `from_home`."]
+    NOTE["На каждый узел `mesh.sv` инстанцируется пара модулей:<br/>`axi2axis` bridge и `router`.<br/>Внутренние связи: `router_if` и `from_home`."]
 
     class R00,R10,R20,R30,R01,R11,R21,R31,R02,R12,R22,R32,R03,R13,R23,R33 node
     class OUT,NOTE note
