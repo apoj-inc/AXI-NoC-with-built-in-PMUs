@@ -2,7 +2,7 @@
 `include "axis_defines.svh"
 
 module buffer_allocator_keep_in_network #(
-    parameter        PHYSICAL_CHANNEL_NUMBER = 8,
+    parameter        PHYSICAL_CHANNEL_NUMBER = 5,
     parameter        VIRTUAL_CHANNEL_NUMBER = 2,
     parameter        CHANNEL_NUMBER = PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
     parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
@@ -24,6 +24,18 @@ module buffer_allocator_keep_in_network #(
     logic [CHANNEL_NUMBER-1:0] busy_next;
     logic [CHANNEL_NUMBER_WIDTH-1:0] allocated_to[CHANNEL_NUMBER];
     logic [CHANNEL_NUMBER_WIDTH-1:0] allocated_to_next[CHANNEL_NUMBER];
+
+    `GENERATE_AXIS_TYPEDEFS
+    axis_mosi_t in_mosi_i[CHANNEL_NUMBER], out_mosi_o[CHANNEL_NUMBER];
+    axis_miso_t in_miso_o[CHANNEL_NUMBER], out_miso_i[CHANNEL_NUMBER];
+
+    generate
+        genvar i;
+        for (i = 0; i < CHANNEL_NUMBER; i++) begin : typedef_to_interface
+            `AXIS_INTERFACE_MASTER2TYPEDEF(m_axis_o[i], out_mosi_o[i], out_miso_i[i])
+            `AXIS_INTERFACE_SLAVE2TYPEDEF(s_axis_i[i], in_mosi_i[i], in_miso_o[i])
+        end
+    endgenerate
 
     int current_virtual_network;
     int current_physical_channel, current_first_channel, current_channel, target_channel;
@@ -67,10 +79,12 @@ module buffer_allocator_keep_in_network #(
         allocation_shift = 0;
         for(allocated_channel = 0; allocated_channel < CHANNEL_NUMBER; allocated_channel++) begin
             if(busy[allocated_channel]) begin
-                `AXIS_INTERFACE2INTERFACE(m_axis_o[allocated_channel], s_axis_i[allocated_to_next[allocated_channel]])
+                out_mosi_o[allocated_channel] = in_mosi_i[allocated_channel];
+                in_miso_o[allocated_channel] = out_miso_i[allocated_channel];
                 allocation_shift++;
             end else begin
-                `AXIS_INTERFACE2INTERFACE(m_axis_o[allocated_channel], s_axis_i[allocated_channel + allocation_shift])
+                out_mosi_o[allocated_channel] = in_mosi_i[allocated_channel + allocation_shift];
+                in_miso_o[allocated_channel] = out_miso_i[allocated_channel + allocation_shift];
             end
         end
     end
