@@ -42,7 +42,7 @@ module avmm_dma_csr #(
         logic [15:0]                cap_next_ptr    ;
 
         logic [63:0]                dma_addr        ;
-        logic [63:0]                dma_word_bytes  ;
+        logic [31:0]                dma_word_bytes  ;
         
         logic [31:0]                max_wr_len      ;
         logic [31:0]                max_rd_len      ;

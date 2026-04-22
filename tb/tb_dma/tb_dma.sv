@@ -7,12 +7,12 @@ parameter     DMA_BYTES_WIDTH                       = 22         ;
 parameter     DMA_OFFFSET_WIDTH                     = 22         ;
 
 parameter int DMA_WORD_BYTES    [DMA_CHANNEL_COUNT] = '{16{16  }};
-parameter int DMA_WQ_DEPTH      [DMA_CHANNEL_COUNT] = '{16{1024}};
-parameter int DMA_RQ_DEPTH      [DMA_CHANNEL_COUNT] = '{16{1024}};
+parameter int DMA_WQ_DEPTH      [DMA_CHANNEL_COUNT] = '{16{16  }};
+parameter int DMA_RQ_DEPTH      [DMA_CHANNEL_COUNT] = '{16{16  }};
 parameter int DMA_TQ_DEPTH      [DMA_CHANNEL_COUNT] = '{16{16  }};
 
-parameter int MAX_WQ_DEPTH                          = 1024       ;
-parameter int MAX_RQ_DEPTH                          = 1024       ;
+parameter int MAX_WQ_DEPTH                          = 16         ;
+parameter int MAX_RQ_DEPTH                          = 16         ;
 parameter int MAX_TQ_DEPTH                          = 16         ;
 
 parameter     BAR_DATA_WIDTH                        = 128        ;
@@ -356,7 +356,7 @@ initial begin
     end
     current_struct = csr_s_readdata[31:16];
     $display("DMA channels: %d;", csr_s_readdata[15:0]);
-    $display("Address of struct 0: 0x%x;", current_struct[31:16]);
+    $display("Address of struct 0: 0x%x;", csr_s_readdata[31:16]);
 
     // DMA configuration
 
@@ -443,9 +443,32 @@ initial begin
             @(posedge clk);
         end
     end
+    // Long operations
+    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+        dec_s_chipselect = '1;
+        dec_s_byteenable = 'h00FF;
+        dec_s_read       = '0;
+        dec_s_write      = '1;
+        dec_s_writedata  = ((22'(128*16)) << 32) | 22'('h0);
+        dec_s_address    = i << 4;
+        @(posedge clk);
+        while (dec_s_waitrequest) begin
+            @(posedge clk);
+        end
+        dec_s_chipselect = '1;
+        dec_s_byteenable = 'hFF00;
+        dec_s_read       = '0;
+        dec_s_write      = '1;
+        dec_s_writedata  = (((22'(128*16)) << 32) | 22'('h100)) << 64;
+        dec_s_address    = i << 4;
+        @(posedge clk);
+        while (dec_s_waitrequest) begin
+            @(posedge clk);
+        end
+    end
     dec_s_write      = '0;
 
-    repeat(100) @(posedge clk);
+    repeat(1000) @(posedge clk);
     
     test_done = '1;
     
