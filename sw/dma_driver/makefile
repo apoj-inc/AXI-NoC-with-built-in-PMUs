@@ -1,4 +1,4 @@
-obj-m += dma.o
+obj-m += hdlnocgen_c5p_driver.o
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
 
