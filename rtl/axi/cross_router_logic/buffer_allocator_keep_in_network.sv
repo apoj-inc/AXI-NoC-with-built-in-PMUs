@@ -66,7 +66,7 @@ module buffer_allocator_keep_in_network #(
         end
 
         for (target_channel = 0; target_channel < CHANNEL_NUMBER; target_channel++) begin
-            if(s_axis_i.TLAST && m_axis_o.TREADY) begin
+            if(out_mosi_o[target_channel].data.TLAST && out_miso_i[target_channel].TREADY) begin
                 busy_next[target_channel] = 1'b0;
             end
         end

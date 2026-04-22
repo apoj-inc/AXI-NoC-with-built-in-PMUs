@@ -2,7 +2,7 @@
 `include "axis_defines.svh"
 
 module tb_buffer_allocator_keep_in_network #(
-    parameter        PHYSICAL_CHANNEL_NUMBER = 8,
+    parameter        PHYSICAL_CHANNEL_NUMBER = 1,
     parameter        VIRTUAL_CHANNEL_NUMBER = 4,
     parameter        CHANNEL_NUMBER = PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
     parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
@@ -123,7 +123,7 @@ module tb_buffer_allocator_keep_in_network #(
     assign axis_o[3].TREADY = s3_tready;
 
 
-    buffer_allocator_keep_network #(
+    buffer_allocator_keep_in_network #(
         .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
         .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
         .CHANNEL_NUMBER(CHANNEL_NUMBER),
