@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge, First
+from cocotb.triggers import RisingEdge, Event
 from cocotb.clock import Clock
 from cocotbext.axi import AxiStreamBus, AxiStreamSource, AxiStreamSink, AxiStreamFrame
 
@@ -43,19 +43,18 @@ async def test(dut):
             )
         )
 
-    cocotb.start_soon(random_ready(dut))
-    await RisingEdge(dut.clk)
+    await RisingEdge(dut.ACLK)
 
-    axis_sinks[0].pause()
-    axis_sinks[1].pause()
+    axis_sinks[0].pause = 1
+    axis_sinks[1].pause = 1
 
-    single_channel = send_multiple_frames(axis_sources[-1], 'dead', 2)
+    single_channel = send_multiple_frames(axis_sources[-1], b'dead', 2)
 
     multiple = []
     for i in range(2):
         multiple.append(
             AxiStreamFrame(
-                'beef',
+                b'beef',
                 tx_complete=Event()
                 )
             )
