@@ -1,16 +1,7 @@
 import cocotb
-from cocotb.triggers import RisingEdge, Event
+from cocotb.triggers import RisingEdge, Event, Timer, First
 from cocotb.clock import Clock
 from cocotbext.axi import AxiStreamBus, AxiStreamSource, AxiStreamSink, AxiStreamFrame
-
-async def send_multiple_frames(axis_source, data, n):
-    for _ in range(n):
-        frame = AxiStreamFrame(
-            data,
-            tx_complete=Event()
-        )
-        await axis_source.send(frame)
-        await frame.tx_complete.wait()
 
 @cocotb.test
 async def test(dut):
@@ -43,23 +34,54 @@ async def test(dut):
             )
         )
 
+    axis_sinks[0].pause = 1
+
     await RisingEdge(dut.ACLK)
 
-    axis_sinks[0].pause = 1
-    axis_sinks[1].pause = 1
+    single_channel = AxiStreamFrame(
+            b'dead',
+            tx_complete=Event()
+        )
 
-    single_channel = send_multiple_frames(axis_sources[-1], b'dead', 2)
+    await axis_sources[-1].send(
+        single_channel
+    )
 
     multiple = []
-    for i in range(2):
-        multiple.append(
-            AxiStreamFrame(
-                b'beef',
-                tx_complete=Event()
-                )
+
+    multiple.append(
+        AxiStreamFrame(
+            b'bee1',
+            tx_complete=Event()
             )
-        axis_sources[i].send(multiple[i])
+        )
+    await axis_sources[0].send(multiple[0])
     
-    await single_channel
+    multiple.append(
+        AxiStreamFrame(
+            b'bee2',
+            tx_complete=Event()
+            )
+        )
+    await axis_sources[1].send(multiple[1])
+
+    timeout = Timer(1_000, unit='ns')
+
+    result = await First(
+        timeout,
+        single_channel.tx_complete.wait()
+    )
+
+    assert result is not timeout, "The design has hung!"
+
     assert axis_sources[0].idle, 'First source didn\'t complete the transaction'
-    assert axis_sources[1].idle, 'First source didn\'t complete the transaction'
+    assert axis_sources[1].idle, 'Second source didn\'t complete the transaction'
+
+
+    for _ in range(3):
+        await RisingEdge(dut.ACLK)
+
+    assert axis_sinks[0].count() == 0,                   'The elements do not add up for sink 1'
+    assert axis_sinks[1].recv_nowait().tdata == b'bee1', 'The elements do not add up for sink 2'
+    assert axis_sinks[2].recv_nowait().tdata == b'bee2', 'The elements do not add up for sink 3'
+    assert axis_sinks[3].recv_nowait().tdata == b'dead', 'The elements do not add up for sink 4'

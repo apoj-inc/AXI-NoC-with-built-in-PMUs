@@ -37,6 +37,7 @@ module buffer_allocator_keep_in_network #(
         end
     endgenerate
 
+    int alloc_channel;
     int current_virtual_network;
     int current_physical_channel, current_first_channel, current_channel, target_channel;
     int done;
@@ -45,6 +46,7 @@ module buffer_allocator_keep_in_network #(
         current_channel = 0;
         current_first_channel = 0;
         allocated_to_next = allocated_to;
+
         for(current_physical_channel = 0; current_physical_channel < PHYSICAL_CHANNEL_NUMBER; current_physical_channel++) begin
             for(current_virtual_network = 0; current_virtual_network < VIRTUAL_NETWORK_NUMBER; current_virtual_network++) begin
                 target_channel = current_first_channel;
@@ -52,7 +54,7 @@ module buffer_allocator_keep_in_network #(
                     done = 1'b0;
                     if(in_mosi_i[current_channel].TVALID) begin
                         for (; (target_channel < current_first_channel + VIRTUAL_NETWORKS[current_virtual_network]) && !done; target_channel++) begin
-                            if(!busy[target_channel] && out_miso_i[target_channel].TREADY) begin
+                            if(!busy_next[target_channel] && out_miso_i[target_channel].TREADY) begin
                                 busy_next[target_channel] = 1'b1;
                                 done = 1'b1;
                                 allocated_to_next[target_channel] = current_channel;
@@ -64,27 +66,22 @@ module buffer_allocator_keep_in_network #(
                 current_first_channel = current_channel;
             end
         end
-
+        
         for (target_channel = 0; target_channel < CHANNEL_NUMBER; target_channel++) begin
             if(out_mosi_o[target_channel].data.TLAST && out_miso_i[target_channel].TREADY) begin
                 busy_next[target_channel] = 1'b0;
             end
         end
 
-    end
+        for (alloc_channel = 0; alloc_channel < CHANNEL_NUMBER; alloc_channel++) begin
+            out_mosi_o[alloc_channel] = '0;
+            in_miso_o[alloc_channel] = '0;
+        end
 
-    int allocated_channel;
-    int allocation_shift;
-    always_comb begin
-        allocation_shift = 0;
-        for(allocated_channel = 0; allocated_channel < CHANNEL_NUMBER; allocated_channel++) begin
-            if(busy[allocated_channel]) begin
-                out_mosi_o[allocated_channel] = in_mosi_i[allocated_channel];
-                in_miso_o[allocated_channel] = out_miso_i[allocated_channel];
-                allocation_shift++;
-            end else begin
-                out_mosi_o[allocated_channel] = in_mosi_i[allocated_channel + allocation_shift];
-                in_miso_o[allocated_channel] = out_miso_i[allocated_channel + allocation_shift];
+        for(alloc_channel = 0; alloc_channel < CHANNEL_NUMBER; alloc_channel++) begin
+            if(busy[alloc_channel]) begin
+                out_mosi_o[alloc_channel] = in_mosi_i[allocated_to_next[alloc_channel]];
+                in_miso_o[allocated_to_next[alloc_channel]] = out_miso_i[alloc_channel];
             end
         end
     end
