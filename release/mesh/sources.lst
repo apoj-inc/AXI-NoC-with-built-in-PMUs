@@ -4,6 +4,7 @@ rtl/axi/mesh/mesh.sv
 rtl/axi/axi2axis.sv
 rtl/axi/cross_router_logic/algorithm_selector_mesh_XY.sv
 rtl/axi/cross_router_logic/buffer_allocator_straight.sv
+rtl/axi/cross_router_logic/buffer_allocator_keep_in_network.sv
 rtl/axi/router/src/router.sv
 rtl/axi/stream_arbiter.sv
 rtl/axi/stream_fifo.sv

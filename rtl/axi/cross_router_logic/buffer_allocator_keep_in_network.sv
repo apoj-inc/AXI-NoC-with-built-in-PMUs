@@ -1,9 +1,8 @@
 `include "defines.svh"
 `include "axis_defines.svh"
 
-// TODO Not tested, just a blueprint. Tesbench before use!
 module buffer_allocator_keep_in_network #(
-    parameter        PHYSICAL_CHANNEL_NUMBER = 8,
+    parameter        PHYSICAL_CHANNEL_NUMBER = 5,
     parameter        VIRTUAL_CHANNEL_NUMBER = 2,
     parameter        CHANNEL_NUMBER = PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER,
     parameter        CHANNEL_NUMBER_WIDTH = $clog2(CHANNEL_NUMBER),
@@ -23,9 +22,22 @@ module buffer_allocator_keep_in_network #(
 
     logic [CHANNEL_NUMBER-1:0] busy;
     logic [CHANNEL_NUMBER-1:0] busy_next;
-    logic [CHANNEL_NUMBER_WIDTH-1:0] allocated_to[CHANNEL_NUMBER];
-    logic [CHANNEL_NUMBER_WIDTH-1:0] allocated_to_next[CHANNEL_NUMBER];
+    logic [CHANNEL_NUMBER_WIDTH:0] allocated_to[CHANNEL_NUMBER];
+    logic [CHANNEL_NUMBER_WIDTH:0] allocated_to_next[CHANNEL_NUMBER];
 
+    `GENERATE_AXIS_TYPEDEFS
+    axis_mosi_t in_mosi_i[CHANNEL_NUMBER], out_mosi_o[CHANNEL_NUMBER];
+    axis_miso_t in_miso_o[CHANNEL_NUMBER], out_miso_i[CHANNEL_NUMBER];
+
+    generate
+        genvar i;
+        for (i = 0; i < CHANNEL_NUMBER; i++) begin : typedef_to_interface
+            `AXIS_INTERFACE_MASTER2TYPEDEF(m_axis_o[i], out_mosi_o[i], out_miso_i[i])
+            `AXIS_INTERFACE_SLAVE2TYPEDEF(s_axis_i[i], in_mosi_i[i], in_miso_o[i])
+        end
+    endgenerate
+
+    int alloc_channel;
     int current_virtual_network;
     int current_physical_channel, current_first_channel, current_channel, target_channel;
     int done;
@@ -34,44 +46,48 @@ module buffer_allocator_keep_in_network #(
         current_channel = 0;
         current_first_channel = 0;
         allocated_to_next = allocated_to;
+
         for(current_physical_channel = 0; current_physical_channel < PHYSICAL_CHANNEL_NUMBER; current_physical_channel++) begin
             for(current_virtual_network = 0; current_virtual_network < VIRTUAL_NETWORK_NUMBER; current_virtual_network++) begin
                 target_channel = current_first_channel;
                 for(current_channel = current_first_channel; current_channel < current_first_channel + VIRTUAL_NETWORKS[current_virtual_network]; current_channel++) begin
                     done = 1'b0;
-                    if(in_mosi_i[current_channel].TVALID) begin
-                        for (; (target_channel < current_first_channel + VIRTUAL_NETWORKS[current_virtual_network]) && !done; target_channel++) begin
+                    if(in_mosi_i[current_channel].TVALID && allocated_to[current_channel] == '1) begin
+                        for (target_channel=target_channel; (target_channel < current_first_channel + VIRTUAL_NETWORKS[current_virtual_network]) && !done; target_channel++) begin
                             if(!busy[target_channel] && out_miso_i[target_channel].TREADY) begin
                                 busy_next[target_channel] = 1'b1;
                                 done = 1'b1;
-                                allocated_to_next[target_channel] = current_channel;
+                                allocated_to_next[current_channel] = target_channel;
                             end
-                            
                         end
                     end
                 end
                 current_first_channel = current_channel;
             end
         end
-
+        
         for (target_channel = 0; target_channel < CHANNEL_NUMBER; target_channel++) begin
-            if(s_axis_i.TLAST && m_axis_o.TREADY) begin
+            if(out_mosi_o[target_channel].data.TLAST && out_miso_i[target_channel].TREADY) begin
                 busy_next[target_channel] = 1'b0;
             end
         end
+        
+        
+        for (current_channel = 0; current_channel < CHANNEL_NUMBER; current_channel++) begin
+            if(!busy_next[allocated_to_next[current_channel]]) begin
+                allocated_to_next[current_channel] = '1;
+            end
+        end
 
-    end
+        for (alloc_channel = 0; alloc_channel < CHANNEL_NUMBER; alloc_channel++) begin
+            out_mosi_o[alloc_channel] = '0;
+            in_miso_o[alloc_channel] = '0;
+        end
 
-    int allocated_channel;
-    int allocation_shift;
-    always_comb begin
-        allocation_shift = 0;
-        for(allocated_channel = 0; allocated_channel < CHANNEL_NUMBER; allocated_channel++) begin
-            if(busy[allocated_channel]) begin
-                `AXIS_INTERFACE2INTERFACE(m_axis_o[allocated_channel], s_axis_i[allocated_to_next[allocated_channel]])
-                allocation_shift++;
-            end else begin
-                `AXIS_INTERFACE2INTERFACE(m_axis_o[allocated_channel], s_axis_i[allocated_channel + allocation_shift])
+        for(alloc_channel = 0; alloc_channel < CHANNEL_NUMBER; alloc_channel++) begin
+            if(busy[allocated_to_next[alloc_channel]]) begin
+                out_mosi_o[allocated_to_next[alloc_channel]] = in_mosi_i[alloc_channel];
+                in_miso_o[alloc_channel] = out_miso_i[allocated_to_next[alloc_channel]];
             end
         end
     end
@@ -88,11 +104,12 @@ module buffer_allocator_keep_in_network #(
     always_ff @(posedge ACLK or negedge ARESETn) begin
         if(!ARESETn) begin
             for(alloc = 0; alloc < CHANNEL_NUMBER; alloc++) begin
-                allocated_to[alloc] <= '0;
+                allocated_to[alloc] <= '1;
             end
         end else begin
             allocated_to <= allocated_to_next;
         end
+        alloc <= 0;
     end
     
 endmodule

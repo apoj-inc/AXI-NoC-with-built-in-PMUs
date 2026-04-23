@@ -49,8 +49,8 @@ module router_buffer #(
                 .s_axis_i(s_axis_i),
                 .m_axis_o(alloc_if)
             );
-        end /* else if(BUFFER_ALLOCATOR == "KeepInNetwork") begin : router_buffer_alloc_keep_in_network
-            buffer_allocator_keep_network #(
+        end else if(BUFFER_ALLOCATOR == "KeepInNetwork") begin : router_buffer_alloc_keep_in_network
+            buffer_allocator_keep_in_network #(
                 .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
                 .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
                 .CHANNEL_NUMBER(CHANNEL_NUMBER),
@@ -63,9 +63,9 @@ module router_buffer #(
             ) buffer_allocator (
                 .ACLK(ACLK), .ARESETn(ARESETn),
                 .s_axis_i(s_axis_i),
-                .m_axis_o(alloc_if.m)
+                .m_axis_o(alloc_if)
             );
-        end*/ else begin : router_buffer_alloc_error
+        end else begin : router_buffer_alloc_error
             initial $error("No buffer allocator proveided! %s", BUFFER_ALLOCATOR);
         end
     endgenerate

@@ -10,6 +10,7 @@ rtl/axi/cross_router_logic/algorithm_selector_torus_XY.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_XY_one_way.sv
 rtl/axi/cross_router_logic/algorithm_selector_torus_EWn_SNe.sv
 rtl/axi/cross_router_logic/buffer_allocator_straight.sv
+rtl/axi/cross_router_logic/buffer_allocator_keep_in_network.sv
 rtl/axi/router/src/algorithm.sv
 rtl/axi/router/src/router_buffer.sv
 rtl/axi/router/src/arbiter.sv
