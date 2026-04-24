@@ -41,9 +41,9 @@ module buffer_allocator_keep_in_network #(
                 // Interfaces
                 axis_mosi_t in_mosi_i[CHANNELS], out_mosi_o[CHANNELS];
                 axis_miso_t in_miso_o[CHANNELS], out_miso_i[CHANNELS];
-                for (interface_virtual_channel = OFFSET; interface_virtual_channel < OFFSET + CHANNELS; interface_virtual_channel++) begin: vc
-                    `AXIS_INTERFACE_MASTER2TYPEDEF(m_axis_o[interface_virtual_channel], out_mosi_o[interface_virtual_channel], out_miso_i[interface_virtual_channel])
-                    `AXIS_INTERFACE_SLAVE2TYPEDEF(s_axis_i[interface_virtual_channel], in_mosi_i[interface_virtual_channel], in_miso_o[interface_virtual_channel])
+                for (interface_virtual_channel = 0; interface_virtual_channel < CHANNELS; interface_virtual_channel++) begin: vc
+                    `AXIS_INTERFACE_MASTER2TYPEDEF(m_axis_o[interface_virtual_channel + OFFSET], out_mosi_o[interface_virtual_channel], out_miso_i[interface_virtual_channel])
+                    `AXIS_INTERFACE_SLAVE2TYPEDEF(s_axis_i[interface_virtual_channel + OFFSET], in_mosi_i[interface_virtual_channel], in_miso_o[interface_virtual_channel])
                 end
                 // Main
                 always_comb begin
