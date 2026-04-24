@@ -33,8 +33,8 @@ module buffer_allocator_keep_in_network #(
                 // Variables
                 logic [$clog2(CHANNELS):0]   allocated_to [CHANNELS];
                 logic [$clog2(CHANNELS):0]   allocated_to_next [CHANNELS];
-                logic [$clog2(CHANNELS-1):0] busy;
-                logic [$clog2(CHANNELS-1):0] busy_next;
+                logic [CHANNELS:0] busy;
+                logic [CHANNELS:0] busy_next;
                 logic [$clog2(CHANNELS-1):0] current_channel;
                 logic done;
                 logic [$clog2(CHANNELS-1):0] target_channel;
@@ -48,6 +48,7 @@ module buffer_allocator_keep_in_network #(
                 // Main
                 always_comb begin
                     target_channel = '0;
+                    busy_next = busy;
                     for (current_channel = '0; current_channel < CHANNELS; current_channel++) begin
                         done = 1'b0;
                         if(in_mosi_i[current_channel].TVALID && allocated_to[current_channel] == '1) begin
