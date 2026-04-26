@@ -27,15 +27,11 @@ endif
 ifndef SIM_ARGS
 SIM_ARGS :=
 SIM_ARGS += -suppress 12110 -autofindloop -suppress 12130
+SIM_ARGS += -do $(CURDIR)/cctb/build/questa_after_vsim.do
 endif
 
 CCTB_DIR ?= $(CACHE_DIR)/cctb
 SIM_BUILD ?= $(CCTB_DIR)/$(COCOTB_TEST_MODULES)
-
-ifndef SCRIPT_FILE
-SCRIPT_FILE :=
-SCRIPT_FILE += $(CURDIR)/cctb/build/cctb_script.tcl
-endif
 
 VENV_DIR ?= $(CACHE_DIR)/.venv
 
@@ -56,8 +52,7 @@ run: $(VENV_DIR) $(VERILOG_SOURCES)
 	make -f $(shell $(VENV_DIR)/bin/cocotb-config --makefiles)/Makefile.sim TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
 	COCOTB_TOPLEVEL=$(COCOTB_TOPLEVEL) COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES) SIM=$(SIM) SIM_BUILD=$(CCTB_DIR) \
 	COMPILE_ARGS='$(COMPILE_ARGS)' SIM_ARGS='$(SIM_ARGS)' WAVES=$(WAVES) VERILOG_INCLUDE_DIRS="$(INCLUDE_DIRS)" TOPLEVEL_LIBRARY=$(TOPLEVEL_LIBRARY) \
-	VERILOG_SOURCES="$(VERILOG_SOURCES) $(TB_FILES)" \
-	SCRIPT_FILE=$(SCRIPT_FILE)
+	VERILOG_SOURCES="$(VERILOG_SOURCES) $(TB_FILES)"
 
 wave:
 	vsim -view $(SIM_BUILD)/vsim.wlf
