@@ -32,7 +32,9 @@ vlib work
 vlog -mfcu -f files_rtl.lst
 
 vsim -voptargs=+acc work.$TOPLEVEL
-set WildcardFilter [lsearch -not -all -inline $WildcardFilter Memory]
+if {[lsearch -exact $WildcardFilter Memory] >= 0} {
+    set WildcardFilter [lsearch -not -all -inline $WildcardFilter Memory]
+}
 log -r /*
 run -all
 
