@@ -92,7 +92,10 @@ module tb_circulant (
         .AXI_ADDR_WIDTH(12),
         .ROUTERS_COUNT(16),
         .GENERATICS_COUNT(3),
-        .GENERATICS('{5,2,1})
+        .GENERATICS('{5,2,1}),
+        .VIRTUAL_CHANNEL_NUMBER(8),
+        .VIRTUAL_NETWORKS('{4, 4}),
+        .BUFFER_ALLOCATOR("KeepInNetwork")
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),

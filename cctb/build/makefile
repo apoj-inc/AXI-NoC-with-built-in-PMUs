@@ -21,7 +21,7 @@ TB_FILES ?=  $(foreach file,$(shell find tb/tb_* -type f -name '*.sv'),$(CURDIR)
 SIM ?= questa-compat
 
 ifndef COMPILE_ARGS
-COMPILE_ARGS := -suppress 13314
+COMPILE_ARGS := -suppress 13314 -suppress 14408
 endif
 
 ifndef SIM_ARGS
