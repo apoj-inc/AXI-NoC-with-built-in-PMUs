@@ -94,6 +94,9 @@ module tb_torus_parallel (
         .MAX_ROUTERS_X(5),
         .MAX_ROUTERS_Y(4),
         .ALGORITHM("EWn_SNe"),
+        .VIRTUAL_CHANNEL_NUMBER(6),
+        .VIRTUAL_NETWORKS('{2, 4}),
+        .BUFFER_ALLOCATOR("KeepInNetwork"),
         .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(1)
     ) dut (
         .ACLK(aclk),

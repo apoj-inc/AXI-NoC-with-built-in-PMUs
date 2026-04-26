@@ -51,6 +51,7 @@ module buffer_allocator_keep_in_network #(
                     // Main
                     always_comb begin
                         busy_next = busy;
+                        allocated_to_next = allocated_to;
 
                         for (target_channel = 0; target_channel < CHANNELS; target_channel++) begin
                             if(out_mosi_o[target_channel].data.TLAST && out_miso_i[target_channel].TREADY) begin

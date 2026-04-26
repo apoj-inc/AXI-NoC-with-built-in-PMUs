@@ -74,7 +74,7 @@ module circulant #(
                 .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
                 .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                 .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-            )   axi2axis_resp_req[2]();
+            )   axi2axis_req_resp[2]();
 
             axi2axis #(
                 .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
@@ -98,10 +98,10 @@ module circulant #(
                 .s_axi_if_i(s_axi_i[i]),
                 .m_axi_if_o(m_axi_o[i]),
 
-                .s_axis_if_req_i(axi2axis_resp_req[0]),
+                .s_axis_if_req_i(axi2axis_req_resp[0]),
                 .m_axis_if_req_o(from_home[i][0]),
 
-                .s_axis_if_resp_i(axi2axis_resp_req[1]),
+                .s_axis_if_resp_i(axi2axis_req_resp[1]),
                 .m_axis_if_resp_o(from_home[i][VIRTUAL_NETWORKS[0]])
             );
 
@@ -183,7 +183,7 @@ module circulant #(
                         .clk_i(ACLK), .rst_n_i(ARESETn),
 
                         .s_axis_i(if_demuxed_narrowed),
-                        .m_axis_o(axi2axis_resp_req[gen_arbiter])
+                        .m_axis_o(axi2axis_req_resp[gen_arbiter])
                     );
                     genvar closed_from_homes;
                     for (closed_from_homes = OFFSET + 1;closed_from_homes < OFFSET + VIRTUAL_NETWORKS[gen_arbiter]; closed_from_homes++) begin
@@ -197,7 +197,7 @@ module circulant #(
                         assign from_home[i][closed_from_homes].TUSER  = '0;
                     end
                 end else begin
-                    `AXIS_INTERFACE2INTERFACE(if_demuxed[gen_arbiter][0], axi2axis_resp_req[gen_arbiter]);
+                    `AXIS_INTERFACE2INTERFACE(if_demuxed[gen_arbiter][0], axi2axis_req_resp[gen_arbiter]);
                 end
             end
 
