@@ -105,7 +105,7 @@ module router #(
             )   arb_i_if [VIRTUAL_NETWORK_NUMBER][CHANNEL_NUMBER] (),
                 alg_o_if [VIRTUAL_NETWORK_NUMBER][CHANNEL_NUMBER] ();
 
-            network_channel_picker # (
+            network_channel_mux # (
                 .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
                 .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
                 .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
@@ -116,11 +116,25 @@ module router #(
                 .CHANNEL_NUMBER(CHANNEL_NUMBER),
                 .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
                 .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
-            ) ncp (
-                .s_axis_dem(queue_o_if),
-                .m_axis_dem(arb_i_if),
+            ) ncm (
                 .s_axis_mux(alg_o_if),
                 .m_axis_mux(m_axis_o)
+            );
+
+            network_channel_demux # (
+                .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+                
+                .PHYSICAL_CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER),
+                .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+                .CHANNEL_NUMBER(CHANNEL_NUMBER),
+                .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
+                .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
+            ) ncd (
+                .s_axis_dem(queue_o_if),
+                .m_axis_dem(arb_i_if)
             );
 
             for (current_virtual_network = 0; current_virtual_network < VIRTUAL_NETWORK_NUMBER; current_virtual_network++) begin : simultainious_network_routing_gen
