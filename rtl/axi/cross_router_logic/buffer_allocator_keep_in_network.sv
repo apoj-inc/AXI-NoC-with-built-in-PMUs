@@ -38,9 +38,9 @@ module buffer_allocator_keep_in_network #(
                     logic [$clog2(CHANNELS):0]   allocated_to_next [CHANNELS];
                     logic [CHANNELS:0] busy;
                     logic [CHANNELS:0] busy_next;
-                    logic [$clog2(CHANNELS-1):0] current_channel;
+                    logic [$clog2(CHANNELS):0] current_channel;
                     logic done;
-                    logic [$clog2(CHANNELS-1):0] target_channel;
+                    logic [$clog2(CHANNELS):0] target_channel;
                     // Interfaces
                     axis_mosi_t in_mosi_i[CHANNELS], out_mosi_o[CHANNELS];
                     axis_miso_t in_miso_o[CHANNELS], out_miso_i[CHANNELS];
@@ -53,9 +53,16 @@ module buffer_allocator_keep_in_network #(
                         busy_next = busy;
                         allocated_to_next = allocated_to;
 
-                        for (target_channel = 0; target_channel < CHANNELS; target_channel++) begin
-                            if(out_mosi_o[target_channel].data.TLAST && out_miso_i[target_channel].TREADY) begin
-                                busy_next[target_channel] = 1'b0;
+                        // Release an occupied target when the currently mapped input
+                        // completes a TLAST handshake on that target.
+                        for (current_channel = 0; current_channel < CHANNELS; current_channel++) begin
+                            if(allocated_to[current_channel] != '1) begin
+                                target_channel = allocated_to[current_channel];
+                                if (in_mosi_i[current_channel].TVALID &&
+                                    in_mosi_i[current_channel].data.TLAST &&
+                                    out_miso_i[target_channel].TREADY) begin
+                                    busy_next[target_channel] = 1'b0;
+                                end
                             end
                         end
 
