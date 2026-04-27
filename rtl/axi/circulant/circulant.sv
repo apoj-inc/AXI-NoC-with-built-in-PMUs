@@ -1,5 +1,6 @@
 `include "defines.svh"
 `include "axis_defines.svh"
+`include "virtual_networks_utils.svh"
 
 module circulant #(
     parameter        AXI_DATA_WIDTH  = 32,
@@ -147,7 +148,7 @@ module circulant #(
             );
 
             genvar gen_arbiter;
-            for (gen_arbiter = 0; gen_arbiter < 2; gen_arbiter++) begin
+            for (gen_arbiter = 0; gen_arbiter < 2; gen_arbiter++) begin: demultiplexing_entrances_to_bridge
                 localparam OFFSET = calculate_virtual_network_offset(gen_arbiter);
                 if (VIRTUAL_NETWORKS[gen_arbiter] != 1) begin
 
@@ -186,7 +187,7 @@ module circulant #(
                         .m_axis_o(axi2axis_req_resp[gen_arbiter])
                     );
                     genvar closed_from_homes;
-                    for (closed_from_homes = OFFSET + 1;closed_from_homes < OFFSET + VIRTUAL_NETWORKS[gen_arbiter]; closed_from_homes++) begin
+                    for (closed_from_homes = OFFSET + 1;closed_from_homes < OFFSET + VIRTUAL_NETWORKS[gen_arbiter]; closed_from_homes++) begin: zeroing_from_home
                         assign from_home[i][closed_from_homes].TVALID = '0;
                         assign from_home[i][closed_from_homes].TDATA  = '0;
                         assign from_home[i][closed_from_homes].TSTRB  = '0;
@@ -197,7 +198,7 @@ module circulant #(
                         assign from_home[i][closed_from_homes].TUSER  = '0;
                     end
                 end else begin
-                    `AXIS_INTERFACE2INTERFACE(if_demuxed[gen_arbiter][0], axi2axis_req_resp[gen_arbiter]);
+                    `AXIS_INTERFACE2INTERFACE(if_demuxed[gen_arbiter], axi2axis_req_resp[gen_arbiter])
                 end
             end
 
