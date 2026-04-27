@@ -53,7 +53,9 @@ module torus #(
         .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
     )   router_if[MAX_ROUTERS_Y][MAX_ROUTERS_X][CHANNEL_NUMBER](),
         from_home[MAX_ROUTERS_Y][MAX_ROUTERS_X][VIRTUAL_CHANNEL_NUMBER](),
-        router_in[MAX_ROUTERS_Y][MAX_ROUTERS_X][CHANNEL_NUMBER]();
+        router_in[MAX_ROUTERS_Y][MAX_ROUTERS_X][CHANNEL_NUMBER](),
+        if_demuxed[MAX_ROUTERS_Y][MAX_ROUTERS_X][VIRTUAL_NETWORK_NUMBER][VIRTUAL_CHANNEL_NUMBER](),
+        ncp_s_axis_dem[MAX_ROUTERS_Y][MAX_ROUTERS_X][VIRTUAL_CHANNEL_NUMBER]();
 
     generate
         for (i = 0; i < MAX_ROUTERS_Y; i++) begin : Y
@@ -97,17 +99,9 @@ module torus #(
                     .m_axis_if_resp_o(from_home[i][j][VIRTUAL_NETWORKS[0]])
                 );
 
-                axis_if #(
-                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
-                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
-                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
-                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-                )   if_demuxed[VIRTUAL_NETWORK_NUMBER][VIRTUAL_CHANNEL_NUMBER](),
-                    ncp_s_axis_dem[VIRTUAL_CHANNEL_NUMBER]();
-
                 genvar demux_vc;
                 for (demux_vc = 0; demux_vc < VIRTUAL_CHANNEL_NUMBER; demux_vc++) begin : demux_input_connect
-                    `AXIS_INTERFACE2INTERFACE(router_if[i][j][demux_vc], ncp_s_axis_dem[demux_vc])
+                    `AXIS_INTERFACE2INTERFACE(router_if[i][j][demux_vc], ncp_s_axis_dem[i][j][demux_vc])
                 end
 
                 network_channel_demux # (
@@ -122,8 +116,8 @@ module torus #(
                     .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
                     .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
                 ) ncp (
-                    .s_axis_dem(ncp_s_axis_dem),
-                    .m_axis_dem(if_demuxed)
+                    .s_axis_dem(ncp_s_axis_dem[i][j]),
+                    .m_axis_dem(if_demuxed[i][j])
                 );
 
                 genvar gen_arbiter;
@@ -145,7 +139,7 @@ module torus #(
                         .WIDTH_IN(VIRTUAL_CHANNEL_NUMBER),
                         .WIDTH_OUT(VIRTUAL_NETWORKS[gen_arbiter])
                     ) ncn (
-                        .s_axis_i(if_demuxed[gen_arbiter]),
+                        .s_axis_i(if_demuxed[i][j][gen_arbiter]),
                         .m_axis_o(if_demuxed_narrowed)
                     );
                     

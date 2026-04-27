@@ -65,7 +65,9 @@ module circulant #(
         .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
     )   router_if[ROUTERS_COUNT][CHANNEL_NUMBER](),
         from_home[ROUTERS_COUNT][VIRTUAL_CHANNEL_NUMBER](),
-        router_in[ROUTERS_COUNT][CHANNEL_NUMBER]();
+        router_in[ROUTERS_COUNT][CHANNEL_NUMBER](),
+        if_demuxed[ROUTERS_COUNT][VIRTUAL_NETWORK_NUMBER][VIRTUAL_CHANNEL_NUMBER](),
+        ncp_s_axis_dem[ROUTERS_COUNT][VIRTUAL_CHANNEL_NUMBER]();
 
     generate
         for (i = 0; i < ROUTERS_COUNT; i++) begin : router_iteration
@@ -110,18 +112,10 @@ module circulant #(
                 `AXIS_INTERFACE2INTERFACE(from_home[i][current_virtual_channel], router_in[i][current_virtual_channel])
             end
 
-            axis_if #(
-                .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
-                .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
-                .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
-                .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-            )   if_demuxed[VIRTUAL_NETWORK_NUMBER][VIRTUAL_CHANNEL_NUMBER](),
-                    ncp_s_axis_dem[VIRTUAL_CHANNEL_NUMBER]();
-
-                genvar demux_vc;
-                for (demux_vc = 0; demux_vc < VIRTUAL_CHANNEL_NUMBER; demux_vc++) begin : demux_input_connect
-                    `AXIS_INTERFACE2INTERFACE(router_if[i][demux_vc], ncp_s_axis_dem[demux_vc])
-                end
+            genvar demux_vc;
+            for (demux_vc = 0; demux_vc < VIRTUAL_CHANNEL_NUMBER; demux_vc++) begin : demux_input_connect
+                `AXIS_INTERFACE2INTERFACE(router_if[i][demux_vc], ncp_s_axis_dem[i][demux_vc])
+            end
 
             network_channel_demux # (
                 .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
@@ -135,8 +129,8 @@ module circulant #(
                 .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
                 .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
             ) ncp (
-                .s_axis_dem(ncp_s_axis_dem),
-                .m_axis_dem(if_demuxed)
+                .s_axis_dem(ncp_s_axis_dem[i]),
+                .m_axis_dem(if_demuxed[i])
             );
 
             genvar gen_arbiter;
@@ -159,7 +153,7 @@ module circulant #(
                     .WIDTH_IN(VIRTUAL_CHANNEL_NUMBER),
                     .WIDTH_OUT(VIRTUAL_NETWORKS[gen_arbiter])
                 ) ncn (
-                    .s_axis_i(if_demuxed[gen_arbiter]),
+                    .s_axis_i(if_demuxed[i][gen_arbiter]),
                     .m_axis_o(if_demuxed_narrowed)
                 );
                 
