@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge, Combine, Timer, First
+from cocotb.triggers import RisingEdge, Combine, Timer, First, with_timeout
 from cocotb.clock import Clock
 from cocotbext.axi import AxiMaster, AxiBus
 
@@ -42,18 +42,22 @@ class AxiWrapper:
 
 
 async def axi_read_write(dut, axi_master, addr, data, id, channel):
-    
-    await axi_master.write(addr, data, awid=id)
-    await axi_master.read(addr, 16, arid=id)
+    await with_timeout(axi_master.write(addr, data, awid=id), 50_000, "ns")
+    await with_timeout(axi_master.read(addr, 16, arid=id), 50_000, "ns")
+
+
+async def reset_dut(dut):
+    # Force reset deterministically before the first clock edge.
+    dut.aresetn.setimmediatevalue(0)
+    await RisingEdge(dut.aclk)
+    await RisingEdge(dut.aclk)
+    dut.aresetn.value = 1
+    await RisingEdge(dut.aclk)
 
 
 @cocotb.test
 async def feedback_loop(dut):
-    
-    dut.aresetn.value = 0
-    await RisingEdge(dut.aclk)
-    await RisingEdge(dut.aclk)
-    dut.aresetn.value = 1
+    await reset_dut(dut)
     axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(20)]
     await RisingEdge(dut.aclk)
 
@@ -82,12 +86,7 @@ async def feedback_loop(dut):
 
 @cocotb.test
 async def test_all_in_one(dut):
-    
-    dut.aresetn.value = 0
-    await RisingEdge(dut.aclk)
-    await RisingEdge(dut.aclk)
-    dut.aresetn.value = 1
-    await RisingEdge(dut.aclk)
+    await reset_dut(dut)
 
     axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(20)]
 
@@ -115,12 +114,7 @@ async def test_all_in_one(dut):
 
 @cocotb.test
 async def test_random(dut):
-    
-    dut.aresetn.value = 0
-    await RisingEdge(dut.aclk)
-    await RisingEdge(dut.aclk)
-    dut.aresetn.value = 1
-    await RisingEdge(dut.aclk)
+    await reset_dut(dut)
 
     axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(20)]
 

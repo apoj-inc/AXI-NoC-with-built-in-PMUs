@@ -115,7 +115,7 @@ module tb_circulant_parallel (
             );
             
             initial begin
-                for (int j = 0; j < 2**16; j++) begin
+                for (int j = 0; j < 2**12; j++) begin
                     ram.coupled_ram.ram[j] = $urandom();
                 end
             end

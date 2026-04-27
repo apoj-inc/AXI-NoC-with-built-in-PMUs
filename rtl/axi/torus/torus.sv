@@ -102,7 +102,13 @@ module torus #(
                     .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
                     .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                     .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-                )   if_demuxed[VIRTUAL_NETWORK_NUMBER][VIRTUAL_CHANNEL_NUMBER]();
+                )   if_demuxed[VIRTUAL_NETWORK_NUMBER][VIRTUAL_CHANNEL_NUMBER](),
+                    ncp_s_axis_dem[VIRTUAL_CHANNEL_NUMBER]();
+
+                genvar demux_vc;
+                for (demux_vc = 0; demux_vc < VIRTUAL_CHANNEL_NUMBER; demux_vc++) begin : demux_input_connect
+                    `AXIS_INTERFACE2INTERFACE(router_if[i][j][demux_vc], ncp_s_axis_dem[demux_vc])
+                end
 
                 network_channel_demux # (
                     .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
@@ -116,7 +122,7 @@ module torus #(
                     .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
                     .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
                 ) ncp (
-                    .s_axis_dem(router_if[i][j][0:VIRTUAL_CHANNEL_NUMBER-1]),
+                    .s_axis_dem(ncp_s_axis_dem),
                     .m_axis_dem(if_demuxed)
                 );
 

@@ -141,7 +141,7 @@ module router #(
                 localparam VIRTUAL_NETWORK_CHANNELS = VIRTUAL_NETWORKS[current_virtual_network];
                 localparam CHANNELS_IN_NETWORK = VIRTUAL_NETWORK_CHANNELS*PHYSICAL_CHANNEL_NUMBER;
 
-                logic [PHYSICAL_CHANNEL_NUMBER_WIDTH-1:0] current_grant;
+                logic [$clog2(CHANNELS_IN_NETWORK)-1:0] current_grant;
                 logic [TARGET_LEN-1:0] target;
 
                 axis_if #(
