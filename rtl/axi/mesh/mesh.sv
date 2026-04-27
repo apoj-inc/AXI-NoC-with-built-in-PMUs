@@ -125,21 +125,7 @@ module mesh #(
                     .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
                     .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
                     .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-                )   router_if_narrowed[VIRTUAL_CHANNEL_NUMBER](),
-                    if_demuxed[VIRTUAL_NETWORK_NUMBER][VIRTUAL_CHANNEL_NUMBER]();
-
-                network_channel_narrower #(
-                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
-                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
-                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
-                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
-
-                    .WIDTH_IN (CHANNEL_NUMBER),
-                    .WIDTH_OUT(VIRTUAL_CHANNEL_NUMBER)
-                ) ncn (
-                    .s_axis_i(router_if[i+1][j+1]),
-                    .m_axis_o(router_if_narrowed)
-                );
+                )   if_demuxed[VIRTUAL_NETWORK_NUMBER][VIRTUAL_CHANNEL_NUMBER]();
 
                 network_channel_demux # (
                     .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
@@ -153,62 +139,58 @@ module mesh #(
                     .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
                     .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
                 ) ncp (
-                    .s_axis_dem(router_if_narrowed),
+                    .s_axis_dem(router_if[i+1][j+1][0:VIRTUAL_CHANNEL_NUMBER-1]),
                     .m_axis_dem(if_demuxed)
                 );
 
                 genvar gen_arbiter;
                 for (gen_arbiter = 0; gen_arbiter < 2; gen_arbiter++) begin: demultiplexing_entrances_to_bridges
                     localparam OFFSET = calculate_virtual_network_offset(gen_arbiter);
-                    if (VIRTUAL_NETWORKS[gen_arbiter] != 1) begin
 
-                        axis_if #(
-                            .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
-                            .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
-                            .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
-                            .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
-                        )   if_demuxed_narrowed[VIRTUAL_NETWORKS[gen_arbiter]]();
+                    axis_if #(
+                        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                        .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+                    )   if_demuxed_narrowed[VIRTUAL_NETWORKS[gen_arbiter]]();
 
-                        network_channel_narrower #(
-                            .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
-                            .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
-                            .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
-                            .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+                    network_channel_narrower #(
+                        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                        .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
 
-                            .WIDTH_IN(VIRTUAL_CHANNEL_NUMBER),
-                            .WIDTH_OUT(VIRTUAL_NETWORKS[gen_arbiter])
-                        ) ncn (
-                            .s_axis_i(if_demuxed[gen_arbiter]),
-                            .m_axis_o(if_demuxed_narrowed)
-                        );
-                        
-                        arbiter #(
-                            .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
-                            .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
-                            .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
-                            .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
-                            .CHANNEL_NUMBER  (VIRTUAL_NETWORKS[gen_arbiter]),
+                        .WIDTH_IN(VIRTUAL_CHANNEL_NUMBER),
+                        .WIDTH_OUT(VIRTUAL_NETWORKS[gen_arbiter])
+                    ) ncn (
+                        .s_axis_i(if_demuxed[gen_arbiter]),
+                        .m_axis_o(if_demuxed_narrowed)
+                    );
+                    
+                    arbiter #(
+                        .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                        .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                        .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                        .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+                        .CHANNEL_NUMBER  (VIRTUAL_NETWORKS[gen_arbiter]),
 
-                            .TARGET_LEN(1)
-                        ) arb (
-                            .clk_i(ACLK), .rst_n_i(ARESETn),
+                        .TARGET_LEN(1)
+                    ) arb (
+                        .clk_i(ACLK), .rst_n_i(ARESETn),
 
-                            .s_axis_i(if_demuxed_narrowed),
-                            .m_axis_o(axi2axis_req_resp[gen_arbiter])
-                        );
-                        genvar closed_from_homes;
-                        for (closed_from_homes = OFFSET + 1;closed_from_homes < OFFSET + VIRTUAL_NETWORKS[gen_arbiter]; closed_from_homes++) begin: zeroing_from_home
-                            assign from_home[i][j][closed_from_homes].TVALID = '0;
-                            assign from_home[i][j][closed_from_homes].TDATA  = '0;
-                            assign from_home[i][j][closed_from_homes].TSTRB  = '0;
-                            assign from_home[i][j][closed_from_homes].TKEEP  = '0;
-                            assign from_home[i][j][closed_from_homes].TLAST  = '0;
-                            assign from_home[i][j][closed_from_homes].TID    = '0;
-                            assign from_home[i][j][closed_from_homes].TDEST  = '0;
-                            assign from_home[i][j][closed_from_homes].TUSER  = '0;
-                        end
-                    end else begin
-                        `AXIS_INTERFACE2INTERFACE(if_demuxed[gen_arbiter], axi2axis_req_resp[gen_arbiter])
+                        .s_axis_i(if_demuxed_narrowed),
+                        .m_axis_o(axi2axis_req_resp[gen_arbiter])
+                    );
+                    genvar closed_from_homes;
+                    for (closed_from_homes = OFFSET + 1;closed_from_homes < OFFSET + VIRTUAL_NETWORKS[gen_arbiter]; closed_from_homes++) begin: zeroing_from_home
+                        assign from_home[i][j][closed_from_homes].TVALID = '0;
+                        assign from_home[i][j][closed_from_homes].TDATA  = '0;
+                        assign from_home[i][j][closed_from_homes].TSTRB  = '0;
+                        assign from_home[i][j][closed_from_homes].TKEEP  = '0;
+                        assign from_home[i][j][closed_from_homes].TLAST  = '0;
+                        assign from_home[i][j][closed_from_homes].TID    = '0;
+                        assign from_home[i][j][closed_from_homes].TDEST  = '0;
+                        assign from_home[i][j][closed_from_homes].TUSER  = '0;
                     end
                 end
 
