@@ -20,15 +20,15 @@ module avmm_dma_top #(
     parameter     TX_ADDR_WIDTH                         = 12         ,
     parameter     TX_BURST_WIDTH                        = 6          ,
 
-    parameter MSI_COUNT               = DMA_CHANNEL_COUNT                     ,
-    parameter BAR_DATA_BYTES          = BAR_DATA_WIDTH / 8                    ,
-    parameter TX_DATA_BYTES           = TX_DATA_WIDTH / 8                     ,
-    parameter DMA_WQ_ADDR_WIDTH       = $clog2(MAX_WQ_DEPTH)                  ,
-    parameter DMA_RQ_ADDR_WIDTH       = $clog2(MAX_RQ_DEPTH)                  ,
-    parameter DMA_TQ_ADDR_WIDTH       = $clog2(MAX_TQ_DEPTH)                  ,
-    parameter PBA_COUNT               = MSI_COUNT / 64 + (MSI_COUNT % 64 != 0),
-    parameter DMA_BURST_WIDTH         = DMA_BYTES_WIDTH - 4                   ,
-    parameter DMA_CHANNEL_COUNT_WIDTH = $clog2(DMA_CHANNEL_COUNT)             
+    parameter MSI_COUNT               = DMA_CHANNEL_COUNT                                     ,
+    parameter BAR_DATA_BYTES          = BAR_DATA_WIDTH / 8                                    ,
+    parameter TX_DATA_BYTES           = TX_DATA_WIDTH / 8                                     ,
+    parameter DMA_WQ_ADDR_WIDTH       = $clog2(MAX_WQ_DEPTH)                                  ,
+    parameter DMA_RQ_ADDR_WIDTH       = $clog2(MAX_RQ_DEPTH)                                  ,
+    parameter DMA_TQ_ADDR_WIDTH       = $clog2(MAX_TQ_DEPTH)                                  ,
+    parameter PBA_COUNT               = MSI_COUNT / 64 + (MSI_COUNT % 64 != 0)                ,
+    parameter DMA_BURST_WIDTH         = DMA_BYTES_WIDTH - 4                                   ,
+    parameter DMA_CHANNEL_COUNT_WIDTH = DMA_CHANNEL_COUNT == 1 ? 1 : $clog2(DMA_CHANNEL_COUNT)
 ) (
     input  logic                       clk                                     ,
     input  logic                       rst_n                                   ,

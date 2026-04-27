@@ -97,7 +97,7 @@ module avmm_dma_engine #(
     logic [TX_BURST_WIDTH-1:0] tx_burstcount_next;
     logic [TX_ADDR_WIDTH-1:0]  tx_address_next   ;
 
-    logic [31:0] outstanding_reads, outstanding_reads_next;
+    logic [DMA_RQ_ADDR_WIDTH:0] outstanding_reads, outstanding_reads_next;
 
     logic                     dma_rddata_valid, dma_rddata_valid_next;
     logic [TX_DATA_WIDTH-1:0] dma_rddata_data , dma_rddata_data_next ;

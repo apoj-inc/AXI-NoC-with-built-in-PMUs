@@ -31,9 +31,9 @@ module avmm_dma_decoder #(
     parameter DMA_OFFFSET_WIDTH = 22 ,
     parameter DMA_BYTES_WIDTH   = 22 ,
 
-    parameter DMA_BURST_WIDTH         = DMA_BYTES_WIDTH - 4      ,
-    parameter DMA_CHANNEL_COUNT_WIDTH = $clog2(DMA_CHANNEL_COUNT),
-    parameter BAR_DATA_BYTES          = BAR_DATA_WIDTH / 8       
+    parameter DMA_BURST_WIDTH         = DMA_BYTES_WIDTH - 4                                   ,
+    parameter DMA_CHANNEL_COUNT_WIDTH = DMA_CHANNEL_COUNT == 1 ? 1 : $clog2(DMA_CHANNEL_COUNT),
+    parameter BAR_DATA_BYTES          = BAR_DATA_WIDTH / 8                                    
 ) (
     input  logic                               clk                 ,
     input  logic                               rst_n               ,
