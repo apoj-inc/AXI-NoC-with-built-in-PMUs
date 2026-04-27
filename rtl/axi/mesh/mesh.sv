@@ -1,6 +1,7 @@
 `include "defines.svh"
 `include "axis_defines.svh"
 `include "XY_compas.svh"
+`include "virtual_networks_utils.svh"
 
 module mesh #(
     parameter        AXI_DATA_WIDTH   = 32,
@@ -157,7 +158,7 @@ module mesh #(
                 );
 
                 genvar gen_arbiter;
-                for (gen_arbiter = 0; gen_arbiter < 2; gen_arbiter++) begin
+                for (gen_arbiter = 0; gen_arbiter < 2; gen_arbiter++) begin: demultiplexing_entrances_to_bridges
                     localparam OFFSET = calculate_virtual_network_offset(gen_arbiter);
                     if (VIRTUAL_NETWORKS[gen_arbiter] != 1) begin
 
@@ -196,7 +197,7 @@ module mesh #(
                             .m_axis_o(axi2axis_req_resp[gen_arbiter])
                         );
                         genvar closed_from_homes;
-                        for (closed_from_homes = OFFSET + 1;closed_from_homes < OFFSET + VIRTUAL_NETWORKS[gen_arbiter]; closed_from_homes++) begin
+                        for (closed_from_homes = OFFSET + 1;closed_from_homes < OFFSET + VIRTUAL_NETWORKS[gen_arbiter]; closed_from_homes++) begin: zeroing_from_home
                             assign from_home[i][j][closed_from_homes].TVALID = '0;
                             assign from_home[i][j][closed_from_homes].TDATA  = '0;
                             assign from_home[i][j][closed_from_homes].TSTRB  = '0;
@@ -207,7 +208,7 @@ module mesh #(
                             assign from_home[i][j][closed_from_homes].TUSER  = '0;
                         end
                     end else begin
-                        `AXIS_INTERFACE2INTERFACE(if_demuxed[gen_arbiter][0], axi2axis_req_resp[gen_arbiter]);
+                        `AXIS_INTERFACE2INTERFACE(if_demuxed[gen_arbiter], axi2axis_req_resp[gen_arbiter])
                     end
                 end
 
