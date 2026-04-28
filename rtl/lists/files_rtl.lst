@@ -47,5 +47,8 @@ rtl/lib/dma/avmm_dma_task_demux.sv
 rtl/lib/dma/avmm_dma_csr.sv
 rtl/lib/dma/avmm_dma_engine.sv
 rtl/lib/dma/avmm_dma_msix_table.sv
-rtl/lib/dma/avmm_msix_tester.sv
 rtl/lib/dma/avmm_dma_top.sv
+rtl/lib/primitives/cdc/cdc_stream_afifo.sv
+rtl/lib/primitives/cdc/sync_ff.sv
+rtl/lib/primitives/memory/dual_clock_memory.sv
+rtl/lib/primitives/cdc/gray_converter.sv
