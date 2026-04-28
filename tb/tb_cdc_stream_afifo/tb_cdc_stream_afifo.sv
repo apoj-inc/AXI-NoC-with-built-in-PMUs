@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 module tb_cdc_stream_afifo;
 
 parameter DATA_WIDTH = 32;
