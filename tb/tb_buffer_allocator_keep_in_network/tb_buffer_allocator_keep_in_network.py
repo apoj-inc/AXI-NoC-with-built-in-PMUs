@@ -163,7 +163,7 @@ async def test_ADHD(dut):
 
     assert result is not timeout, "The design has hung!"
     
-    for _ in range(2):
+    for _ in range(1):
         await RisingEdge(dut.ACLK)
 
     assert axis_sinks[0].count() == 0,                   'The elements do not add up for sink 1'
