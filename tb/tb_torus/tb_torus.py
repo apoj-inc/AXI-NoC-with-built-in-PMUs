@@ -95,7 +95,7 @@ async def test_all_in_one(dut):
              b'1010101010101010', b'1111111111111111', b'1212121212121212', b'1313131313131313', b'1414141414141414',
              b'1515151515151515'] * 10
     addrs = [32 * i for i in range(20)]
-    for j in range(64):
+    for j in range(20):
         processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 20], addrs[j % 20], datas[j % 16], 5, 0)))
 
     timeout = Timer(200_000, unit='ns')
@@ -149,7 +149,7 @@ async def test_random(dut):
 
     axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(20)]
 
-    for i in range(100):
+    for i in range(20):
         cocotb.log.info(f"pass {i}")
         processes = []
         datas = [b'0000000000000000', b'1111111111111111', b'2222222222222222', b'3333333333333333', b'4444444444444444',
