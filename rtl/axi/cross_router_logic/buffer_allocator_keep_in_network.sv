@@ -93,9 +93,9 @@ module buffer_allocator_keep_in_network #(
                         end
 
                         for(current_channel = 0; current_channel < CHANNELS; current_channel++) begin
-                            if(busy_next[allocated_to_next[current_channel]]) begin
-                                out_mosi_o[allocated_to_next[current_channel]] = in_mosi_i[current_channel];
-                                in_miso_o[current_channel] = out_miso_i[allocated_to_next[current_channel]];
+                            if(busy[allocated_to[current_channel]]) begin
+                                out_mosi_o[allocated_to[current_channel]] = in_mosi_i[current_channel];
+                                in_miso_o[current_channel] = out_miso_i[allocated_to[current_channel]];
                             end
                         end
 
