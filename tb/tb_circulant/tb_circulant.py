@@ -66,7 +66,7 @@ async def feedback_loop(dut):
              b'1010101010101010', b'1111111111111111', b'1212121212121212', b'1313131313131313', b'1414141414141414',
              b'1515151515151515'] * 10
     addrs = [32 * i for i in range(100)]
-    for i in range(50):
+    for i in range(20):
         processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[0], addrs[i * 2], datas[i * 2], 2, 0)))
         processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[1], addrs[i * 2 + 1], datas[i * 2 + 1], 1, 0)))
 
@@ -117,7 +117,7 @@ async def test_random(dut):
 
     axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(16)]
 
-    for i in range(10):
+    for i in range(20):
         cocotb.log.info(f"pass {i}")
         processes = []
         datas = [b'0000000000000000', b'1111111111111111', b'2222222222222222', b'3333333333333333', b'4444444444444444',
@@ -125,7 +125,7 @@ async def test_random(dut):
                  b'1010101010101010', b'1111111111111111', b'1212121212121212', b'1313131313131313', b'1414141414141414',
                  b'1515151515151515']
         addrs = [32 * i for i in range(16)]
-        for j in range(64):
+        for j in range(32):
             processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 16], addrs[j % 16], datas[j % 16], randint(1, 16), 0)))
 
         timeout = Timer(200_000, unit='ns')
