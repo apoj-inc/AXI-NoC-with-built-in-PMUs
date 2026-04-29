@@ -54,8 +54,6 @@ module arbiter #(
 
             logic [CHANNEL_NUMBER-1:0] valid_i;
             logic [CHANNEL_NUMBER*2 - 1:0] shifted_valid_i;
-            
-            axis_data_t data [CHANNEL_NUMBER];
 
             assign target_o = (out_mosi_o.TVALID && (out_mosi_o.data.TID == ROUTING_HEADER_READ || out_mosi_o.data.TID == ROUTING_HEADER_WRITE)) ?
                                 out_mosi_o.data.TDATA[TARGET_LEN-1:0] :

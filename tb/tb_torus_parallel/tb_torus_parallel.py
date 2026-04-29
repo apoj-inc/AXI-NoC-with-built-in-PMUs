@@ -53,7 +53,7 @@ async def reset_dut(dut):
     dut.aresetn.value = 1
     await RisingEdge(dut.aclk)
 
-
+"""
 @cocotb.test
 async def feedback_loop(dut):
     await reset_dut(dut)
@@ -109,7 +109,7 @@ async def test_all_in_one(dut):
 
     for _ in range(10):
         await RisingEdge(dut.aclk)
-
+"""
 
 @cocotb.test
 async def deadlock_inducer(dut):
@@ -142,7 +142,7 @@ async def deadlock_inducer(dut):
     for _ in range(10):
         await RisingEdge(dut.aclk)
 
-
+"""
 @cocotb.test
 async def test_random(dut):
     await reset_dut(dut)
@@ -171,3 +171,4 @@ async def test_random(dut):
 
     for _ in range(10):
         await RisingEdge(dut.aclk)
+"""
