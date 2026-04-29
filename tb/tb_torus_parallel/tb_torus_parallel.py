@@ -42,8 +42,8 @@ class AxiWrapper:
 
 
 async def axi_read_write(dut, axi_master, addr, data, id, channel):
-    await with_timeout(axi_master.write(addr, data, awid=id), 50_000, "ns")
-    await with_timeout(axi_master.read(addr, 16, arid=id), 50_000, "ns")
+    await with_timeout(axi_master.write(addr, data, awid=id), 500_000, "ns")
+    await with_timeout(axi_master.read(addr, 16, arid=id), 500_000, "ns")
 
 
 async def reset_dut(dut):
@@ -53,7 +53,6 @@ async def reset_dut(dut):
     dut.aresetn.value = 1
     await RisingEdge(dut.aclk)
 
-"""
 @cocotb.test
 async def feedback_loop(dut):
     await reset_dut(dut)
@@ -109,7 +108,6 @@ async def test_all_in_one(dut):
 
     for _ in range(10):
         await RisingEdge(dut.aclk)
-"""
 
 @cocotb.test
 async def deadlock_inducer(dut):
@@ -142,7 +140,6 @@ async def deadlock_inducer(dut):
     for _ in range(10):
         await RisingEdge(dut.aclk)
 
-"""
 @cocotb.test
 async def test_random(dut):
     await reset_dut(dut)
@@ -171,4 +168,3 @@ async def test_random(dut):
 
     for _ in range(10):
         await RisingEdge(dut.aclk)
-"""

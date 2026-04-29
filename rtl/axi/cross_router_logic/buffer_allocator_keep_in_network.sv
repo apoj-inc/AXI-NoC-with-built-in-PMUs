@@ -118,7 +118,7 @@ module buffer_allocator_keep_in_network #(
                         end else begin
                             allocated_to <= allocated_to_next;
                         end
-                        alloc <= 0;
+                        alloc = 0;
                     end
                 end
             end

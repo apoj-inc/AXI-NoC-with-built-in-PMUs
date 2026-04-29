@@ -156,6 +156,34 @@ module circulant #(
                     .s_axis_i(if_demuxed[i][gen_arbiter]),
                     .m_axis_o(if_demuxed_narrowed)
                 );
+
+
+                axis_if #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+                )   queue_o_if       [VIRTUAL_NETWORKS[gen_arbiter]] ();
+
+                router_buffer #(
+                    .PHYSICAL_CHANNEL_NUMBER(1),
+                    .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_NETWORKS[gen_arbiter]),
+                    .CHANNEL_NUMBER(VIRTUAL_NETWORKS[gen_arbiter]),
+                    .VIRTUAL_NETWORK_NUMBER(1),
+                    .VIRTUAL_NETWORKS('{VIRTUAL_NETWORKS[gen_arbiter]}),
+                    .BUFFER_DEPTH(4),
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+                    .BUFFER_ALLOCATOR("KeepInNetwork")
+                ) buffer (
+                    .ACLK(ACLK),
+                    .ARESETn(ARESETn),
+
+                    .s_axis_i(if_demuxed_narrowed),
+                    .m_axis_o(queue_o_if)
+                );
                 
                 arbiter #(
                     .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
@@ -168,7 +196,7 @@ module circulant #(
                 ) arb (
                     .clk_i(ACLK), .rst_n_i(ARESETn),
 
-                    .s_axis_i(if_demuxed_narrowed),
+                    .s_axis_i(queue_o_if),
                     .m_axis_o(axi2axis_req_resp[gen_arbiter])
                 );
                 genvar closed_from_homes;
