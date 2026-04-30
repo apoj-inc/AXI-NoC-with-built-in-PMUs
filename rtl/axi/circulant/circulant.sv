@@ -1,5 +1,6 @@
 `include "defines.svh"
 `include "axis_defines.svh"
+`include "virtual_networks_utils.svh"
 
 module circulant #(
     parameter        AXI_DATA_WIDTH  = 32,
@@ -36,6 +37,7 @@ module circulant #(
     axi_if.s s_axi_i[ROUTERS_COUNT],
     axi_if.m m_axi_o[ROUTERS_COUNT]
 );
+    `GENERATE_CALCULATE_VIRTUAL_NETWORK_OFFSET
 
     int test_previous_generatic;
     int test_i;
@@ -54,11 +56,6 @@ module circulant #(
 
     localparam CHANNEL_NUMBER = PHYSICAL_CHANNEL_NUMBER*VIRTUAL_CHANNEL_NUMBER;
 
-    typedef enum logic {
-        HOME_REQ,
-        HOME_RESP
-    } home_index;
-
     genvar i, generatic, current_virtual_channel;
     
     axis_if #(
@@ -68,10 +65,19 @@ module circulant #(
         .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
     )   router_if[ROUTERS_COUNT][CHANNEL_NUMBER](),
         from_home[ROUTERS_COUNT][VIRTUAL_CHANNEL_NUMBER](),
-        router_in[ROUTERS_COUNT][CHANNEL_NUMBER]();
+        router_in[ROUTERS_COUNT][CHANNEL_NUMBER](),
+        if_demuxed[ROUTERS_COUNT][VIRTUAL_NETWORK_NUMBER][VIRTUAL_CHANNEL_NUMBER](),
+        ncp_s_axis_dem[ROUTERS_COUNT][VIRTUAL_CHANNEL_NUMBER]();
 
     generate
         for (i = 0; i < ROUTERS_COUNT; i++) begin : router_iteration
+
+            axis_if #(
+                .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+            )   axi2axis_req_resp[2]();
 
             axi2axis #(
                 .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
@@ -95,23 +101,124 @@ module circulant #(
                 .s_axi_if_i(s_axi_i[i]),
                 .m_axi_if_o(m_axi_o[i]),
 
-                .s_axis_if_resp_i(router_if[i][HOME_RESP]),
-                .m_axis_if_resp_o(from_home[i][HOME_RESP]),
+                .s_axis_if_req_i(axi2axis_req_resp[0]),
+                .m_axis_if_req_o(from_home[i][0]),
 
-                .s_axis_if_req_i(router_if[i][HOME_REQ]),
-                .m_axis_if_req_o(from_home[i][HOME_REQ])
+                .s_axis_if_resp_i(axi2axis_req_resp[1]),
+                .m_axis_if_resp_o(from_home[i][VIRTUAL_NETWORKS[0]])
             );
 
             for (current_virtual_channel = 0; current_virtual_channel < VIRTUAL_CHANNEL_NUMBER; current_virtual_channel++) begin : assigning_home_channels
                 `AXIS_INTERFACE2INTERFACE(from_home[i][current_virtual_channel], router_in[i][current_virtual_channel])
             end
 
+            genvar demux_vc;
+            for (demux_vc = 0; demux_vc < VIRTUAL_CHANNEL_NUMBER; demux_vc++) begin : demux_input_connect
+                `AXIS_INTERFACE2INTERFACE(router_if[i][demux_vc], ncp_s_axis_dem[i][demux_vc])
+            end
+
+            network_channel_demux # (
+                .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+                
+                .PHYSICAL_CHANNEL_NUMBER(1),
+                .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+                .CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+                .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
+                .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
+            ) ncp (
+                .s_axis_dem(ncp_s_axis_dem[i]),
+                .m_axis_dem(if_demuxed[i])
+            );
+
+            genvar gen_arbiter;
+            for (gen_arbiter = 0; gen_arbiter < 2; gen_arbiter++) begin: demultiplexing_entrances_to_bridge
+                localparam OFFSET = calculate_virtual_network_offset(gen_arbiter);
+
+                axis_if #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+                )   if_demuxed_narrowed[VIRTUAL_NETWORKS[gen_arbiter]]();
+
+                network_channel_narrower #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+
+                    .WIDTH_IN(VIRTUAL_CHANNEL_NUMBER),
+                    .WIDTH_OUT(VIRTUAL_NETWORKS[gen_arbiter])
+                ) ncn (
+                    .s_axis_i(if_demuxed[i][gen_arbiter]),
+                    .m_axis_o(if_demuxed_narrowed)
+                );
+
+
+                axis_if #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH)
+                )   queue_o_if       [VIRTUAL_NETWORKS[gen_arbiter]] ();
+
+                router_buffer #(
+                    .PHYSICAL_CHANNEL_NUMBER(1),
+                    .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_NETWORKS[gen_arbiter]),
+                    .CHANNEL_NUMBER(VIRTUAL_NETWORKS[gen_arbiter]),
+                    .VIRTUAL_NETWORK_NUMBER(1),
+                    .VIRTUAL_NETWORKS('{VIRTUAL_NETWORKS[gen_arbiter]}),
+                    .BUFFER_DEPTH(4),
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+                    .BUFFER_ALLOCATOR("KeepInNetwork")
+                ) buffer (
+                    .ACLK(ACLK),
+                    .ARESETn(ARESETn),
+
+                    .s_axis_i(if_demuxed_narrowed),
+                    .m_axis_o(queue_o_if)
+                );
+                
+                arbiter #(
+                    .AXIS_DATA_WIDTH (AXIS_DATA_WIDTH),
+                    .AXIS_ID_WIDTH   (AXIS_ID_WIDTH  ),
+                    .AXIS_DEST_WIDTH (AXIS_DEST_WIDTH),
+                    .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
+                    .CHANNEL_NUMBER  (VIRTUAL_NETWORKS[gen_arbiter]),
+
+                    .TARGET_LEN(1),
+                    .WAIT_FOR_TLAST(1)
+                ) arb (
+                    .clk_i(ACLK), .rst_n_i(ARESETn),
+
+                    .s_axis_i(queue_o_if),
+                    .m_axis_o(axi2axis_req_resp[gen_arbiter])
+                );
+                genvar closed_from_homes;
+                for (closed_from_homes = OFFSET + 1;closed_from_homes < OFFSET + VIRTUAL_NETWORKS[gen_arbiter]; closed_from_homes++) begin: zeroing_from_home
+                    assign from_home[i][closed_from_homes].TVALID = '0;
+                    assign from_home[i][closed_from_homes].TDATA  = '0;
+                    assign from_home[i][closed_from_homes].TSTRB  = '0;
+                    assign from_home[i][closed_from_homes].TKEEP  = '0;
+                    assign from_home[i][closed_from_homes].TLAST  = '0;
+                    assign from_home[i][closed_from_homes].TID    = '0;
+                    assign from_home[i][closed_from_homes].TDEST  = '0;
+                    assign from_home[i][closed_from_homes].TUSER  = '0;
+                end
+            end
+
             for (generatic = 0; generatic < GENERATICS_COUNT; generatic++) begin : interconnection_assignment
                 for (current_virtual_channel = 0; current_virtual_channel < VIRTUAL_CHANNEL_NUMBER; current_virtual_channel++) begin : assigning_generatics_channels
-                    //Clockwise
+                    // Clockwise
                     `AXIS_INTERFACE2INTERFACE(router_if[i][(generatic+1)*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel]  , router_in[(i+GENERATICS[generatic])%ROUTERS_COUNT][(generatic+1)*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
-                    //Counter clockwise
-                    `AXIS_INTERFACE2INTERFACE(router_if[i][(generatic+GENERATICS_COUNT+1)*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel]  , router_in[(i+GENERATICS[generatic])%ROUTERS_COUNT][(generatic+GENERATICS_COUNT+1)*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
+                    // Counter clockwise
+                    `AXIS_INTERFACE2INTERFACE(router_if[i][(generatic+GENERATICS_COUNT+1)*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel]  , router_in[(i+ROUTERS_COUNT-GENERATICS[generatic])%ROUTERS_COUNT][(generatic+GENERATICS_COUNT+1)*VIRTUAL_CHANNEL_NUMBER+current_virtual_channel])
                 end
             end
             
@@ -147,7 +254,5 @@ module circulant #(
 
         end
     endgenerate
-
-
 
 endmodule

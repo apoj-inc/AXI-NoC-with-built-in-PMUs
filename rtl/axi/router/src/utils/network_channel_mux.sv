@@ -1,7 +1,7 @@
 `include "axis_defines.svh"
 `include "virtual_networks_utils.svh"
 
-module network_channel_picker #(
+module network_channel_mux #(
     parameter        AXIS_DATA_WIDTH = 40,
     parameter        AXIS_ID_WIDTH = 4,
     parameter        AXIS_DEST_WIDTH = 4,
@@ -17,8 +17,6 @@ module network_channel_picker #(
     parameter        VIRTUAL_NETWORK_NUMBER = 2,
     parameter int    VIRTUAL_NETWORKS[VIRTUAL_NETWORK_NUMBER] = '{1, 1}
     ) (
-        axis_if.s s_axis_dem[CHANNEL_NUMBER],
-        axis_if.m m_axis_dem[VIRTUAL_NETWORK_NUMBER][CHANNEL_NUMBER],
         axis_if.s s_axis_mux[VIRTUAL_NETWORK_NUMBER][CHANNEL_NUMBER],
         axis_if.m m_axis_mux[CHANNEL_NUMBER]
     );
@@ -37,11 +35,11 @@ module network_channel_picker #(
                         localparam ORIGINAL_CHANNEL = current_physical_channel * VIRTUAL_CHANNEL_NUMBER+VIRTUAL_NETWORK_OFFSET + current_virtual_channel;
                         localparam MAPPED_CHANNEL   = current_physical_channel * VIRTUAL_NETWORK_CHANNELS + current_virtual_channel;
                         
-                        `AXIS_INTERFACE2INTERFACE(s_axis_dem[ORIGINAL_CHANNEL], m_axis_dem[current_virtual_network][MAPPED_CHANNEL]  )
                         `AXIS_INTERFACE2INTERFACE(s_axis_mux[current_virtual_network][MAPPED_CHANNEL],   m_axis_mux[ORIGINAL_CHANNEL])
+                        
                     end
                 end
         end
     endgenerate
 
-endmodule : network_channel_picker
+endmodule : network_channel_mux
