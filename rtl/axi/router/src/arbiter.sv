@@ -13,7 +13,7 @@ module arbiter #(
     = $clog2(CHANNEL_NUMBER),
     
     parameter TARGET_LEN = 0,
-    parameter NO_TIMEOUT = 0
+    parameter WAIT_FOR_TLAST = 0
 ) (
     input clk_i, rst_n_i,
 
@@ -82,7 +82,7 @@ module arbiter #(
                 end
             end
             
-            if(NO_TIMEOUT) begin
+            if(WAIT_FOR_TLAST) begin
                 logic lock;
                 logic lock_next;
                 always_comb begin
