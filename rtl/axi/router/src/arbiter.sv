@@ -12,7 +12,8 @@ module arbiter #(
     parameter CHANNEL_NUMBER_WIDTH
     = $clog2(CHANNEL_NUMBER),
     
-    parameter TARGET_LEN = 0
+    parameter TARGET_LEN = 0,
+    parameter NO_TIMEOUT = 0
 ) (
     input clk_i, rst_n_i,
 
@@ -80,21 +81,55 @@ module arbiter #(
                     current_grant_o <= next_grant;
                 end
             end
+            
+            if(NO_TIMEOUT) begin
+                logic lock;
+                logic lock_next;
+                always_comb begin
+                    next_grant = current_grant_o;
+                    increment = 0;
+                    lock_next = lock;
 
-            always_comb begin
-                next_grant = current_grant_o;
-                increment = 0;
-
-                if (!in_miso_o[current_grant_o].TREADY || !out_mosi_o.TVALID || (out_mosi_o.TVALID && out_miso_i.TREADY && out_mosi_o.data.TLAST)) begin
-                    for (int i = CHANNEL_NUMBER-1; i > 0; i--) begin
-                        if (shifted_valid_i[i]) begin
-                            increment = i;
-                        end
+                    if (out_mosi_o.TVALID && out_miso_i.TREADY && out_mosi_o.data.TLAST) begin
+                        lock_next = '0;
                     end
+                    if(!lock_next) begin
+                        for (int i = CHANNEL_NUMBER-1; i > 0; i--) begin
+                            if (shifted_valid_i[i]) begin
+                                increment = i;
+                                lock_next = '1;
+                            end
+                        end
 
-                    next_grant = (next_grant + increment) >= CHANNEL_NUMBER ?
-                                    (next_grant + increment - CHANNEL_NUMBER):
-                                    (next_grant + increment);
+                        next_grant = (next_grant + increment) >= CHANNEL_NUMBER ?
+                                        (next_grant + increment - CHANNEL_NUMBER):
+                                        (next_grant + increment);
+                    end
+                end
+
+                always_ff @(posedge clk_i or negedge rst_n_i) begin
+                    if (!rst_n_i) begin
+                        lock <= '0;
+                    end else begin
+                        lock <= lock_next;
+                    end
+                end
+            end else begin
+                always_comb begin
+                    next_grant = current_grant_o;
+                    increment = 0;
+
+                    if (!in_miso_o[current_grant_o].TREADY || !out_mosi_o.TVALID || (out_mosi_o.TVALID && out_miso_i.TREADY && out_mosi_o.data.TLAST)) begin
+                        for (int i = CHANNEL_NUMBER-1; i > 0; i--) begin
+                            if (shifted_valid_i[i]) begin
+                                increment = i;
+                            end
+                        end
+
+                        next_grant = (next_grant + increment) >= CHANNEL_NUMBER ?
+                                        (next_grant + increment - CHANNEL_NUMBER):
+                                        (next_grant + increment);
+                    end
                 end
             end
 

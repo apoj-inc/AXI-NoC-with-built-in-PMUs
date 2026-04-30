@@ -177,7 +177,8 @@ module torus #(
                         .AXIS_USER_WIDTH (AXIS_USER_WIDTH),
                         .CHANNEL_NUMBER  (VIRTUAL_NETWORKS[gen_arbiter]),
 
-                        .TARGET_LEN(1)
+                        .TARGET_LEN(1),
+                        .NO_TIMEOUT(1)
                     ) arb (
                         .clk_i(ACLK), .rst_n_i(ARESETn),
 

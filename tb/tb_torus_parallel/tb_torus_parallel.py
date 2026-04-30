@@ -42,8 +42,8 @@ class AxiWrapper:
 
 
 async def axi_read_write(dut, axi_master, addr, data, id, channel):
-    await with_timeout(axi_master.write(addr, data, awid=id), 500_000, "ns")
-    await with_timeout(axi_master.read(addr, 16, arid=id), 500_000, "ns")
+    await with_timeout(axi_master.write(addr, data, awid=id), 50_000, "ns")
+    await with_timeout(axi_master.read(addr, 16, arid=id), 50_000, "ns")
 
 
 async def reset_dut(dut):
