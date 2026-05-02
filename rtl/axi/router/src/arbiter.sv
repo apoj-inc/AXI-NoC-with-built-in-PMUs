@@ -94,7 +94,9 @@ module arbiter #(
                         lock_next = '0;
                     end
                     if(!lock_next) begin
-                        for (int i = CHANNEL_NUMBER-1; i > 0; i--) begin
+                        if (out_mosi_o.TVALID && !out_mosi_o.data.TLAST) begin
+                            lock_next = '1;
+                        end else for (int i = CHANNEL_NUMBER-1; i > 0; i--) begin
                             if (shifted_valid_i[i]) begin
                                 increment = i;
                                 lock_next = '1;
