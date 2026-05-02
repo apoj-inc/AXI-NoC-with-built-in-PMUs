@@ -92,7 +92,7 @@ module axi_master_loader #(
         end
         else begin
             if (m_axi_i.RVALID) begin
-                rdata_o = m_axi_i.data.r.RDATA;
+                rdata_o <= m_axi_i.data.r.RDATA;
             end
         end
     end

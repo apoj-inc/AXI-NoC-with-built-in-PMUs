@@ -2,19 +2,24 @@
 `include "axi_defines.svh"
 
 module axi_pmu #(
-    parameter AXI_DATA_WIDTH = 32,
-    parameter AXI_ADDR_WIDTH = 16,
-    parameter AXI_ID_R_WIDTH = 4,
-    parameter AXI_ID_W_WIDTH = 4
+    parameter AXI_DATA_WIDTH   = 32,
+    parameter AXI_ADDR_WIDTH   = 16,
+    parameter AXI_ID_R_WIDTH   = 4 ,
+    parameter AXI_ID_W_WIDTH   = 4 ,
+
+    parameter PMU_METRIC_COUNT = 19,
+    parameter PMU_DATA_WIDTH   = 32,
+
+    parameter PMU_ADDR_WIDTH = PMU_METRIC_COUNT == 1 ? 1 : $clog2(PMU_METRIC_COUNT)
 ) (
-    input  logic        aclk,
-    input  logic        aresetn,
-    input  logic        enable,
+    input  logic                      aclk     ,
+    input  logic                      aresetn  ,
+    input  logic                      enable   ,
 
-    axi_if.mon          mon_axi_i,
+    axi_if.mon                        mon_axi_i,
 
-    input  logic [4:0]  addr_i,
-    output logic [31:0] data_o
+    input  logic [PMU_ADDR_WIDTH-1:0] addr_i   ,
+    output logic [PMU_DATA_WIDTH-1:0] data_o   
 );
 
     `GENERATE_AXI_TYPEDEFS
@@ -24,56 +29,56 @@ module axi_pmu #(
     `AXI_INTERFACE_MONITOR2TYPEDEF(mon_axi_i, mon_axi_mosi, mon_axi_miso)
 
     typedef struct packed {
-        logic [31:0] idle;
-        logic [31:0] outstanding;
-        logic [31:0] ar_stall;
-        logic [31:0] ar_handshake;
-        logic [31:0] rvalid_stall;
-        logic [31:0] rready_stall;
-        logic [31:0] r_handshake;
+        logic [PMU_DATA_WIDTH-1:0] idle;
+        logic [PMU_DATA_WIDTH-1:0] outstanding;
+        logic [PMU_DATA_WIDTH-1:0] ar_stall;
+        logic [PMU_DATA_WIDTH-1:0] ar_handshake;
+        logic [PMU_DATA_WIDTH-1:0] rvalid_stall;
+        logic [PMU_DATA_WIDTH-1:0] rready_stall;
+        logic [PMU_DATA_WIDTH-1:0] r_handshake;
     } read_counters;
 
     typedef struct packed {
-        logic [31:0] idle;
-        logic [31:0] outstanding;
-        logic [31:0] responding;
-        logic [31:0] aw_stall;
-        logic [31:0] aw_handshake;
-        logic [31:0] wvalid_stall;
-        logic [31:0] wready_stall;
-        logic [31:0] w_handshake;
-        logic [31:0] bvalid_stall;
-        logic [31:0] bready_stall;
-        logic [31:0] b_handshake;
+        logic [PMU_DATA_WIDTH-1:0] idle;
+        logic [PMU_DATA_WIDTH-1:0] outstanding;
+        logic [PMU_DATA_WIDTH-1:0] responding;
+        logic [PMU_DATA_WIDTH-1:0] aw_stall;
+        logic [PMU_DATA_WIDTH-1:0] aw_handshake;
+        logic [PMU_DATA_WIDTH-1:0] wvalid_stall;
+        logic [PMU_DATA_WIDTH-1:0] wready_stall;
+        logic [PMU_DATA_WIDTH-1:0] w_handshake;
+        logic [PMU_DATA_WIDTH-1:0] bvalid_stall;
+        logic [PMU_DATA_WIDTH-1:0] bready_stall;
+        logic [PMU_DATA_WIDTH-1:0] b_handshake;
     } write_counters;
 
 
     read_counters rc;
     write_counters wc;
-    logic [31:0] clock_counter;
+    logic [PMU_DATA_WIDTH-1:0] clock_counter;
 
     always_comb begin
         case (addr_i)
-            0:  data_o <= rc.idle;
-            1:  data_o <= rc.outstanding;
-            2:  data_o <= rc.ar_stall;
-            3:  data_o <= rc.ar_handshake;
-            4:  data_o <= rc.rvalid_stall;
-            5:  data_o <= rc.rready_stall;
-            6:  data_o <= rc.r_handshake;
-            7:  data_o <= wc.idle;
-            8:  data_o <= wc.outstanding;
-            9:  data_o <= wc.responding;
-            10: data_o <= wc.aw_stall;
-            11: data_o <= wc.aw_handshake;
-            12: data_o <= wc.wvalid_stall;
-            13: data_o <= wc.wready_stall;
-            14: data_o <= wc.w_handshake;
-            15: data_o <= wc.bvalid_stall;
-            16: data_o <= wc.bready_stall;
-            17: data_o <= wc.b_handshake;
-            18: data_o <= clock_counter;
-            default: data_o <= '0;
+            0:  data_o = rc.idle;
+            1:  data_o = rc.outstanding;
+            2:  data_o = rc.ar_stall;
+            3:  data_o = rc.ar_handshake;
+            4:  data_o = rc.rvalid_stall;
+            5:  data_o = rc.rready_stall;
+            6:  data_o = rc.r_handshake;
+            7:  data_o = wc.idle;
+            8:  data_o = wc.outstanding;
+            9:  data_o = wc.responding;
+            10: data_o = wc.aw_stall;
+            11: data_o = wc.aw_handshake;
+            12: data_o = wc.wvalid_stall;
+            13: data_o = wc.wready_stall;
+            14: data_o = wc.w_handshake;
+            15: data_o = wc.bvalid_stall;
+            16: data_o = wc.bready_stall;
+            17: data_o = wc.b_handshake;
+            18: data_o = clock_counter;
+            default: data_o = '0;
         endcase
     end
 

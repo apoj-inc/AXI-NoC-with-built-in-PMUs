@@ -2,8 +2,8 @@ rtl/axi/axi_if.sv
 rtl/axi/axis_if.sv
 rtl/cosimulation/cosim_top.sv
 rtl/cosimulation/noc/mesh_with_loaders.sv
-rtl/lib/axi/axi_pmu.sv
-rtl/lib/axi/axi_master_loader.sv
+rtl/cosimulation/test_env/axi_master_loader.sv
+rtl/cosimulation/test_env/axi_pmu.sv
 rtl/cosimulation/decoders/uart_control.sv
 rtl/lib/cosim/uart/receiver.sv
 rtl/lib/cosim/uart/transmitter.sv

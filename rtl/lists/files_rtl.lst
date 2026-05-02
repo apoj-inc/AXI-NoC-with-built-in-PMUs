@@ -24,7 +24,8 @@ rtl/axi/mesh/mesh.sv
 rtl/axi/torus/torus.sv
 rtl/axi/axi_demux.sv
 rtl/axi/axi_if.sv
-rtl/lib/axi/axi_master_loader.sv
+rtl/cosimulation/test_env/axi_master_loader.sv
+rtl/cosimulation/test_env/axi_pmu.sv
 rtl/axi/axi_mux.sv
 rtl/lib/axi/axi_ram.sv
 rtl/axi/axi2axis.sv
@@ -36,7 +37,6 @@ rtl/lib/primitives/memory/ram.sv
 rtl/axi/stream_arbiter.sv
 rtl/axi/stream_fifo.sv
 rtl/axi/axis_fifo_buffer.sv
-rtl/lib/axi/axi_pmu.sv
 rtl/lib/cosim/uart/receiver.sv
 rtl/lib/cosim/uart/transmitter.sv
 rtl/cosimulation/decoders/uart_control.sv
