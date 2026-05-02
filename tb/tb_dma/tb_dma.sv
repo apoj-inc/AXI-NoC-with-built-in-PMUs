@@ -33,8 +33,13 @@ parameter DMA_BURST_WIDTH         = DMA_BYTES_WIDTH - 4                   ;
 parameter DMA_CHANNEL_COUNT_WIDTH = $clog2(DMA_CHANNEL_COUNT)             ;
 
 
-logic        test_done     ;
-logic [15:0] current_struct;
+logic                         test_done                               ;
+logic                         start_validation                        ;
+logic [DMA_CHANNEL_COUNT-1:0] finished_validation                     ;
+logic [TX_DATA_WIDTH-1:0]     fifo_data                               ;
+logic [TX_DATA_WIDTH-1:0]     tx_data                                 ;
+logic [15:0]                  current_struct                          ;
+logic [DMA_CHANNEL_COUNT][31:0]                   msi_assertion_count ;
 
 logic                       clk                                     ;
 logic                       rst_n                                   ;
@@ -93,6 +98,12 @@ logic [TX_DATA_WIDTH-1:0]   dma_rddata_data_o    [DMA_CHANNEL_COUNT];
 generate
     for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : dma_data_fifos
 
+        logic [TX_DATA_WIDTH-1:0] dma_fifo_write [$];
+        logic [TX_DATA_WIDTH-1:0] dma_fifo_read  [$];
+
+        logic [TX_DATA_WIDTH-1:0] dma_tx_write   [$];
+        logic [TX_DATA_WIDTH-1:0] dma_tx_read    [$];
+
         logic                       dma_wrdata_valid_wr;
         logic                       dma_wrdata_ready_wr;
         logic [TX_DATA_WIDTH-1:0]   dma_wrdata_data_wr ;
@@ -100,6 +111,38 @@ generate
         logic                       dma_rddata_valid_rd;
         logic                       dma_rddata_ready_rd;
         logic [TX_DATA_WIDTH-1:0]   dma_rddata_data_rd ;
+
+        // MSI logging
+        always_ff @(posedge clk or negedge rst_n) begin
+            if (!rst_n) begin
+                msi_assertion_count[i] <= '0;
+            end
+            else begin
+                if (tx_chipselect[i] && tx_write[i] && !tx_waitrequest[i] && (tx_address[i] == {32'('hFEE00000), 32'((i/4)*16)}) && (tx_byteenable[i] == ('h000F << ((i%4)*4))) && (tx_writedata[i] == (32'('hDEADBEE0 + i) << ((i%4)*32)))) begin
+                    msi_assertion_count[i] <= msi_assertion_count[i] + 1;
+                end
+            end
+        end
+
+        // FIFO logging
+        always_ff @(posedge clk) begin
+            if (dma_wrdata_valid_wr && dma_wrdata_ready_wr) begin
+                dma_fifo_write.push_back(dma_wrdata_data_wr);
+            end
+            if (dma_rddata_valid_rd && dma_rddata_ready_rd) begin
+                dma_fifo_read.push_back(dma_rddata_data_rd);
+            end
+
+            
+            if (tx_write[i] && !tx_waitrequest[i]) begin
+                if (!((tx_address[i] == {32'('hFEE00000), 32'((i/4)*16)}) && (tx_byteenable[i] == ('h000F << ((i%4)*4))) && (tx_writedata[i] == (32'('hDEADBEE0 + i) << ((i%4)*32))))) begin
+                    dma_tx_write.push_back(tx_writedata[i]);
+                end
+            end
+            if (tx_readdatavalid[i]) begin
+                dma_tx_read.push_back(tx_readdata[i]);
+            end
+        end
 
         always_ff @(posedge clk or negedge rst_n) begin
             if (!rst_n) begin
@@ -402,12 +445,12 @@ initial begin
     end
 
     for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
-        // Write DMA ADDR LO
+        // Write MSIX
         msix_s_chipselect = '1;
         msix_s_byteenable = 'hFFFF;
         msix_s_read       = '0;
         msix_s_write      = '1;
-        msix_s_writedata  = {32'(i % 2), 32'($urandom()), 32'('hFEE00000), 32'(i << 16)}; // ctrl, data, addr_hi, addr_lo
+        msix_s_writedata  = {32'(i % 2), 32'('hDEADBEE0 + i), 32'('hFEE00000), 32'(i*4)}; // ctrl, data, addr_hi, addr_lo
         msix_s_address    = i * 'h10;
         @(posedge clk);
         while (csr_s_waitrequest) begin
@@ -420,58 +463,144 @@ initial begin
     
     // DMA action
 
-    // Short operations
-    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
-        dec_s_chipselect = '1;
-        dec_s_byteenable = 'h00FF;
-        dec_s_read       = '0;
-        dec_s_write      = '1;
-        dec_s_writedata  = ((22'(16*16)) << 32) | 22'('h0);
-        dec_s_address    = i << 4;
-        @(posedge clk);
-        while (dec_s_waitrequest) begin
+    for (int i = 0; i < 2; i++) begin
+        // Short operations
+        for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+            dec_s_chipselect = '1;
+            dec_s_byteenable = 'h00FF;
+            dec_s_read       = '0;
+            dec_s_write      = '1;
+            dec_s_writedata  = ((22'(16*16)) << 32) | 22'('h0);
+            dec_s_address    = i << 4;
             @(posedge clk);
-        end
-        dec_s_chipselect = '1;
-        dec_s_byteenable = 'hFF00;
-        dec_s_read       = '0;
-        dec_s_write      = '1;
-        dec_s_writedata  = (((22'(16*16)) << 32) | 22'('h100)) << 64;
-        dec_s_address    = i << 4;
-        @(posedge clk);
-        while (dec_s_waitrequest) begin
+            while (dec_s_waitrequest) begin
+                @(posedge clk);
+            end
+            dec_s_chipselect = '1;
+            dec_s_byteenable = 'hFF00;
+            dec_s_read       = '0;
+            dec_s_write      = '1;
+            dec_s_writedata  = (((22'(16*16)) << 32) | 22'('h100)) << 64;
+            dec_s_address    = i << 4;
             @(posedge clk);
+            while (dec_s_waitrequest) begin
+                @(posedge clk);
+            end
         end
-    end
-    // Long operations
-    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
-        dec_s_chipselect = '1;
-        dec_s_byteenable = 'h00FF;
-        dec_s_read       = '0;
-        dec_s_write      = '1;
-        dec_s_writedata  = ((22'(128*16)) << 32) | 22'('h0);
-        dec_s_address    = i << 4;
-        @(posedge clk);
-        while (dec_s_waitrequest) begin
+        // Long operations
+        for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+            dec_s_chipselect = '1;
+            dec_s_byteenable = 'h00FF;
+            dec_s_read       = '0;
+            dec_s_write      = '1;
+            dec_s_writedata  = ((22'(128*16)) << 32) | 22'('h0);
+            dec_s_address    = i << 4;
             @(posedge clk);
-        end
-        dec_s_chipselect = '1;
-        dec_s_byteenable = 'hFF00;
-        dec_s_read       = '0;
-        dec_s_write      = '1;
-        dec_s_writedata  = (((22'(128*16)) << 32) | 22'('h100)) << 64;
-        dec_s_address    = i << 4;
-        @(posedge clk);
-        while (dec_s_waitrequest) begin
+            while (dec_s_waitrequest) begin
+                @(posedge clk);
+            end
+            dec_s_chipselect = '1;
+            dec_s_byteenable = 'hFF00;
+            dec_s_read       = '0;
+            dec_s_write      = '1;
+            dec_s_writedata  = (((22'(128*16)) << 32) | 22'('h100)) << 64;
+            dec_s_address    = i << 4;
             @(posedge clk);
+            while (dec_s_waitrequest) begin
+                @(posedge clk);
+            end
         end
-    end
-    dec_s_write      = '0;
+        dec_s_write      = '0;
 
-    repeat(1000) @(posedge clk);
+        for (int j = 0; j < DMA_CHANNEL_COUNT; j++) begin
+            repeat (100) @(posedge clk);
+            while (msi_assertion_count[j] != (8 - j%2*4 - (1-i)*4)) begin
+                @(posedge clk);
+            end
+        
+            // Demask masked MSIX
+            msix_s_chipselect = '1;
+            msix_s_byteenable = 'hFFFF;
+            msix_s_read       = '0;
+            msix_s_write      = '1;
+            msix_s_writedata  = {32'(1'b0), 32'('hDEADBEE0 + j), 32'('hFEE00000), 32'(j*4)}; // ctrl, data, addr_hi, addr_lo
+            msix_s_address    = j * 'h10;
+            @(posedge clk);
+            while (csr_s_waitrequest) begin
+                @(posedge clk);
+            end
+            @(posedge clk);
+            $write("MSI-X for DMA channel %u: mask 0x%x, data 0x%x, addr 0x%x;\n", 4'(j), dut.msix_mask[j][0], dut.msix_data[j], dut.msix_addrs[j]);
+        end
+    end
+
+    
+    // Validate contents
+    start_validation = 1;
+
+    while (finished_validation != DMA_CHANNEL_COUNT'('1)) begin
+        @(posedge clk);
+    end
     
     test_done = '1;
     
 end
+
+generate
+    for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : fifo_validator
+        logic [31:0] iter;
+
+        initial begin
+            finished_validation[i] = 0;
+
+            @(posedge start_validation);
+
+            iter = 0;
+            
+            assert ((128 + 16)*2 == dma_data_fifos[i].dma_tx_write.size()) 
+            else   begin
+                $error("Mismatched write sizes channel %d: %d expected, %d got", i, (128 + 16)*2, dma_data_fifos[i].dma_tx_write.size());
+                $finish();
+            end
+            
+
+            while (dma_data_fifos[i].dma_tx_write.size()) begin
+                fifo_data = dma_data_fifos[i].dma_fifo_write.pop_front();
+                tx_data   = dma_data_fifos[i].dma_tx_write.pop_front();
+
+                assert (fifo_data == tx_data) 
+                else   begin
+                    $error("Erroneous write data channel %d: iter %d, %x dma_fifo, %x dma_tx", i, iter, fifo_data, tx_data);
+                    $finish();
+                end
+                iter = iter + 1;
+            end
+
+
+            iter = 0;
+
+            assert ((128 + 16)*2 == dma_data_fifos[i].dma_tx_read.size()) 
+            else   begin
+                $error("Mismatched read sizes channel %d: %d expected, %d got", (128 + 16)*2, i, dma_data_fifos[i].dma_tx_read.size());
+                $finish();
+            end
+
+
+            while (dma_data_fifos[i].dma_tx_read.size()) begin
+                fifo_data = dma_data_fifos[i].dma_fifo_read.pop_front();
+                tx_data   = dma_data_fifos[i].dma_tx_read.pop_front();
+
+                assert (fifo_data == tx_data) 
+                else   begin
+                    $error("Erroneous read data channel %d: iter %d, %x dma_fifo, %x dma_tx", i, iter, fifo_data, tx_data);
+                    $finish();
+                end
+                iter = iter + 1;
+            end
+
+            finished_validation[i] = 1;
+        end
+    end
+endgenerate
 
 endmodule

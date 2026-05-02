@@ -223,15 +223,7 @@ module avmm_dma_engine #(
         case (state)
             IDLE    : begin
                 if (dma_task_valid_i) begin
-                    if (dma_task_write_i) begin
-                        dma_task_ready_o = '1;
-                    end
-                    else if (!dma_task_write_i) begin
-                        dma_task_ready_o = '1;
-                    end
-                    else begin
-                        dma_task_ready_o = '0;
-                    end
+                    dma_task_ready_o = '1;
                 end
                 else begin
                     dma_task_ready_o = '0;
@@ -329,16 +321,30 @@ module avmm_dma_engine #(
             end
             GEN_MSI : begin
                 tx_chipselect_next = '1         ;
-                tx_writedata_next  = msix_data_i;
                 tx_write_next      = '1         ;
                 tx_read_next       = '0         ;
                 tx_burstcount_next = 1          ;
                 case (msix_addr_i[3:0])
-                    'h0    : tx_byteenable_next = 16'h000F;
-                    'h4    : tx_byteenable_next = 16'h00F0;
-                    'h8    : tx_byteenable_next = 16'h0F00;
-                    'hC    : tx_byteenable_next = 16'hF000;
-                    default: tx_byteenable_next = 16'h000F;
+                    'h0    : begin
+                        tx_writedata_next  = msix_data_i << 0 ;
+                        tx_byteenable_next = 16'h000F;
+                    end
+                    'h4    : begin
+                        tx_writedata_next  = msix_data_i << 32;
+                        tx_byteenable_next = 16'h00F0;
+                    end
+                    'h8    : begin
+                        tx_writedata_next  = msix_data_i << 64;
+                        tx_byteenable_next = 16'h0F00;
+                    end
+                    'hC    : begin
+                        tx_writedata_next  = msix_data_i << 96;
+                        tx_byteenable_next = 16'hF000;
+                    end
+                    default: begin
+                        tx_writedata_next  = msix_data_i << 0 ;
+                        tx_byteenable_next = 16'h000F;
+                    end
                 endcase
                 tx_address_next    = {msix_addr_i[63:4], 4'h0};
 

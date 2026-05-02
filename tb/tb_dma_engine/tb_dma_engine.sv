@@ -310,6 +310,8 @@ initial begin
         @(posedge clk);
     end
 
+    // Validate contents
+    
     iter = 0;
     assert (dma_fifo_write.size() == dma_tx_write.size()) 
     else   begin

@@ -42,11 +42,11 @@ logic [DMA_BURST_WIDTH-1:0]         dma_task_burst_o     ;
 logic [DMA_OFFFSET_WIDTH-1:0]       dma_task_offset_o    ;
 logic                               dma_task_write_o     ;
 
-logic [DMA_CHANNEL_COUNT-1:0]       out_dma_task_valid_o ;
-logic [DMA_CHANNEL_COUNT-1:0]       out_dma_task_ready_i ;
-logic [DMA_BURST_WIDTH-1:0]         out_dma_task_burst_o ;
-logic [DMA_OFFFSET_WIDTH-1:0]       out_dma_task_offset_o;
-logic [DMA_CHANNEL_COUNT-1:0]       out_dma_task_write_o ;
+logic [DMA_CHANNEL_COUNT-1:0]       out_dma_task_valid_o                     ;
+logic [DMA_CHANNEL_COUNT-1:0]       out_dma_task_ready_i                     ;
+logic [DMA_BURST_WIDTH-1:0]         out_dma_task_burst_o  [DMA_CHANNEL_COUNT];
+logic [DMA_OFFFSET_WIDTH-1:0]       out_dma_task_offset_o [DMA_CHANNEL_COUNT];
+logic [DMA_CHANNEL_COUNT-1:0]       out_dma_task_write_o                     ;
 
 logic [DMA_CHANNEL_COUNT-1:0]       task_ready_mask;
 
@@ -199,19 +199,19 @@ initial begin
         while (!(out_dma_task_valid_o == (DMA_CHANNEL_COUNT'('1) >> (DMA_CHANNEL_COUNT-(i+1))))) begin
             @(posedge clk);
         end
-        assert (out_dma_task_burst_o == (22'(dma_bytes) >> 4)) 
+        assert (out_dma_task_burst_o[i] == (22'(dma_bytes) >> 4)) 
         else   begin
-            $error("Wrong write burst at channel %d: expected %h, got %h", i, 22'(dma_bytes) >> 4, out_dma_task_burst_o);
+            $error("Wrong write burst at channel %d: expected %h, got %h", i, 22'(dma_bytes) >> 4, out_dma_task_burst_o[i]);
             $finish();
         end
-        assert (out_dma_task_offset_o == 22'(dma_offset)) 
+        assert (out_dma_task_offset_o[i] == 22'(dma_offset)) 
         else   begin
-            $error("Wrong write offset at channel %d: expected %h, got %h", i, 22'(dma_offset) >> 4, out_dma_task_offset_o);
+            $error("Wrong write offset at channel %d: expected %h, got %h", i, 22'(dma_offset) >> 4, out_dma_task_offset_o[i]);
             $finish();
         end
-        assert (out_dma_task_write_o == 1) 
+        assert (out_dma_task_write_o[i] == 1) 
         else   begin
-            $error("Wrong write write at channel %d: expected %d, got %d", i, 1, out_dma_task_write_o);
+            $error("Wrong write write at channel %d: expected %d, got %d", i, 1, out_dma_task_write_o[i]);
             $finish();
         end
     end
@@ -250,19 +250,19 @@ initial begin
         while (!(out_dma_task_valid_o == (DMA_CHANNEL_COUNT'('1) >> (DMA_CHANNEL_COUNT-(i+1))))) begin
             @(posedge clk);
         end
-        assert (out_dma_task_burst_o == (22'(dma_bytes) >> 4)) 
+        assert (out_dma_task_burst_o[i] == (22'(dma_bytes) >> 4)) 
         else   begin
-            $error("Wrong read burst at channel %d: expected %h, got %h", i, 22'(dma_bytes) >> 4, out_dma_task_burst_o);
+            $error("Wrong read burst at channel %d: expected %h, got %h", i, 22'(dma_bytes) >> 4, out_dma_task_burst_o[i]);
             $finish();
         end
-        assert (out_dma_task_offset_o == 22'(dma_offset)) 
+        assert (out_dma_task_offset_o[i] == 22'(dma_offset)) 
         else   begin
-            $error("Wrong task offset at channel %d: expected %h, got %h", i, 22'(dma_offset) >> 4, out_dma_task_offset_o);
+            $error("Wrong task offset at channel %d: expected %h, got %h", i, 22'(dma_offset) >> 4, out_dma_task_offset_o[i]);
             $finish();
         end
-        assert (out_dma_task_write_o == 0) 
+        assert (out_dma_task_write_o[i] == 0) 
         else   begin
-            $error("Wrong read write at channel %d: expected %d, got %d", i, 0, out_dma_task_write_o);
+            $error("Wrong read write at channel %d: expected %d, got %d", i, 0, out_dma_task_write_o[i]);
             $finish();
         end
     end
