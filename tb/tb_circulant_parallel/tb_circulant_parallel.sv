@@ -93,6 +93,9 @@ module tb_circulant_parallel (
         .ROUTERS_COUNT(16),
         .GENERATICS_COUNT(3),
         .GENERATICS('{5,2,1}),
+        .VIRTUAL_CHANNEL_NUMBER(7),
+        .VIRTUAL_NETWORKS('{3, 4}),
+        .BUFFER_ALLOCATOR("KeepInNetwork"),
         .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(1)
     ) dut (
         .ACLK(aclk),
@@ -112,7 +115,7 @@ module tb_circulant_parallel (
             );
             
             initial begin
-                for (int j = 0; j < 2**16; j++) begin
+                for (int j = 0; j < 2**12; j++) begin
                     ram.coupled_ram.ram[j] = $urandom();
                 end
             end

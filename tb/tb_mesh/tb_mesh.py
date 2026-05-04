@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge, Combine, Timer, First
+from cocotb.triggers import RisingEdge, Combine, Timer, First, with_timeout
 from cocotb.clock import Clock
 from cocotbext.axi import AxiMaster, AxiBus
 
@@ -42,19 +42,22 @@ class AxiWrapper:
 
 
 async def axi_read_write(dut, axi_master, addr, data, id, channel):
-    
-    await axi_master.write(addr, data, awid=id)
-    await axi_master.read(addr, 16, arid=id)
+    await with_timeout(axi_master.write(addr, data, awid=id), 50_000, "ns")
+    await with_timeout(axi_master.read(addr, 16, arid=id), 50_000, "ns")
+
+
+async def reset_dut(dut):
+    dut.aresetn.setimmediatevalue(0)
+    await RisingEdge(dut.aclk)
+    await RisingEdge(dut.aclk)
+    dut.aresetn.value = 1
+    await RisingEdge(dut.aclk)
 
 
 @cocotb.test
 async def feedback_loop(dut):
-    
-    dut.aresetn.value = 0
-    await RisingEdge(dut.aclk)
-    await RisingEdge(dut.aclk)
-    dut.aresetn.value = 1
-    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(16)]
+    await reset_dut(dut)
+    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(20)]
     await RisingEdge(dut.aclk)
 
     processes = []
@@ -82,23 +85,18 @@ async def feedback_loop(dut):
 
 @cocotb.test
 async def test_all_in_one(dut):
-    
-    dut.aresetn.value = 0
-    await RisingEdge(dut.aclk)
-    await RisingEdge(dut.aclk)
-    dut.aresetn.value = 1
-    await RisingEdge(dut.aclk)
+    await reset_dut(dut)
 
-    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(16)]
+    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(20)]
 
     processes = []
     datas = [b'0000000000000000', b'1111111111111111', b'2222222222222222', b'3333333333333333', b'4444444444444444',
              b'5555555555555555', b'6666666666666666', b'7777777777777777', b'8888888888888888', b'9999999999999999',
              b'1010101010101010', b'1111111111111111', b'1212121212121212', b'1313131313131313', b'1414141414141414',
              b'1515151515151515'] * 10
-    addrs = [32 * i for i in range(16)]
-    for j in range(64):
-        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 16], addrs[j % 16], datas[j % 16], 5, 0)))
+    addrs = [32 * i for i in range(20)]
+    for j in range(20):
+        processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 20], addrs[j % 20], datas[j % 20], 5, 0)))
 
     timeout = Timer(200_000, unit='ns')
 
@@ -115,25 +113,20 @@ async def test_all_in_one(dut):
 
 @cocotb.test
 async def test_random(dut):
-    
-    dut.aresetn.value = 0
-    await RisingEdge(dut.aclk)
-    await RisingEdge(dut.aclk)
-    dut.aresetn.value = 1
-    await RisingEdge(dut.aclk)
+    await reset_dut(dut)
 
-    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(16)]
+    axi_master = [AxiMaster(AxiBus.from_prefix(AxiWrapper(dut, i), ""), dut.aclk, dut.aresetn, reset_active_level=False) for i in range(20)]
 
-    for i in range(10):
+    for i in range(20):
         cocotb.log.info(f"pass {i}")
         processes = []
         datas = [b'0000000000000000', b'1111111111111111', b'2222222222222222', b'3333333333333333', b'4444444444444444',
                  b'5555555555555555', b'6666666666666666', b'7777777777777777', b'8888888888888888', b'9999999999999999',
                  b'1010101010101010', b'1111111111111111', b'1212121212121212', b'1313131313131313', b'1414141414141414',
-                 b'1515151515151515']
-        addrs = [32 * i for i in range(16)]
-        for j in range(64):
-            processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 16], addrs[j % 16], datas[j % 16], randint(1, 16), 0)))
+                 b'1515151515151515', b'1616161616161616', b'1717171717171717', b'1818181818181818', b'1919191919191919']
+        addrs = [32 * i for i in range(20)]
+        for j in range(32):
+            processes.append(cocotb.start_soon(axi_read_write(dut, axi_master[j % 20], addrs[j % 20], datas[j % 20], randint(1, 20), 0)))
 
         timeout = Timer(200_000, unit='ns')
 

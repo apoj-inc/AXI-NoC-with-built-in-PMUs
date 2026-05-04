@@ -92,7 +92,10 @@ module tb_circulant (
         .AXI_ADDR_WIDTH(12),
         .ROUTERS_COUNT(16),
         .GENERATICS_COUNT(3),
-        .GENERATICS('{5,2,1})
+        .GENERATICS('{5,2,1}),
+        .VIRTUAL_CHANNEL_NUMBER(7),
+        .VIRTUAL_NETWORKS('{3, 4}),
+        .BUFFER_ALLOCATOR("KeepInNetwork")
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),
@@ -111,7 +114,7 @@ module tb_circulant (
             );
             
             initial begin
-                for (int j = 0; j < 2**16; j++) begin
+                for (int j = 0; j < 2**12; j++) begin
                     ram.coupled_ram.ram[j] = $urandom();
                 end
             end
