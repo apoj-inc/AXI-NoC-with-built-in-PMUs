@@ -19,24 +19,24 @@ module axi_testenv #(
     parameter AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH,
     parameter PMU_ADDR_WIDTH   = PMU_METRIC_COUNT == 1 ? 1 : $clog2(PMU_METRIC_COUNT)               
 ) (
-    input  logic                           clk_in                              ,
-    input  logic                           rst_n_in                            ,
+    input  logic                           clk_in                         ,
+    input  logic                           rst_n_in                       ,
 
-    input  logic [EXT_FIFO_DATA_WIDTH-1:0] command_fifo_data_i                 ,
-    input  logic                           command_fifo_valid_i                ,
-    output logic                           command_fifo_ready_o                ,
+    input  logic [EXT_FIFO_DATA_WIDTH-1:0] command_data_i                 ,
+    input  logic                           command_valid_i                ,
+    output logic                           command_ready_o                ,
 
-    output logic [EXT_FIFO_DATA_WIDTH-1:0] pmu_fifo_data_o                     ,
-    output logic                           pmu_fifo_valid_o                    ,
-    input  logic                           pmu_fifo_ready_i                    ,
+    output logic [EXT_FIFO_DATA_WIDTH-1:0] pmu_data_o                     ,
+    output logic                           pmu_valid_o                    ,
+    input  logic                           pmu_ready_i                    ,
 
-    input  logic                           clk_axi                             ,
-    input  logic                           rst_n_axi                           ,
+    input  logic                           clk_axi                        ,
+    input  logic                           rst_n_axi                      ,
 
-    output logic [ROUTERS_COUNT-1:0]       ld_idle_o                           ,
-    output logic [AXI_DATA_WIDTH-1:0]      ld_rdata_o           [ROUTERS_COUNT],
+    output logic [ROUTERS_COUNT-1:0]       ld_idle_o                      ,
+    output logic [AXI_DATA_WIDTH-1:0]      ld_rdata_o      [ROUTERS_COUNT],
 
-    axi_if.m                               m_axi_if_o           [ROUTERS_COUNT]                           
+    axi_if.m                               m_axi_if_o      [ROUTERS_COUNT]                           
 );
 
     logic [ROUTERS_COUNT-1:0]    ld_valid  ;
@@ -62,7 +62,7 @@ module axi_testenv #(
 
 
     assign ld_idle_o = ld_idle_resynced;
-    assign command_fifo_ready_o = '1;
+    assign command_ready_o = '1;
 
 
     dma_task_dispatcher #(
@@ -78,8 +78,8 @@ module axi_testenv #(
         .clk         (clk_in              ),
         .rst_n       (rst_n_in            ),
 
-        .dma_valid_i (command_fifo_valid_i),
-        .dma_data_i  (command_fifo_data_i ),
+        .dma_valid_i (command_valid_i),
+        .dma_data_i  (command_data_i ),
 
         .ld_valid_o  (ld_valid            ),
         .resp_wait_o (resp_wait           ),
@@ -164,9 +164,9 @@ module axi_testenv #(
         .clk_rd   (clk_in               ),
         .rst_n_rd (rst_n_in             ),
 
-        .data_o   (pmu_fifo_data_o      ),
-        .valid_o  (pmu_fifo_valid_o     ),
-        .ready_i  (pmu_fifo_ready_i     ),
+        .data_o   (pmu_data_o      ),
+        .valid_o  (pmu_valid_o     ),
+        .ready_i  (pmu_ready_i     ),
         .count_o  (                     )
     );
 

@@ -12,15 +12,15 @@ parameter     AXI_ID_W_WIDTH                        = 5          ;
 parameter     AXI_ID_R_WIDTH                        = 5          ;
 parameter     AXI_ADDR_WIDTH                        = 16         ;
 
-parameter     DMA_CHANNEL_COUNT                     = 1          ;
+parameter     DMA_CHANNEL_COUNT                     = 8          ;
 
 parameter     DMA_BYTES_WIDTH                       = 22         ;
 parameter     DMA_OFFFSET_WIDTH                     = 22         ;
 
-parameter int DMA_WORD_BYTES    [DMA_CHANNEL_COUNT] = '{1 {16  }};
-parameter int DMA_WQ_DEPTH      [DMA_CHANNEL_COUNT] = '{1 {1024}};
-parameter int DMA_RQ_DEPTH      [DMA_CHANNEL_COUNT] = '{1 {1024}};
-parameter int DMA_TQ_DEPTH      [DMA_CHANNEL_COUNT] = '{1 {16  }};
+parameter int DMA_WORD_BYTES    [DMA_CHANNEL_COUNT] = '{8 {16  }};
+parameter int DMA_WQ_DEPTH      [DMA_CHANNEL_COUNT] = '{8 {1024}};
+parameter int DMA_RQ_DEPTH      [DMA_CHANNEL_COUNT] = '{8 {1024}};
+parameter int DMA_TQ_DEPTH      [DMA_CHANNEL_COUNT] = '{8 {16  }};
 
 parameter int MAX_WQ_DEPTH                          = 1024       ;
 parameter int MAX_RQ_DEPTH                          = 1024       ;
@@ -172,32 +172,14 @@ logic                       tx_readdatavalid     [DMA_CHANNEL_COUNT];
 logic                       tx_waitrequest       [DMA_CHANNEL_COUNT];
 logic [TX_ADDR_WIDTH-1:0]   tx_address           [DMA_CHANNEL_COUNT];
 
-logic                       dma_wrdata_valid_i   [DMA_CHANNEL_COUNT];
-logic                       dma_wrdata_ready_o   [DMA_CHANNEL_COUNT];
-logic [DMA_WQ_ADDR_WIDTH:0] dma_wrdata_count_i   [DMA_CHANNEL_COUNT];
-logic [TX_DATA_WIDTH-1:0]   dma_wrdata_data_i    [DMA_CHANNEL_COUNT];
-
-logic                       dma_rddata_valid_o   [DMA_CHANNEL_COUNT];
-logic                       dma_rddata_ready_i   [DMA_CHANNEL_COUNT];
-logic [DMA_RQ_ADDR_WIDTH:0] dma_rddata_free_i    [DMA_CHANNEL_COUNT];
-logic [TX_DATA_WIDTH-1:0]   dma_rddata_data_o    [DMA_CHANNEL_COUNT];
-
-logic                       dma_wrdata_valid_wr  [DMA_CHANNEL_COUNT];
-logic                       dma_wrdata_ready_wr  [DMA_CHANNEL_COUNT];
-logic [TX_DATA_WIDTH-1:0]   dma_wrdata_data_wr   [DMA_CHANNEL_COUNT];
-
-logic                       dma_rddata_valid_rd  [DMA_CHANNEL_COUNT];
-logic                       dma_rddata_ready_rd  [DMA_CHANNEL_COUNT];
-logic [TX_DATA_WIDTH-1:0]   dma_rddata_data_rd   [DMA_CHANNEL_COUNT];
-
 
 generate
     for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : multiply_pmu_dumps
         logic [PMU_WIDTH_RATIO*DMA_DATA_WIDTH-1:0] pmu_dump [ROUTERS_COUNT];
         for (genvar j = 0; j < ROUTERS_COUNT; j++) begin : extract_all_pmus
-            assign pmu_dump[j] = {multiply_testenvs[i].u_axi_testenv.pmus_and_generators[j].u_axi_pmu.clock_counter,
-                                  multiply_testenvs[i].u_axi_testenv.pmus_and_generators[j].u_axi_pmu.wc,
-                                  multiply_testenvs[i].u_axi_testenv.pmus_and_generators[j].u_axi_pmu.rc};
+            assign pmu_dump[j] = {u_dma_testenv_top.testenvs[i].u_axi_testenv.pmus_and_generators[j].u_axi_pmu.clock_counter,
+                                  u_dma_testenv_top.testenvs[i].u_axi_testenv.pmus_and_generators[j].u_axi_pmu.wc,
+                                  u_dma_testenv_top.testenvs[i].u_axi_testenv.pmus_and_generators[j].u_axi_pmu.rc};
         end
     end
 endgenerate
@@ -217,45 +199,6 @@ generate
 endgenerate
 
 generate
-    for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : dma_data_fifos
-
-        stream_fifo #(
-            .DATA_WIDTH (TX_DATA_WIDTH  ),
-            .FIFO_DEPTH (DMA_WQ_DEPTH[i])
-        ) u_stream_fifo_dmawr (
-            .ACLK    (clk                   ),
-            .ARESETn (rst_n                 ),
-
-            .data_i  (dma_wrdata_data_wr [i]),
-            .valid_i (dma_wrdata_valid_wr[i]),
-            .ready_o (dma_wrdata_ready_wr[i]),
-            .free_o  (                      ), // NC
-
-            .data_o  (dma_wrdata_data_i [i] ),
-            .valid_o (dma_wrdata_valid_i[i] ),
-            .ready_i (dma_wrdata_ready_o[i] ),
-            .count_o (dma_wrdata_count_i[i] )
-        );
-
-        stream_fifo #(
-            .DATA_WIDTH (TX_DATA_WIDTH  ),
-            .FIFO_DEPTH (DMA_WQ_DEPTH[i])
-        ) u_stream_fifo_dmard (
-            .ACLK    (clk                   ),
-            .ARESETn (rst_n                 ),
-
-            .data_i  (dma_rddata_data_o [i] ),
-            .valid_i (dma_rddata_valid_o[i] ),
-            .ready_o (dma_rddata_ready_i[i] ),
-            .free_o  (dma_rddata_free_i [i] ), // NC
-
-            .data_o  (dma_rddata_data_rd [i]),
-            .valid_o (dma_rddata_valid_rd[i]),
-            .ready_i (dma_rddata_ready_rd[i]),
-            .count_o (                      )  // NC
-        );
-    end
-
     for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : tx_read_logic
         logic rdvalid_gate;
         logic [31:0] reads_pipelined;
@@ -324,30 +267,35 @@ generate
     end
 endgenerate
 
-avmm_dma_top #(
-    .DMA_CHANNEL_COUNT (DMA_CHANNEL_COUNT ),
+dma_testenv_top #(
+    .DMA_CHANNEL_COUNT (DMA_CHANNEL_COUNT),
 
-    .DMA_BYTES_WIDTH   (DMA_BYTES_WIDTH   ),
-    .DMA_OFFFSET_WIDTH (DMA_OFFFSET_WIDTH ),
+    .DMA_BYTES_WIDTH   (DMA_BYTES_WIDTH  ),
+    .DMA_OFFFSET_WIDTH (DMA_OFFFSET_WIDTH),
 
-    .DMA_WORD_BYTES    (DMA_WORD_BYTES    ),
-    .DMA_WQ_DEPTH      (DMA_WQ_DEPTH      ),
-    .DMA_RQ_DEPTH      (DMA_RQ_DEPTH      ),
-    .DMA_TQ_DEPTH      (DMA_TQ_DEPTH      ),
+    .DMA_WORD_BYTES    (DMA_WORD_BYTES   ),
+    .DMA_WQ_DEPTH      (DMA_WQ_DEPTH     ),
+    .DMA_RQ_DEPTH      (DMA_RQ_DEPTH     ),
+    .DMA_TQ_DEPTH      (DMA_TQ_DEPTH     ),
 
-    .MAX_WQ_DEPTH      (MAX_WQ_DEPTH      ),
-    .MAX_RQ_DEPTH      (MAX_RQ_DEPTH      ),
-    .MAX_TQ_DEPTH      (MAX_TQ_DEPTH      ),
+    .MAX_WQ_DEPTH      (MAX_WQ_DEPTH     ),
+    .MAX_RQ_DEPTH      (MAX_RQ_DEPTH     ),
+    .MAX_TQ_DEPTH      (MAX_TQ_DEPTH     ),
 
-    .BAR_DATA_WIDTH    (BAR_DATA_WIDTH    ),
-    .BAR_ADDR_WIDTH    (BAR_ADDR_WIDTH    ),
+    .BAR_DATA_WIDTH    (BAR_DATA_WIDTH   ),
+    .BAR_ADDR_WIDTH    (BAR_ADDR_WIDTH   ),
 
-    .TX_DATA_WIDTH     (TX_DATA_WIDTH     ),
-    .TX_ADDR_WIDTH     (TX_ADDR_WIDTH     ),
-    .TX_BURST_WIDTH    (TX_BURST_WIDTH    )
-) dut (
-    .clk                  (clk                  ),
-    .rst_n                (rst_n                ),
+    .TX_DATA_WIDTH     (TX_DATA_WIDTH    ),
+    .TX_ADDR_WIDTH     (TX_ADDR_WIDTH    ),
+    .TX_BURST_WIDTH    (TX_BURST_WIDTH   ),
+
+    .AXI_LD_FIFO_DEPTH (FIFO_DEPTH       ),
+
+    .PMU_METRIC_COUNT  (PMU_METRIC_COUNT ),
+    .PMU_DATA_WIDTH    (PMU_DATA_WIDTH   )
+) u_dma_testenv_top (
+    .clk_dma              (clk                  ),
+    .rst_n_dma            (rst_n                ),
 
     .csr_s_chipselect     (csr_s_chipselect     ),
     .csr_s_byteenable     (csr_s_byteenable     ),
@@ -390,96 +338,9 @@ avmm_dma_top #(
     .tx_waitrequest       (tx_waitrequest       ),
     .tx_address           (tx_address           ),
 
-    .dma_wrdata_valid_i   (dma_wrdata_valid_i   ),
-    .dma_wrdata_ready_o   (dma_wrdata_ready_o   ),
-    .dma_wrdata_count_i   (dma_wrdata_count_i   ),
-    .dma_wrdata_data_i    (dma_wrdata_data_i    ),
-
-    .dma_rddata_valid_o   (dma_rddata_valid_o   ),
-    .dma_rddata_ready_i   (dma_rddata_ready_i   ),
-    .dma_rddata_free_i    (dma_rddata_free_i    ),
-    .dma_rddata_data_o    (dma_rddata_data_o    )
+    .clk_noc              (clk_axi              ),
+    .rst_n_noc            (rst_n_axi            )
 );
-
-generate
-    for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : multiply_testenvs
-        logic [PMU_ADDR_WIDTH-1:0] pmu_addr_o                ;
-        logic [PMU_DATA_WIDTH-1:0] pmu_data_i [ROUTERS_COUNT];
-        logic [ROUTERS_COUNT-1:0]  ld_idle_i                 ;
-
-        logic                        dma_valid_i ;
-        logic [DMA_DATA_WIDTH-1:0]   dma_data_i  ;
-        logic [ROUTERS_COUNT-1:0]    ld_valid_o  ;
-        logic                        resp_wait_o ;
-        logic [AXI_MAX_ID_WIDTH-1:0] id_o        ;
-        logic                        write_o     ;
-        logic [AXI_ADDR_WIDTH-1:0]   axaddr_o    ;
-        logic [7:0]                  axlen_o     ;
-        logic [AXI_DATA_WIDTH-1:0]   wdata_o     ;
-        logic [AXI_DATA_BYTES-1:0]   wstrb_o     ;
-        logic                        start_o     ;
-
-        logic                      syncer_wrdata_valid_wr;
-        logic                      syncer_wrdata_ready_wr;
-        logic [DMA_DATA_WIDTH-1:0] syncer_wrdata_data_wr ;
-        
-        axi_if #(
-            .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
-            .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
-            .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH),
-            .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH)
-        ) axi_if[ROUTERS_COUNT]();
-
-        axi_testenv #(
-            .ROUTERS_COUNT       (ROUTERS_COUNT),
-
-            .AXI_DATA_WIDTH      (AXI_DATA_WIDTH),
-            .AXI_ADDR_WIDTH      (AXI_ADDR_WIDTH),
-            .AXI_ID_W_WIDTH      (AXI_ID_W_WIDTH),
-            .AXI_ID_R_WIDTH      (AXI_ID_R_WIDTH),
-
-            .EXT_FIFO_DATA_WIDTH (DMA_DATA_WIDTH),
-
-            .AXI_LD_FIFO_DEPTH   (FIFO_DEPTH),
-
-            .PMU_METRIC_COUNT    (PMU_METRIC_COUNT),
-            .PMU_DATA_WIDTH      (PMU_DATA_WIDTH  )
-        ) u_axi_testenv (
-            .clk_in               (clk                   ),
-            .rst_n_in             (rst_n                 ),
-
-            .command_fifo_data_i  (dma_rddata_data_rd[i] ),
-            .command_fifo_valid_i (dma_rddata_valid_rd[i]),
-            .command_fifo_ready_o (dma_rddata_ready_rd[i]), // NC
-
-            .pmu_fifo_data_o      (dma_wrdata_data_wr [i]),
-            .pmu_fifo_valid_o     (dma_wrdata_valid_wr[i]),
-            .pmu_fifo_ready_i     (dma_wrdata_ready_wr[i]),
-
-            .clk_axi              (clk_axi               ),
-            .rst_n_axi            (rst_n_axi             ),
-
-            .ld_idle_o            (                      ), // NC
-            .ld_rdata_o           (                      ), // NC
-
-            .m_axi_if_o           (axi_if                )                           
-        );
-
-        for (genvar j = 0; j < ROUTERS_COUNT; j++) begin : rams
-            axi_ram #(
-                .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
-                .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH),
-                .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH),
-                .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH)
-            ) u_axi_ram (
-                .clk_i   (clk_axi  ),
-                .rst_n_i (rst_n_axi),
-                
-                .s_axi_i (axi_if[j])
-            );
-        end
-    end
-endgenerate
 
 always #4  clk = ~clk;
 always #10 clk_axi = ~clk_axi;
@@ -575,7 +436,7 @@ initial begin
             @(posedge clk);
         end
         current_struct = csr_s_readdata[31:0];
-        $write("DMA address for channel %u: 0x%x; ", 4'(i), dut.dma_addr[i]);
+        $write("DMA address for channel %u: 0x%x; ", 4'(i), u_dma_testenv_top.u_avmm_dma_top.dma_addr[i]);
         $display("Next address: 0x%x;", current_struct);
     end
 
@@ -592,7 +453,8 @@ initial begin
             @(posedge clk);
         end
         @(posedge clk);
-        $write("MSI-X for DMA channel %u: mask 0x%x, data 0x%x, addr 0x%x;\n", 4'(i), dut.msix_mask[i][0], dut.msix_data[i], dut.msix_addrs[i]);
+        $write("MSI-X for DMA channel %u: mask 0x%x, data 0x%x, addr 0x%x;\n",
+                4'(i), u_dma_testenv_top.u_avmm_dma_top.msix_mask[i][0], u_dma_testenv_top.u_avmm_dma_top.msix_data[i], u_dma_testenv_top.u_avmm_dma_top.msix_addrs[i]);
     end
 
     
