@@ -19,3 +19,7 @@ rtl/axi/router/src/utils/network_channel_demux.sv
 rtl/axi/router/src/utils/network_channel_narrower.sv
 rtl/axi/router/src/algorithm.sv
 rtl/axi/router/src/arbiter.sv
+rtl/lib/primitives/cdc/cdc_stream_afifo.sv
+rtl/lib/primitives/cdc/sync_ff.sv
+rtl/lib/primitives/memory/dual_clock_memory.sv
+rtl/lib/primitives/cdc/gray_converter.sv
