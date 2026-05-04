@@ -192,4 +192,38 @@ assign master.RDATA   =  slave.RDATA   ; \
 assign master.RLAST   =  slave.RLAST   ; \
 assign master.RID     =  slave.RID     ;
 
+
+`define AXI_INTERFACE2INTERFACE_MONITOR(bus, monitor) \
+assign monitor.AWVALID = bus.AWVALID ; \
+assign monitor.AWREADY = bus.AWREADY ; \
+assign monitor.AWADDR  = bus.AWADDR  ; \
+assign monitor.AWLEN   = bus.AWLEN   ; \
+assign monitor.AWSIZE  = bus.AWSIZE  ; \
+assign monitor.AWBURST = bus.AWBURST ; \
+assign monitor.AWID    = bus.AWID    ; \
+                                       \
+assign monitor.WVALID  = bus.WVALID  ; \
+assign monitor.WREADY  = bus.WREADY  ; \
+assign monitor.WDATA   = bus.WDATA   ; \
+assign monitor.WSTRB   = bus.WSTRB   ; \
+assign monitor.WLAST   = bus.WLAST   ; \
+                                       \
+assign monitor.BVALID  = bus.BVALID  ; \
+assign monitor.BREADY  = bus.BREADY  ; \
+assign monitor.BID     = bus.BID     ; \
+                                       \
+assign monitor.ARVALID = bus.ARVALID ; \
+assign monitor.ARREADY = bus.ARREADY ; \
+assign monitor.ARADDR  = bus.ARADDR  ; \
+assign monitor.ARLEN   = bus.ARLEN   ; \
+assign monitor.ARSIZE  = bus.ARSIZE  ; \
+assign monitor.ARBURST = bus.ARBURST ; \
+assign monitor.ARID    = bus.ARID    ; \
+                                       \
+assign monitor.RVALID  = bus.RVALID  ; \
+assign monitor.RREADY  = bus.RREADY  ; \
+assign monitor.RDATA   = bus.RDATA   ; \
+assign monitor.RLAST   = bus.RLAST   ; \
+assign monitor.RID     = bus.RID     ;
+
 `endif

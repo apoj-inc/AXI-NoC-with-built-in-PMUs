@@ -81,8 +81,9 @@ module mesh_with_loaders # (
                 .FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH),
                 .LOADER_ID(i)
             ) loader (
-                .clk_i       (aclk),
-                .arstn_i     (aresetn),
+                .clk_in      (aclk),
+                .rst_n_in    (aresetn),
+
                 .resp_wait_i (resp_wait_i[i]),
                 .id_i        (id_i[i]),
                 .write_i     (write_i[i]),
@@ -91,6 +92,10 @@ module mesh_with_loaders # (
                 .wdata_i     (wdata_i[i]),
                 .wstrb_i     (wstrb_i[i]),
                 .fifo_push_i (fifo_push_i[i]),
+
+                .clk_axi     (aclk),
+                .rst_n_axi   (aresetn),
+
                 .start_i     (start_i),
                 .idle_o      (idle_o[i]),
                 .rdata_o     (rdata_o[i]),

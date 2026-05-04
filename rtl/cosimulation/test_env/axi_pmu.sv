@@ -29,27 +29,27 @@ module axi_pmu #(
     `AXI_INTERFACE_MONITOR2TYPEDEF(mon_axi_i, mon_axi_mosi, mon_axi_miso)
 
     typedef struct packed {
-        logic [PMU_DATA_WIDTH-1:0] idle;
-        logic [PMU_DATA_WIDTH-1:0] outstanding;
-        logic [PMU_DATA_WIDTH-1:0] ar_stall;
-        logic [PMU_DATA_WIDTH-1:0] ar_handshake;
-        logic [PMU_DATA_WIDTH-1:0] rvalid_stall;
-        logic [PMU_DATA_WIDTH-1:0] rready_stall;
         logic [PMU_DATA_WIDTH-1:0] r_handshake;
+        logic [PMU_DATA_WIDTH-1:0] rready_stall;
+        logic [PMU_DATA_WIDTH-1:0] rvalid_stall;
+        logic [PMU_DATA_WIDTH-1:0] ar_handshake;
+        logic [PMU_DATA_WIDTH-1:0] ar_stall;
+        logic [PMU_DATA_WIDTH-1:0] outstanding;
+        logic [PMU_DATA_WIDTH-1:0] idle;
     } read_counters;
 
     typedef struct packed {
-        logic [PMU_DATA_WIDTH-1:0] idle;
-        logic [PMU_DATA_WIDTH-1:0] outstanding;
-        logic [PMU_DATA_WIDTH-1:0] responding;
-        logic [PMU_DATA_WIDTH-1:0] aw_stall;
-        logic [PMU_DATA_WIDTH-1:0] aw_handshake;
-        logic [PMU_DATA_WIDTH-1:0] wvalid_stall;
-        logic [PMU_DATA_WIDTH-1:0] wready_stall;
-        logic [PMU_DATA_WIDTH-1:0] w_handshake;
-        logic [PMU_DATA_WIDTH-1:0] bvalid_stall;
-        logic [PMU_DATA_WIDTH-1:0] bready_stall;
         logic [PMU_DATA_WIDTH-1:0] b_handshake;
+        logic [PMU_DATA_WIDTH-1:0] bready_stall;
+        logic [PMU_DATA_WIDTH-1:0] bvalid_stall;
+        logic [PMU_DATA_WIDTH-1:0] w_handshake;
+        logic [PMU_DATA_WIDTH-1:0] wready_stall;
+        logic [PMU_DATA_WIDTH-1:0] wvalid_stall;
+        logic [PMU_DATA_WIDTH-1:0] aw_handshake;
+        logic [PMU_DATA_WIDTH-1:0] aw_stall;
+        logic [PMU_DATA_WIDTH-1:0] responding;
+        logic [PMU_DATA_WIDTH-1:0] outstanding;
+        logic [PMU_DATA_WIDTH-1:0] idle;
     } write_counters;
 
 
