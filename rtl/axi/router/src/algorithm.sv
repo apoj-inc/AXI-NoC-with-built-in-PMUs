@@ -140,7 +140,7 @@ module algorithm #(
                 .ROUTERS_COUNT(ROUTERS_COUNT),
                 .GENERATICS_COUNT(GENERATICS_COUNT),
                 .GENERATICS(GENERATICS),
-                .CHANNEL_NUMBER(CHANNEL_NUMBER)
+                .CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER)
                 ) algorithm_selector (
                     .target_i(target_i),
                     .selector_o(ctrl_logical)
