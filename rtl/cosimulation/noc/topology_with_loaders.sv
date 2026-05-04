@@ -1,0 +1,216 @@
+`include "defines.svh"
+
+module topology_with_loaders # (
+    parameter        AXI_DATA_WIDTH = 32,
+    parameter        AXI_ID_W_WIDTH = 5,
+    parameter        AXI_ID_R_WIDTH = 5,
+    parameter        AXI_ADDR_WIDTH = 16,
+    parameter string TOPOLOGY       = "Mesh",
+    parameter string ALGORITHM      = "XY",
+    parameter        BUFFER_ALLOCATOR = "Straight",
+    
+    parameter        AXIS_DATA_WIDTH = 40,
+    parameter        AXIS_ID_WIDTH = 4,
+    parameter        AXIS_DEST_WIDTH = 4,
+    parameter        AXIS_USER_WIDTH = 4,
+    
+    parameter        AXI_MASTER_LOADER_FIFO_DEPTH = 64,
+
+    parameter        MAX_ROUTERS_X = 4,
+    parameter        MAX_ROUTERS_Y = 4,
+
+    parameter        ROUTERS_COUNT = MAX_ROUTERS_X*MAX_ROUTERS_Y,
+    parameter        GENERATICS_COUNT = 2,
+    parameter int    GENERATICS[GENERATICS_COUNT] = '{2, 1},
+
+    parameter        MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
+    parameter        MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
+
+    parameter        SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING = 1,
+    parameter        VIRTUAL_NETWORK_NUMBER = 2,
+    parameter        VIRTUAL_CHANNEL_NUMBER = 2,
+    parameter int    VIRTUAL_NETWORKS[VIRTUAL_NETWORK_NUMBER] = '{1, 1},
+
+    parameter        BUFFER_DEPTH = 16,
+
+    parameter        AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH,
+
+    parameter        AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
+) (
+    input  logic                        aclk,
+    input  logic                        aresetn,
+
+    input  logic                        pmu_enable_i,
+    input  logic [4:0]                  pmu_addr_i   [ROUTERS_COUNT],
+    output logic [31:0]                 pmu_data_o   [ROUTERS_COUNT],
+
+    input  logic                        resp_wait_i  [ROUTERS_COUNT],
+    input  logic [AXI_MAX_ID_WIDTH-1:0] id_i         [ROUTERS_COUNT],
+    input  logic                        write_i      [ROUTERS_COUNT],
+    input  logic [AXI_ADDR_WIDTH-1:0]   axaddr_i     [ROUTERS_COUNT],
+    input  logic [7:0]                  axlen_i      [ROUTERS_COUNT],
+    input  logic [AXI_DATA_WIDTH-1:0]   wdata_i      [ROUTERS_COUNT],
+    input  logic [AXI_DATA_BYTES-1:0]   wstrb_i      [ROUTERS_COUNT],
+    input  logic                        fifo_push_i  [ROUTERS_COUNT],
+    input  logic                        start_i,
+    output logic                        idle_o       [ROUTERS_COUNT],
+    output logic [AXI_DATA_WIDTH-1:0]   rdata_o      [ROUTERS_COUNT]
+);
+
+    axi_if #(
+        .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
+        .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
+        .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH),
+        .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH)
+    ) axi_if_loader_noc [ROUTERS_COUNT](), axi_if_noc_ram [ROUTERS_COUNT]();
+
+    generate
+        genvar i;
+        for (i = 0; i < ROUTERS_COUNT; i++) begin : map_wires
+
+            axi_pmu #(
+                .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
+                .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
+                .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH),
+                .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH)
+            ) pmu (
+                .aclk         (aclk),
+                .aresetn      (aresetn),
+                .enable       (pmu_enable_i),
+                .mon_axi_i    (axi_if_loader_noc[i]),
+                .addr_i       (pmu_addr_i[i]),
+                .data_o       (pmu_data_o[i])
+            );
+
+            axi_master_loader #(
+                .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+                .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+                .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
+                .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH),
+                .FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH),
+                .LOADER_ID(i)
+            ) loader (
+                .clk_i       (aclk),
+                .arstn_i     (aresetn),
+                .resp_wait_i (resp_wait_i[i]),
+                .id_i        (id_i[i]),
+                .write_i     (write_i[i]),
+                .axaddr_i    (axaddr_i[i]),
+                .axlen_i     (axlen_i[i]),
+                .wdata_i     (wdata_i[i]),
+                .wstrb_i     (wstrb_i[i]),
+                .fifo_push_i (fifo_push_i[i]),
+                .start_i     (start_i),
+                .idle_o      (idle_o[i]),
+                .rdata_o     (rdata_o[i]),
+                .m_axi_if_o  (axi_if_loader_noc[i])
+            );
+
+            axi_ram #(
+                .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
+                .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
+                .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH),
+                .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH),
+                .BYTE_WIDTH(8)
+            ) ram (
+                .clk_i(aclk),
+                .rst_n_i(aresetn),
+                .s_axi_i(axi_if_noc_ram[i])
+            );
+        end
+
+        if(TOPOLOGY == "Mesh") begin : topology_to_generate_mesh
+            mesh #(
+                .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+                .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+                .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
+                .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH),
+                .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH(AXIS_ID_WIDTH),
+                .AXIS_DEST_WIDTH(AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH(AXIS_USER_WIDTH),
+
+                .BUFFER_DEPTH(BUFFER_DEPTH),
+                .BUFFER_ALLOCATOR(BUFFER_ALLOCATOR),
+                .ALGORITHM   (ALGORITHM),
+
+                .MAX_ROUTERS_X(MAX_ROUTERS_X),
+                .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
+
+                .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING),
+                .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+                .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
+                .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
+            ) dut (
+                .ACLK(aclk),
+                .ARESETn(aresetn),
+
+                .s_axi_i(axi_if_loader_noc),
+                .m_axi_o(axi_if_noc_ram)
+            );
+        end else if(TOPOLOGY == "Torus") begin : topology_to_generate_torus
+            torus #(
+                .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+                .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+                .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
+                .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH),
+                .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH(AXIS_ID_WIDTH),
+                .AXIS_DEST_WIDTH(AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH(AXIS_USER_WIDTH),
+
+                .BUFFER_DEPTH(BUFFER_DEPTH),
+                .BUFFER_ALLOCATOR(BUFFER_ALLOCATOR),
+                .ALGORITHM   (ALGORITHM),
+
+                .MAX_ROUTERS_X(MAX_ROUTERS_X),
+                .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
+
+                .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING),
+                .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+                .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
+                .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
+            ) dut (
+                .ACLK(aclk),
+                .ARESETn(aresetn),
+
+                .s_axi_i(axi_if_loader_noc),
+                .m_axi_o(axi_if_noc_ram)
+            );
+        end else if(TOPOLOGY == "Circulant") begin : topology_to_generate_circulant
+            circulant #(
+                .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+                .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+                .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
+                .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH),
+                .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
+                .AXIS_ID_WIDTH(AXIS_ID_WIDTH),
+                .AXIS_DEST_WIDTH(AXIS_DEST_WIDTH),
+                .AXIS_USER_WIDTH(AXIS_USER_WIDTH),
+
+                .BUFFER_DEPTH(BUFFER_DEPTH),
+                .BUFFER_ALLOCATOR(BUFFER_ALLOCATOR),
+                .ALGORITHM   (ALGORITHM),
+
+                .ROUTERS_COUNT(ROUTERS_COUNT),
+                .GENERATICS_COUNT(GENERATICS_COUNT),
+                .GENERATICS(GENERATICS),
+
+                .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING),
+                .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+                .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
+                .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS)
+            ) dut (
+                .ACLK(aclk),
+                .ARESETn(aresetn),
+
+                .s_axi_i(axi_if_loader_noc),
+                .m_axi_o(axi_if_noc_ram)
+            );
+        end else begin : topology_to_generate_error
+            initial $error("No topology provided! %s", TOPOLOGY);
+        end
+
+    endgenerate
+    
+endmodule

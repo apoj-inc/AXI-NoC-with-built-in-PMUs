@@ -20,13 +20,22 @@ module cosim_top #(
     parameter        MAX_ROUTERS_X_WIDTH = $clog2(MAX_ROUTERS_X),
     parameter        MAX_ROUTERS_Y = 4,
     parameter        MAX_ROUTERS_Y_WIDTH = $clog2(MAX_ROUTERS_Y),
+    parameter        GENERATICS_COUNT = 2,
+    parameter int    GENERATICS[GENERATICS_COUNT] = '{2, 1},
 
+    parameter string TOPOLOGY = "Mesh",
+    parameter string BUFFER_ALLOCATOR = "Straight",
     parameter        BUFFER_DEPTH = 16,
-    parameter string ALGORITHM       = "XY",
+    parameter string ALGORITHM = "XY",
 
     parameter        ROUTERS_COUNT = MAX_ROUTERS_X*MAX_ROUTERS_Y,
     parameter        CORE_COUNT = ROUTERS_COUNT,
     parameter        AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH,
+
+    parameter        SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING = 1,
+    parameter        VIRTUAL_NETWORK_NUMBER = 2,
+    parameter        VIRTUAL_CHANNEL_NUMBER = 2,
+    parameter int    VIRTUAL_NETWORKS[VIRTUAL_NETWORK_NUMBER] = '{1, 1},
 
     parameter        AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)
 ) (
@@ -64,7 +73,7 @@ module cosim_top #(
         end
     end
 
-    mesh_with_loaders #(
+    topology_with_loaders #(
         .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
         .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
         .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH),
@@ -77,12 +86,21 @@ module cosim_top #(
 
         .MAX_ROUTERS_X(MAX_ROUTERS_X),
         .MAX_ROUTERS_Y(MAX_ROUTERS_Y),
+        .GENERATICS_COUNT(GENERATICS_COUNT),
+        .GENERATICS(GENERATICS),
 
+        .TOPOLOGY (TOPOLOGY),
         .BUFFER_DEPTH(BUFFER_DEPTH),
-        .ALGORITHM   ("XY"),
+        .BUFFER_ALLOCATOR(BUFFER_ALLOCATOR),
+        .ALGORITHM (ALGORITHM),
+        
+        .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING),
+        .VIRTUAL_NETWORK_NUMBER(VIRTUAL_NETWORK_NUMBER),
+        .VIRTUAL_CHANNEL_NUMBER(VIRTUAL_CHANNEL_NUMBER),
+        .VIRTUAL_NETWORKS(VIRTUAL_NETWORKS),
 
         .AXI_MASTER_LOADER_FIFO_DEPTH(AXI_MASTER_LOADER_FIFO_DEPTH)
-    ) mesh_with_loaders (
+    ) topology_with_loaders (
         .aclk         (clk_i),
         .aresetn      (rstn_noc ),
  

@@ -114,8 +114,19 @@ module algorithm #(
                     .target_y_i(target_y_i),
                     .selector_o(ctrl_logical)
                 );
-            end
-            else if (ALGORITHM == "EWn_SNe") begin : ewn_sne_alg
+            end else if (ALGORITHM == "XY_ONE_WAY") begin : xy_one_way_alg
+                algorithm_selector_torus_XY_one_way #(
+                    .MAX_ROUTERS_X(MAX_ROUTERS_X), 
+                    .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 
+                    .ROUTER_X(ROUTER_X),
+                    .ROUTER_Y(ROUTER_Y),
+                    .CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER)
+                ) algorithm_selector (
+                    .target_x_i(target_x_i),
+                    .target_y_i(target_y_i),
+                    .selector_o(ctrl_logical)
+                );
+            end else if (ALGORITHM == "EWn_SNe") begin : ewn_sne_alg
                 algorithm_selector_torus_EWn_SNe #(
                     .MAX_ROUTERS_X(MAX_ROUTERS_X), 
                     .MAX_ROUTERS_Y(MAX_ROUTERS_Y), 

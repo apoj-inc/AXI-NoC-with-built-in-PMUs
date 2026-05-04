@@ -1,7 +1,7 @@
 rtl/axi/axi_if.sv
 rtl/axi/axis_if.sv
 rtl/cosimulation/cosim_top.sv
-rtl/cosimulation/noc/mesh_with_loaders.sv
+rtl/cosimulation/noc/topology_with_loaders.sv
 rtl/lib/axi/axi_pmu.sv
 rtl/lib/axi/axi_master_loader.sv
 rtl/cosimulation/decoders/uart_control.sv
@@ -11,8 +11,14 @@ rtl/lib/axi/axi_ram.sv
 rtl/lib/axi/axi2ram.sv
 rtl/lib/primitives/memory/ram.sv
 rtl/axi/mesh/mesh.sv
+rtl/axi/torus/torus.sv
+rtl/axi/circulant/circulant.sv
 rtl/axi/axi2axis.sv
 rtl/axi/cross_router_logic/algorithm_selector_mesh_XY.sv
+rtl/axi/cross_router_logic/algorithm_selector_clockwise.sv
+rtl/axi/cross_router_logic/algorithm_selector_torus_XY.sv
+rtl/axi/cross_router_logic/algorithm_selector_torus_XY_one_way.sv
+rtl/axi/cross_router_logic/algorithm_selector_torus_EWn_SNe.sv
 rtl/axi/cross_router_logic/buffer_allocator_straight.sv
 rtl/axi/cross_router_logic/buffer_allocator_keep_in_network.sv
 rtl/axi/router/src/router.sv

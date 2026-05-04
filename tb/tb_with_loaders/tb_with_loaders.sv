@@ -36,7 +36,7 @@ module tb_with_loaders #(
     output logic        idle_o       [ROUTERS_COUNT]
 );
 
-    mesh_with_loaders #(
+    topology_with_loaders #(
         .AXI_ADDR_WIDTH(ADDR_WIDTH)
     ) ct (
         .aclk         (aclk),
