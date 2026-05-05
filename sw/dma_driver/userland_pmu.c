@@ -9,7 +9,7 @@
 #include <time.h>
 
 #define ARRAY_SIZE (uint64_t)(1024*16/8)
-#define DMA_CHANNEL_COUNT 1
+#define DMA_CHANNEL_COUNT 2
 #define ITERATION_COUNT (uint64_t)(10000)
 
 #define FIFO_DEPTH 64
@@ -82,21 +82,17 @@ int main () {
             uint64_t axi_id = rand();
             uint8_t write  = 1;
             uint64_t address = 0;
-            uint8_t axlen = rand() % 4;
+            uint8_t axlen = 4;
 
-            for (int k = 0; k < ROUTERS_COUNT_BYTES; k++) {
-                tasks[i][byte_counter] = (uint8_t)router_id;
-                router_id = router_id >> 8;
+            for (int k = 0; k < AXI_WSTRB_BYTES; k++) {
+                tasks[i][byte_counter] = rand() % 256;
                 byte_counter++;
             }
-            tasks[i][byte_counter] = resp_wait;
-            byte_counter++;
-            for (int k = 0; k < AXI_MAX_ID_BYTES; k++) {
-                tasks[i][byte_counter] = (uint8_t)axi_id;
-                axi_id = axi_id >> 8;
+            for (int k = 0; k < AXI_DATA_BYTES; k++) {
+                tasks[i][byte_counter] = rand() % 256;
                 byte_counter++;
             }
-            tasks[i][byte_counter] = write;
+            tasks[i][byte_counter] = axlen;
             byte_counter++;
             for (int k = 0; k < AXI_ADDR_BYTES; k++) {
                 tasks[i][byte_counter] = (uint8_t)address;
@@ -105,14 +101,19 @@ int main () {
             }
             tasks[i][byte_counter] = write;
             byte_counter++;
-            for (int k = 0; k < AXI_DATA_BYTES; k++) {
-                tasks[i][byte_counter] = rand() % 256;
+            for (int k = 0; k < AXI_MAX_ID_BYTES; k++) {
+                tasks[i][byte_counter] = (uint8_t)axi_id;
+                axi_id = axi_id >> 8;
                 byte_counter++;
             }
-            for (int k = 0; k < AXI_WSTRB_BYTES; k++) {
-                tasks[i][byte_counter] = rand() % 256;
+            tasks[i][byte_counter] = resp_wait;
+            byte_counter++;
+            for (int k = 0; k < ROUTERS_COUNT_BYTES; k++) {
+                tasks[i][byte_counter] = (uint8_t)router_id;
+                router_id = router_id >> 8;
                 byte_counter++;
             }
+
             while (byte_counter % COMMAND_BYTES != 0) {
                 byte_counter++;
             }
@@ -124,21 +125,17 @@ int main () {
             uint64_t axi_id = rand();
             uint8_t write  = 0;
             uint64_t address = 0;
-            uint8_t axlen = rand() % 4;
+            uint8_t axlen = 4;
 
-            for (int k = 0; k < ROUTERS_COUNT_BYTES; k++) {
-                tasks[i][byte_counter] = (uint8_t)router_id;
-                router_id = router_id >> 8;
+            for (int k = 0; k < AXI_WSTRB_BYTES; k++) {
+                tasks[i][byte_counter] = rand() % 256;
                 byte_counter++;
             }
-            tasks[i][byte_counter] = resp_wait;
-            byte_counter++;
-            for (int k = 0; k < AXI_MAX_ID_BYTES; k++) {
-                tasks[i][byte_counter] = (uint8_t)axi_id;
-                axi_id = axi_id >> 8;
+            for (int k = 0; k < AXI_DATA_BYTES; k++) {
+                tasks[i][byte_counter] = rand() % 256;
                 byte_counter++;
             }
-            tasks[i][byte_counter] = write;
+            tasks[i][byte_counter] = axlen;
             byte_counter++;
             for (int k = 0; k < AXI_ADDR_BYTES; k++) {
                 tasks[i][byte_counter] = (uint8_t)address;
@@ -147,14 +144,19 @@ int main () {
             }
             tasks[i][byte_counter] = write;
             byte_counter++;
-            for (int k = 0; k < AXI_DATA_BYTES; k++) {
-                tasks[i][byte_counter] = rand() % 256;
+            for (int k = 0; k < AXI_MAX_ID_BYTES; k++) {
+                tasks[i][byte_counter] = (uint8_t)axi_id;
+                axi_id = axi_id >> 8;
                 byte_counter++;
             }
-            for (int k = 0; k < AXI_WSTRB_BYTES; k++) {
-                tasks[i][byte_counter] = rand() % 256;
+            tasks[i][byte_counter] = resp_wait;
+            byte_counter++;
+            for (int k = 0; k < ROUTERS_COUNT_BYTES; k++) {
+                tasks[i][byte_counter] = (uint8_t)router_id;
+                router_id = router_id >> 8;
                 byte_counter++;
             }
+            
             while (byte_counter % COMMAND_BYTES != 0) {
                 byte_counter++;
             }
@@ -186,14 +188,20 @@ int main () {
     printf("\n");
     printf("Test done\n");
 
-    for (int i = PMU_DATA_BYTES*PMU_METRIC_COUNT-PMU_DATA_BYTES; i >= 0; i -= PMU_DATA_BYTES) {
-        for (int j = PMU_DATA_BYTES-1; j >= 0; j--) {
-            if (j % 4 == 3) {
-                printf("0x%02x", pmu[0][i+j]);
-            } else if (j % 4 == 0) {
-                printf("%02x\n", pmu[0][i+j]);
-            } else {
-                printf("%02x", pmu[0][i+j]);
+    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) {
+        printf("Channel %d:\n", i);
+        for (int r = 0; r < ROUTERS_COUNT*PMU_TRANSFER_BYTES; r += PMU_TRANSFER_BYTES) {
+            printf("    Router %d:\n", r/(PMU_TRANSFER_BYTES));
+            for (int j = PMU_TRANSFER_BYTES-PMU_DATA_BYTES; j >= 0; j -= PMU_DATA_BYTES) {
+                for (int k = PMU_DATA_BYTES-1; k >= 0; k--) {
+                    if (k % 4 == 3) {
+                        printf("        0x%02x", pmu[i][r+j+k]);
+                    } else if (k % 4 == 0) {
+                        printf("%02x\n", pmu[i][r+j+k]);
+                    } else {
+                        printf("%02x", pmu[i][r+j+k]);
+                    }
+                }
             }
         }
     }
