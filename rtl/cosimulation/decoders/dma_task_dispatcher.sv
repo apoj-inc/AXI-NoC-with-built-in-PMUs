@@ -63,10 +63,6 @@ module dma_task_dispatcher #(
 
     logic                            ld_valid_bit;
 
-    initial begin
-        $display("%d", WRITE_WIDTH_OFFSET);
-    end
-
     always_comb begin
         ld_valid_o  = ld_valid_bit << data_packed[CHANNEL_WIDTH_OFFSET +: ROUTERS_COUNT_WIDTH];
         

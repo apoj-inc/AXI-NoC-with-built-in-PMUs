@@ -48,7 +48,7 @@ module axi_testenv #(
     logic [AXI_DATA_WIDTH-1:0]   wdata     ;
     logic [AXI_DATA_BYTES-1:0]   wstrb     ;
     
-    logic start, start_resynced, start_waiter;
+    logic start, start_resynced, start_waiter, start_resync_ready;
 
     logic [ROUTERS_COUNT-1:0] ld_idle, ld_idle_resynced;
 
@@ -164,9 +164,9 @@ module axi_testenv #(
         .clk_rd   (clk_in               ),
         .rst_n_rd (rst_n_in             ),
 
-        .data_o   (pmu_data_o      ),
-        .valid_o  (pmu_valid_o     ),
-        .ready_i  (pmu_ready_i     ),
+        .data_o   (pmu_data_o           ),
+        .valid_o  (pmu_valid_o          ),
+        .ready_i  (pmu_ready_i          ),
         .count_o  (                     )
     );
 

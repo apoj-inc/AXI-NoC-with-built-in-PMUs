@@ -17,7 +17,7 @@ module dma_testenv_top #(
     parameter     BAR_ADDR_WIDTH                        = 12         ,
 
     parameter     TX_DATA_WIDTH                         = 128        ,
-    parameter     TX_ADDR_WIDTH                         = 12         ,
+    parameter     TX_ADDR_WIDTH                         = 64         ,
     parameter     TX_BURST_WIDTH                        = 6          ,
 
     parameter     AXI_LD_FIFO_DEPTH                     = 64         ,
@@ -274,7 +274,8 @@ module dma_testenv_top #(
 
             // NOC GOES HERE 
             //     vvvv
-            for (genvar j = 0; j < ROUTERS_COUNT; j++) begin : rams
+            genvar j;
+            for (j = 0; j < ROUTERS_COUNT; j++) begin : rams
                 axi_ram #(
                     .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
                     .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH),

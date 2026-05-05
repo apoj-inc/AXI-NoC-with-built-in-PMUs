@@ -102,8 +102,20 @@ module avmm_dma_engine #(
     logic                     dma_rddata_valid, dma_rddata_valid_next;
     logic [TX_DATA_WIDTH-1:0] dma_rddata_data , dma_rddata_data_next ;
 
+    logic [DMA_RQ_ADDR_WIDTH:0] dma_rddata_free_checker;
+    logic                       wait_checker, wait_checker_next;
+
     assign dma_rddata_valid_o = dma_rddata_valid;
     assign dma_rddata_data_o  = dma_rddata_data ;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            dma_rddata_free_checker <= '0;
+        end
+        else begin
+            dma_rddata_free_checker <= dma_rddata_free_i - outstanding_reads;
+        end
+    end
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -123,6 +135,8 @@ module avmm_dma_engine #(
 
             dma_rddata_valid <= '0;
             dma_rddata_data  <= '0;
+
+            wait_checker <= '0;
         end
         else begin
             state <= state_next;
@@ -141,6 +155,8 @@ module avmm_dma_engine #(
 
             dma_rddata_valid <= dma_rddata_valid_next;
             dma_rddata_data  <= dma_rddata_data_next ;
+
+            wait_checker <= wait_checker_next;
         end
     end
 
@@ -219,6 +235,8 @@ module avmm_dma_engine #(
         tx_address_next    = tx_address   ;
 
         outstanding_reads_next = outstanding_reads;
+
+        wait_checker_next = wait_checker;
 
         case (state)
             IDLE    : begin
@@ -304,15 +322,23 @@ module avmm_dma_engine #(
                     end
                 end
                 else begin
-                    if (!dma_descriptor.bursts_left == 0 && (dma_descriptor.curr_burst <= (dma_rddata_free_i - outstanding_reads))) begin
-                        tx_chipselect_next = '1                       ;
-                        tx_write_next      = '0                       ;
-                        tx_read_next       = '1                       ;
-                        tx_byteenable_next = '1                       ;
-                        tx_burstcount_next = dma_descriptor.curr_burst;
-                        tx_address_next    = dma_descriptor.curr_addr ;
+                    if (wait_checker) begin
+                        if (!dma_descriptor.bursts_left == 0 && (dma_descriptor.curr_burst <= dma_rddata_free_checker)) begin
+                            tx_chipselect_next = '1                       ;
+                            tx_write_next      = '0                       ;
+                            tx_read_next       = '1                       ;
+                            tx_byteenable_next = '1                       ;
+                            tx_burstcount_next = dma_descriptor.curr_burst;
+                            tx_address_next    = dma_descriptor.curr_addr ;
 
-                        outstanding_reads_next = outstanding_reads + dma_descriptor.curr_burst;
+                            outstanding_reads_next = outstanding_reads + dma_descriptor.curr_burst;
+                            wait_checker_next = '0;
+                        end
+                    end
+                    else begin
+                        if (!dma_descriptor.bursts_left == 0 && (dma_descriptor.curr_burst <= dma_rddata_free_checker)) begin
+                            wait_checker_next = '1;
+                        end
                     end
                 end
 
