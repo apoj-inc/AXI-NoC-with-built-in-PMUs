@@ -39,12 +39,12 @@ module tb_axi_loader (
     input  logic        write_i,
     input  logic [11:0] axaddr_i,
     input  logic [7:0]  axlen_i,
-    input  logic [8:0]  wdata_i,
+    input  logic [7:0]  wdata_i,
     input  logic        wstrb_i,
     input  logic        fifo_push_i,
     input  logic        start_i,
     output logic        idle_o,
-    output logic        rdata_o
+    output logic [7:0]  rdata_o
 );
 
 
@@ -93,8 +93,9 @@ module tb_axi_loader (
         .FIFO_DEPTH(32),
         .LOADER_ID(1)
     ) dut (
-        .clk_i       (clk_i),
-        .arstn_i     (arstn_i),
+        .clk_in      (clk_i       ),
+        .rst_n_in    (arstn_i     ),
+
 
         .resp_wait_i (resp_wait_i ),
         .id_i        (id_i        ),
@@ -105,12 +106,15 @@ module tb_axi_loader (
         .wstrb_i     (wstrb_i     ),
         .fifo_push_i (fifo_push_i ),
 
+        .clk_axi     (clk_i       ),
+        .rst_n_axi   (arstn_i     ),
+
         .start_i     (start_i     ),
         .idle_o      (idle_o      ),
 
         .rdata_o     (rdata_o     ),
 
-        .m_axi_if_o  (axi_if    )
+        .m_axi_if_o  (axi_if      )
     );
     
 endmodule

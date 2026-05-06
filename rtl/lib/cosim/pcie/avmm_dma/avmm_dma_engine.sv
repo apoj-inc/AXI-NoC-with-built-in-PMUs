@@ -102,8 +102,20 @@ module avmm_dma_engine #(
     logic                     dma_rddata_valid, dma_rddata_valid_next;
     logic [TX_DATA_WIDTH-1:0] dma_rddata_data , dma_rddata_data_next ;
 
+    logic [DMA_RQ_ADDR_WIDTH:0] dma_rddata_free_checker;
+    logic                       wait_checker, wait_checker_next;
+
     assign dma_rddata_valid_o = dma_rddata_valid;
     assign dma_rddata_data_o  = dma_rddata_data ;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            dma_rddata_free_checker <= '0;
+        end
+        else begin
+            dma_rddata_free_checker <= dma_rddata_free_i - outstanding_reads;
+        end
+    end
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -123,6 +135,8 @@ module avmm_dma_engine #(
 
             dma_rddata_valid <= '0;
             dma_rddata_data  <= '0;
+
+            wait_checker <= '0;
         end
         else begin
             state <= state_next;
@@ -141,6 +155,8 @@ module avmm_dma_engine #(
 
             dma_rddata_valid <= dma_rddata_valid_next;
             dma_rddata_data  <= dma_rddata_data_next ;
+
+            wait_checker <= wait_checker_next;
         end
     end
 
@@ -220,18 +236,12 @@ module avmm_dma_engine #(
 
         outstanding_reads_next = outstanding_reads;
 
+        wait_checker_next = wait_checker;
+
         case (state)
             IDLE    : begin
                 if (dma_task_valid_i) begin
-                    if (dma_task_write_i) begin
-                        dma_task_ready_o = '1;
-                    end
-                    else if (!dma_task_write_i) begin
-                        dma_task_ready_o = '1;
-                    end
-                    else begin
-                        dma_task_ready_o = '0;
-                    end
+                    dma_task_ready_o = '1;
                 end
                 else begin
                     dma_task_ready_o = '0;
@@ -312,15 +322,23 @@ module avmm_dma_engine #(
                     end
                 end
                 else begin
-                    if (!dma_descriptor.bursts_left == 0 && (dma_descriptor.curr_burst <= (dma_rddata_free_i - outstanding_reads))) begin
-                        tx_chipselect_next = '1                       ;
-                        tx_write_next      = '0                       ;
-                        tx_read_next       = '1                       ;
-                        tx_byteenable_next = '1                       ;
-                        tx_burstcount_next = dma_descriptor.curr_burst;
-                        tx_address_next    = dma_descriptor.curr_addr ;
+                    if (wait_checker) begin
+                        if (!dma_descriptor.bursts_left == 0 && (dma_descriptor.curr_burst <= dma_rddata_free_checker)) begin
+                            tx_chipselect_next = '1                       ;
+                            tx_write_next      = '0                       ;
+                            tx_read_next       = '1                       ;
+                            tx_byteenable_next = '1                       ;
+                            tx_burstcount_next = dma_descriptor.curr_burst;
+                            tx_address_next    = dma_descriptor.curr_addr ;
 
-                        outstanding_reads_next = outstanding_reads + dma_descriptor.curr_burst;
+                            outstanding_reads_next = outstanding_reads + dma_descriptor.curr_burst;
+                            wait_checker_next = '0;
+                        end
+                    end
+                    else begin
+                        if (!dma_descriptor.bursts_left == 0 && (dma_descriptor.curr_burst <= dma_rddata_free_checker)) begin
+                            wait_checker_next = '1;
+                        end
                     end
                 end
 
@@ -329,16 +347,30 @@ module avmm_dma_engine #(
             end
             GEN_MSI : begin
                 tx_chipselect_next = '1         ;
-                tx_writedata_next  = msix_data_i;
                 tx_write_next      = '1         ;
                 tx_read_next       = '0         ;
                 tx_burstcount_next = 1          ;
                 case (msix_addr_i[3:0])
-                    'h0    : tx_byteenable_next = 16'h000F;
-                    'h4    : tx_byteenable_next = 16'h00F0;
-                    'h8    : tx_byteenable_next = 16'h0F00;
-                    'hC    : tx_byteenable_next = 16'hF000;
-                    default: tx_byteenable_next = 16'h000F;
+                    'h0    : begin
+                        tx_writedata_next  = msix_data_i << 0 ;
+                        tx_byteenable_next = 16'h000F;
+                    end
+                    'h4    : begin
+                        tx_writedata_next  = msix_data_i << 32;
+                        tx_byteenable_next = 16'h00F0;
+                    end
+                    'h8    : begin
+                        tx_writedata_next  = msix_data_i << 64;
+                        tx_byteenable_next = 16'h0F00;
+                    end
+                    'hC    : begin
+                        tx_writedata_next  = msix_data_i << 96;
+                        tx_byteenable_next = 16'hF000;
+                    end
+                    default: begin
+                        tx_writedata_next  = msix_data_i << 0 ;
+                        tx_byteenable_next = 16'h000F;
+                    end
                 endcase
                 tx_address_next    = {msix_addr_i[63:4], 4'h0};
 

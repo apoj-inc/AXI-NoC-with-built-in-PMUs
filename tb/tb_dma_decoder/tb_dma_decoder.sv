@@ -50,6 +50,9 @@ logic [DMA_CHANNEL_COUNT-1:0]       out_dma_task_write_o                     ;
 
 logic [DMA_CHANNEL_COUNT-1:0]       task_ready_mask;
 
+logic [21:0] dma_offset;
+logic [21:0] dma_bytes ;
+
 
 avmm_dma_decoder #(
     .BAR_DATA_WIDTH    (BAR_DATA_WIDTH    ),
@@ -105,18 +108,9 @@ avmm_dma_task_demux #(
 
 always #10 clk = ~clk;
 
-always_ff @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-        out_dma_task_ready_i <= '0;
-    end
-    else begin
-        out_dma_task_ready_i <= $urandom() & task_ready_mask;
-    end
-end
-
 initial begin
     test_done = '0;
-    task_ready_mask = '0;
+    out_dma_task_ready_i = '0;
 
     clk = '1;
     rst_n = '0;
@@ -133,7 +127,7 @@ initial begin
 
     @(posedge clk);
     // Reads
-    for (int i = 0; i < 16; i++) begin
+    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
         avmm_s_chipselect    = '1            ;
         avmm_s_byteenable    = BYTEENABLES[i];
         avmm_s_read          = '1            ;
@@ -141,14 +135,24 @@ initial begin
         avmm_s_writedata     = '0            ;
         std::randomize(avmm_s_address);
         @(posedge clk);
+        assert (out_dma_task_valid_o == 0) 
+        else   begin
+            $error("dma_task_valid_o asserted on avmm read for no reason");
+            $finish();
+        end
 
         while (!avmm_s_readdatavalid) begin
             @(posedge clk);
+            assert (out_dma_task_valid_o == 0) 
+            else   begin
+                $error("dma_task_valid_o asserted on avmm read for no reason");
+                $finish();
+            end
         end
     end
 
     // Bad writes
-    for (int i = 0; i < 16; i++) begin
+    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
         if (BYTEENABLES[i] != 'hFF00 && BYTEENABLES[i] != 'h00FF) begin
             avmm_s_chipselect    = '1            ;
             avmm_s_byteenable    = BYTEENABLES[i];
@@ -157,47 +161,124 @@ initial begin
             std::randomize(avmm_s_writedata);
             std::randomize(avmm_s_address  );
             @(posedge clk);
+            assert (out_dma_task_valid_o == 0) 
+            else   begin
+                $error("dma_task_valid_o asserted on avmm write for no reason");
+                $finish();
+            end
 
             while (avmm_s_waitrequest) begin
-                $display(i);
                 @(posedge clk);
+                assert (out_dma_task_valid_o == 0) 
+                else   begin
+                    $error("dma_task_valid_o asserted on avmm write for no reason");
+                    $finish();
+                end
             end
         end
     end
 
     // Writes to DMA writes
-    for (int i = 0; i < 16; i++) begin
+    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+        dma_offset = $urandom();
+        dma_bytes  = $urandom();
+
         avmm_s_chipselect    = '1                                       ;
         avmm_s_byteenable    = 'h00FF                                   ;
         avmm_s_read          = '0                                       ;
         avmm_s_write         = '1                                       ;
-        avmm_s_writedata     = (22'($urandom()) << 32) | 22'($urandom());
+        avmm_s_writedata     = (22'(dma_bytes) << 32) | 22'(dma_offset) ;
         avmm_s_address       = i << 4                                   ;
         @(posedge clk);
 
         while (avmm_s_waitrequest) begin
             @(posedge clk);
         end
+        avmm_s_chipselect    = '0;
+        avmm_s_write         = '0;
+        while (!(out_dma_task_valid_o == (DMA_CHANNEL_COUNT'('1) >> (DMA_CHANNEL_COUNT-(i+1))))) begin
+            @(posedge clk);
+        end
+        assert (out_dma_task_burst_o[i] == (22'(dma_bytes) >> 4)) 
+        else   begin
+            $error("Wrong write burst at channel %d: expected %h, got %h", i, 22'(dma_bytes) >> 4, out_dma_task_burst_o[i]);
+            $finish();
+        end
+        assert (out_dma_task_offset_o[i] == 22'(dma_offset)) 
+        else   begin
+            $error("Wrong write offset at channel %d: expected %h, got %h", i, 22'(dma_offset) >> 4, out_dma_task_offset_o[i]);
+            $finish();
+        end
+        assert (out_dma_task_write_o[i] == 1) 
+        else   begin
+            $error("Wrong write write at channel %d: expected %d, got %d", i, 1, out_dma_task_write_o[i]);
+            $finish();
+        end
     end
 
-    repeat(10) @(posedge clk);
-    task_ready_mask = '1;
+    for (int i = 0; i < 16; i++) begin
+        @(posedge clk);
+        out_dma_task_ready_i[i] = '1;
+        @(posedge clk);
+        out_dma_task_ready_i[i] = '0;
+        @(posedge clk);
+        assert (out_dma_task_valid_o == (DMA_CHANNEL_COUNT'('1) << (i+1))) 
+        else   begin
+            $error("Failed to deassert write valid at channel %d", i);
+            $finish();
+        end
+    end
 
     // Writes to DMA reads
-    for (int i = 0; i < 16; i++) begin
+    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+        dma_offset = $urandom();
+        dma_bytes  = $urandom();
+
         avmm_s_chipselect    = '1                                               ;
         avmm_s_byteenable    = 'hFF00                                           ;
         avmm_s_read          = '0                                               ;
         avmm_s_write         = '1                                               ;
-        avmm_s_writedata     = ((22'($urandom()) << 32) | 22'($urandom())) << 64;
+        avmm_s_writedata     = ((22'(dma_bytes) << 32) | 22'(dma_offset)) << 64 ;
         avmm_s_address       = i << 4                                           ;
         @(posedge clk);
 
         while (avmm_s_waitrequest) begin
             @(posedge clk);
         end
+        avmm_s_chipselect    = '0;
+        avmm_s_write         = '0;
+        while (!(out_dma_task_valid_o == (DMA_CHANNEL_COUNT'('1) >> (DMA_CHANNEL_COUNT-(i+1))))) begin
+            @(posedge clk);
+        end
+        assert (out_dma_task_burst_o[i] == (22'(dma_bytes) >> 4)) 
+        else   begin
+            $error("Wrong read burst at channel %d: expected %h, got %h", i, 22'(dma_bytes) >> 4, out_dma_task_burst_o[i]);
+            $finish();
+        end
+        assert (out_dma_task_offset_o[i] == 22'(dma_offset)) 
+        else   begin
+            $error("Wrong task offset at channel %d: expected %h, got %h", i, 22'(dma_offset) >> 4, out_dma_task_offset_o[i]);
+            $finish();
+        end
+        assert (out_dma_task_write_o[i] == 0) 
+        else   begin
+            $error("Wrong read write at channel %d: expected %d, got %d", i, 0, out_dma_task_write_o[i]);
+            $finish();
+        end
     end
 
+    for (int i = 0; i < 16; i++) begin
+        @(posedge clk);
+        out_dma_task_ready_i[i] = '1;
+        @(posedge clk);
+        out_dma_task_ready_i[i] = '0;
+        @(posedge clk);
+        assert (out_dma_task_valid_o == (DMA_CHANNEL_COUNT'('1) << (i+1))) 
+        else   begin
+            $error("Failed to deassert read valid at channel %d", i);
+            $finish();
+        end
+    end
     
     test_done = '1;
 

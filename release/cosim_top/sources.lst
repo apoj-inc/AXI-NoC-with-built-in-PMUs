@@ -1,9 +1,9 @@
 rtl/axi/axi_if.sv
 rtl/axi/axis_if.sv
-rtl/cosimulation/cosim_top.sv
+rtl/cosimulation/testtop/cosim_top.sv
 rtl/cosimulation/noc/mesh_with_loaders.sv
-rtl/lib/axi/axi_pmu.sv
-rtl/lib/axi/axi_master_loader.sv
+rtl/cosimulation/testenv/axi_master_loader.sv
+rtl/cosimulation/testenv/axi_pmu.sv
 rtl/cosimulation/decoders/uart_control.sv
 rtl/lib/cosim/uart/receiver.sv
 rtl/lib/cosim/uart/transmitter.sv
@@ -27,3 +27,7 @@ rtl/axi/router/src/utils/network_channel_demux.sv
 rtl/axi/router/src/utils/network_channel_narrower.sv
 rtl/axi/router/src/algorithm.sv
 rtl/axi/router/src/arbiter.sv
+rtl/lib/primitives/cdc/cdc_stream_afifo.sv
+rtl/lib/primitives/cdc/sync_ff.sv
+rtl/lib/primitives/memory/dual_clock_memory.sv
+rtl/lib/primitives/cdc/gray_converter.sv

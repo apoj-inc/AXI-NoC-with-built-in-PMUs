@@ -81,6 +81,8 @@ module uart_control #(
     logic pmu_to_reg, pmu_to_reg_next;
     logic pmu_enable_next;
 
+    logic [3:0] start_delayer, start_delayer_next;
+
     generate
         genvar i;
         for (i = 0; i < CORE_COUNT; i++) begin : pack_idle
@@ -136,6 +138,7 @@ module uart_control #(
             pmu_to_reg <= '0;
             rstn_o <= '0;
             pmu_enable_o <= '0;
+            start_delayer <= '0;
         end
         else begin
             state <= state_next;
@@ -156,6 +159,7 @@ module uart_control #(
             pmu_to_reg <= pmu_to_reg_next;
             rstn_o <= rstn_next;
             pmu_enable_o <= pmu_enable_next;
+            start_delayer <= start_delayer_next;
         end
     end
 
@@ -292,6 +296,8 @@ module uart_control #(
 
         rstn_next = rstn_o;
         pmu_enable_next = pmu_enable_o;
+
+        start_delayer_next = start_delayer;
 
         case (state)
             IDLE: begin
@@ -459,7 +465,11 @@ module uart_control #(
                 end
 
                 if ((trans_counter == (ADDR_WIDTH_BYTES + AXI_ID_BYTES + 1)) || (trans_counter == (ADDR_WIDTH_BYTES + AXI_ID_BYTES))) begin
-                    trans_counter_next = trans_counter + 1;
+                    start_delayer_next = start_delayer + 1;
+                    if (start_delayer == 10) begin
+                        trans_counter_next = trans_counter + 1;
+                        start_delayer_next = '0;
+                    end
                 end
 
                 if (!idle_i[0] && (trans_counter == (ADDR_WIDTH_BYTES + AXI_ID_BYTES + 2))) begin

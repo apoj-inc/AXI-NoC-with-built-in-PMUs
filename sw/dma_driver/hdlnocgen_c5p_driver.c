@@ -11,7 +11,7 @@
 #include <linux/cdev.h>
 
 #define DRIVER_NAME "hdlnocgen_c5p_driver"
-#define DMA_BUFFER_SIZE 4096
+#define DMA_BUFFER_SIZE 4194304
 
 //Device globs
 uint64_t b0_start, b0_size;
@@ -60,9 +60,18 @@ static ssize_t read_from_pci(struct file *filp, char __user *user_buf, size_t le
     iowrite64((((uint64_t)len) << 32) | 0, bar2_ptr + 0x1000 + channel*0x10);
     printk(KERN_INFO "hdlnocgen_c5p_driver: Read from DMA channel %d command sent\n", channel);
 
-    while (irq_flags[channel]) {
-        fsleep(1000);
+    for (int i = 0; i < 1000000; i++) {
+        if (!irq_flags[channel]) {
+            break;
+        }
+        fsleep(1);
     }
+    if (irq_flags[channel]) {
+        irq_flags[channel] = 0;
+        printk(KERN_ERR "hdlnocgen_c5p_driver: Read from DMA channel %d timeout\n", channel);
+        return -1;
+    }
+
     printk(KERN_INFO "hdlnocgen_c5p_driver: Read from DMA channel %d finished successfully\n", channel);
 
     uint64_t not_copied = copy_to_user(user_buf, cpu_addr[channel], len);
@@ -94,9 +103,18 @@ static ssize_t write_to_pci(struct file *filp, const char __user *user_buf, size
     iowrite64((((uint64_t)(len-not_copied)) << 32) | 0, bar2_ptr + 0x1008 + channel*0x10);
     printk(KERN_INFO "hdlnocgen_c5p_driver: Write to DMA channel %d command sent\n", channel);
 
-    while (irq_flags[channel]) {
-        fsleep(1000);
+    for (int i = 0; i < 1000000; i++) {
+        if (!irq_flags[channel]) {
+            break;
+        }
+        fsleep(1);
     }
+    if (irq_flags[channel]) {
+        irq_flags[channel] = 0;
+        printk(KERN_ERR "hdlnocgen_c5p_driver: Write to DMA channel %d timeout\n", channel);
+        return -1;
+    }
+
     printk(KERN_INFO "hdlnocgen_c5p_driver: Write to DMA channel %d finished successfully\n", channel);
 
     return not_copied;

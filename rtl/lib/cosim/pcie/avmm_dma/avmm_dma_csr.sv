@@ -1,3 +1,33 @@
+// s.talibov: this is a configuration regmap for the avmm_dma
+/*
+    High-level CSR structure
+
+0x000  | Struct size | Struct 0 pointer | -\
+0x004  | Task FIFO free spaces          |  |
+                                           |
+   /---------------------------------------/
+   \-> | Struct 1 pointer | -\
+       | Struct info 0    |  |
+            ...              |
+       | Struct info N    |  |
+                             |
+   /-------------------------/
+   \-> | Struct 2 pointer |
+       | Struct info 0    |
+            ...            
+       | Struct info N    |
+            ...
+
+    There are DMA_CHANNEL_COUNT number of structures.
+    Last structure's pointer is equal to 0. That's how you
+    know it's last.
+
+    Info about DMA channel capability structure can be acquired
+    from code section under "// Per structure address decoding"
+    comment
+
+*/
+
 module avmm_dma_csr #(
     parameter     DMA_CHANNEL_COUNT                     = 16         ,
 
@@ -48,8 +78,8 @@ module avmm_dma_csr #(
         logic [31:0]                max_rd_len      ;
         logic [31:0]                tq_depth        ;
 
-        logic [DMA_WQ_ADDR_WIDTH:0] wdata_fifo_count;
-        logic [DMA_RQ_ADDR_WIDTH:0] rdata_fifo_free ;
+        logic [31:0]                wdata_fifo_count;
+        logic [31:0]                rdata_fifo_free ;
     } dma_csr_struct_t;
 
     localparam DMA_STRUCT_BITS       = $bits(dma_csr_struct_t)                           ;
@@ -203,8 +233,8 @@ module avmm_dma_csr #(
             
             assign dma_csr_struct.cap_next_ptr   = (i == (DMA_CHANNEL_COUNT-1)) ? '0 : ((i+2) << DMA_STRUCT_ADDR_WIDTH);
             assign dma_csr_struct.dma_word_bytes = DMA_WORD_BYTES[i]                                                   ;
-            assign dma_csr_struct.max_wr_len     = DMA_WQ_DEPTH[i] * 16                                                ;
-            assign dma_csr_struct.max_rd_len     = DMA_RQ_DEPTH[i] * 16                                                ;
+            assign dma_csr_struct.max_wr_len     = DMA_WQ_DEPTH[i] * DMA_WORD_BYTES[i]                                 ;
+            assign dma_csr_struct.max_rd_len     = DMA_RQ_DEPTH[i] * DMA_WORD_BYTES[i]                                 ;
             assign dma_csr_struct.tq_depth       = DMA_TQ_DEPTH[i]                                                     ;
 
             always_ff @(posedge clk or negedge rst_n) begin

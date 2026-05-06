@@ -4,32 +4,38 @@
 module axi_master_loader #(
     parameter AXI_DATA_WIDTH = 32,
     parameter AXI_ADDR_WIDTH = 16,
-    parameter AXI_ID_W_WIDTH = 5,
-    parameter AXI_ID_R_WIDTH = 5,
-    parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0),
-    parameter FIFO_DEPTH   = 64,
-    parameter LOADER_ID    = 0,
+    parameter AXI_ID_W_WIDTH = 5 ,
+    parameter AXI_ID_R_WIDTH = 5 ,
 
+    parameter FIFO_DEPTH     = 64,
+    parameter LOADER_ID      = 0 ,
+
+    parameter FIFO_ADDR_WIDTH = FIFO_DEPTH == 1 ? 1 : $clog2(FIFO_DEPTH)                            ,
+    parameter AXI_DATA_BYTES = AXI_DATA_WIDTH / 8 + (AXI_DATA_WIDTH % 8 != 0)                       ,
     parameter AXI_MAX_ID_WIDTH = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH
 ) (
-    input  logic                        clk_i,
-    input  logic                        arstn_i,
+    input  logic                        clk_in      ,
+    input  logic                        rst_n_in    ,
 
-    input  logic                        resp_wait_i,
-    input  logic [AXI_MAX_ID_WIDTH-1:0] id_i,
-    input  logic                        write_i,
-    input  logic [AXI_ADDR_WIDTH-1:0]   axaddr_i,
-    input  logic [7:0]                  axlen_i,
-    input  logic [AXI_DATA_WIDTH-1:0]   wdata_i,
-    input  logic [AXI_DATA_BYTES-1:0]   wstrb_i,
-    input  logic                        fifo_push_i,
+    input  logic                        resp_wait_i ,
+    input  logic [AXI_MAX_ID_WIDTH-1:0] id_i        ,
+    input  logic                        write_i     ,
+    input  logic [AXI_ADDR_WIDTH-1:0]   axaddr_i    ,
+    input  logic [7:0]                  axlen_i     ,
+    input  logic [AXI_DATA_WIDTH-1:0]   wdata_i     ,
+    input  logic [AXI_DATA_BYTES-1:0]   wstrb_i     ,
+    input  logic                        fifo_push_i ,
 
-    input  logic                        start_i,
-    output logic                        idle_o,
+    input  logic                        clk_axi     ,
+    input  logic                        rst_n_axi   ,
 
-    output logic [AXI_DATA_WIDTH-1:0]   rdata_o,
+    input  logic                        start_i     ,
+    output logic                        idle_o      ,
+    output logic                        finished_o  ,
 
-    axi_if.m                            m_axi_if_o
+    output logic [AXI_DATA_WIDTH-1:0]   rdata_o     ,
+
+    axi_if.m                            m_axi_if_o  
 );
 
     `GENERATE_AXI_TYPEDEFS
@@ -64,6 +70,9 @@ module axi_master_loader #(
     logic awlen_resp_wait_rd, awlen_wait;
     logic [7:0] awlen_current;
 
+    logic finished_w, finished_w_next;
+    logic finished_r, finished_r_next;
+
 
     assign m_axi_o.data.aw.AWID    = awid_rd;
     assign m_axi_o.data.aw.AWADDR  = awaddr_rd;
@@ -85,44 +94,52 @@ module axi_master_loader #(
     assign m_axi_o.RREADY = 1'b1;
 
     assign idle_o = w_idle & r_idle;
+    assign finished_o = finished_w & finished_r;
 
-    always_ff @(posedge clk_i or negedge arstn_i) begin
-        if (!arstn_i) begin
+    always_ff @(posedge clk_axi or negedge rst_n_axi) begin
+        if (!rst_n_axi) begin
             rdata_o <= '0;
         end
         else begin
             if (m_axi_i.RVALID) begin
-                rdata_o = m_axi_i.data.r.RDATA;
+                rdata_o <= m_axi_i.data.r.RDATA;
             end
         end
     end
 
     /* --- W SECTION --- */
 
-    stream_fifo #(
+    cdc_stream_afifo #(
         .DATA_WIDTH (AXI_ADDR_WIDTH + AXI_MAX_ID_WIDTH + 1 + 8),
-        .FIFO_DEPTH   (FIFO_DEPTH)
+        .ADDR_WIDTH (FIFO_ADDR_WIDTH)
     ) u_stream_fifo_w (
-        .ACLK    (clk_i),
-        .ARESETn (arstn_i),
+        .clk_wr   (clk_in                                        ),
+        .rst_n_wr (rst_n_in                                      ),
 
-        .data_i  ({resp_wait_i, axaddr_i, axlen_i, id_i}),
-        .valid_i (fifo_push_i & write_i),
-        .ready_o (), // NC
+        .data_i   ({resp_wait_i, axaddr_i, axlen_i, id_i}        ),
+        .valid_i  (fifo_push_i & write_i                         ),
+        .ready_o  (                                              ), // NC
+        .free_o   (                                              ), // NC
 
-        .data_o  ({w_resp_wait_rd, awaddr_rd, awlen_rd, awid_rd}),
-        .valid_o (w_fifo_valid_rd),
-        .ready_i (w_fifo_ready_rd)
+        .clk_rd   (clk_axi                                       ),
+        .rst_n_rd (rst_n_axi                                     ),
+
+        .data_o   ({w_resp_wait_rd, awaddr_rd, awlen_rd, awid_rd}),
+        .valid_o  (w_fifo_valid_rd                               ),
+        .ready_i  (w_fifo_ready_rd                               ),
+        .count_o  (                                              )  // NC
     );
 
-    always_ff @(posedge clk_i or negedge arstn_i) begin
-        if (!arstn_i) begin
+    always_ff @(posedge clk_axi or negedge rst_n_axi) begin
+        if (!rst_n_axi) begin
             state_w <= IDLE;
             b_wait_cnt <= '0;
+            finished_w <= '0;
         end
         else begin
             state_w <= state_w_next;
             b_wait_cnt <= b_wait_cnt_next;
+            finished_w <= finished_w_next;
         end
     end
 
@@ -169,6 +186,7 @@ module axi_master_loader #(
         m_axi_o.AWVALID = '0;
 
         b_wait_cnt_next = b_wait_cnt;
+        finished_w_next = finished_w;
 
         case (state_w)
             IDLE: begin
@@ -182,37 +200,48 @@ module axi_master_loader #(
                 end
 
                 b_wait_cnt_next = b_wait_cnt + (m_axi_o.AWVALID & m_axi_i.AWREADY) - (m_axi_i.BVALID & m_axi_o.BREADY);
+
+                finished_w_next = '0;
             end
             MISO: begin
                 b_wait_cnt_next = b_wait_cnt + (m_axi_o.AWVALID & m_axi_i.AWREADY) - (m_axi_i.BVALID & m_axi_o.BREADY);
+                if (b_wait_cnt == 0 && !w_fifo_valid_rd) begin
+                    finished_w_next = '1;
+                end
             end
             default: begin
             end
         endcase
     end
 
-    stream_fifo #(
+
+    cdc_stream_afifo #(
         .DATA_WIDTH (1 + 8 + AXI_DATA_WIDTH + AXI_DATA_BYTES),
-        .FIFO_DEPTH   (FIFO_DEPTH)
+        .ADDR_WIDTH (FIFO_ADDR_WIDTH)
     ) u_stream_fifo_awlen (
-        .ACLK    (clk_i),
-        .ARESETn (arstn_i),
+        .clk_wr   (clk_in                                                 ),
+        .rst_n_wr (rst_n_in                                               ),
 
-        .data_i  ({resp_wait_i, axlen_i, wdata_i, wstrb_i}),
-        .valid_i (fifo_push_i & write_i),
-        .ready_o (), // NC
+        .data_i   ({resp_wait_i, axlen_i, wdata_i, wstrb_i}               ),
+        .valid_i  (fifo_push_i & write_i                                  ),
+        .ready_o  (                                                       ), // NC
+        .free_o   (                                                       ), // NC
 
-        .data_o  ({awlen_resp_wait_rd, awlen_current, wdata_rd, wstrb_rd}),
-        .valid_o (awlen_fifo_valid_rd),
-        .ready_i (awlen_fifo_ready_rd)
+        .clk_rd   (clk_axi                                                ),
+        .rst_n_rd (rst_n_axi                                              ),
+
+        .data_o   ({awlen_resp_wait_rd, awlen_current, wdata_rd, wstrb_rd}),
+        .valid_o  (awlen_fifo_valid_rd                                    ),
+        .ready_i  (awlen_fifo_ready_rd                                    ),
+        .count_o  (                                                       )  // NC
     );
 
     assign m_axi_o.WVALID = awlen_fifo_valid_rd & ~awlen_wait & (state_w != IDLE);
     assign m_axi_o.data.w.WLAST = (w_hand_counter == awlen_current);
     assign awlen_fifo_ready_rd = m_axi_o.WVALID & m_axi_i.WREADY & m_axi_o.data.w.WLAST;
 
-    always_ff @(posedge clk_i or negedge arstn_i) begin : blockName
-        if (!arstn_i) begin
+    always_ff @(posedge clk_axi or negedge rst_n_axi) begin : blockName
+        if (!rst_n_axi) begin
             w_hand_counter <= '0;
             awlen_wait <= '0;
         end
@@ -232,31 +261,37 @@ module axi_master_loader #(
 
 
     /* --- R SECTION --- */
-
-    stream_fifo #(
+    cdc_stream_afifo #(
         .DATA_WIDTH (AXI_ADDR_WIDTH + AXI_MAX_ID_WIDTH + 1 + 8),
-        .FIFO_DEPTH   (FIFO_DEPTH)
+        .ADDR_WIDTH (FIFO_ADDR_WIDTH)
     ) u_stream_fifo_r (
-        .ACLK    (clk_i),
-        .ARESETn (arstn_i),
+        .clk_wr   (clk_in                                        ),
+        .rst_n_wr (rst_n_in                                      ),
 
-        .data_i  ({resp_wait_i, axaddr_i, axlen_i, id_i}),
-        .valid_i (fifo_push_i & ~write_i),
-        .ready_o (), // NC
+        .data_i   ({resp_wait_i, axaddr_i, axlen_i, id_i}        ),
+        .valid_i  (fifo_push_i & ~write_i                        ),
+        .ready_o  (                                              ), // NC
+        .free_o   (                                              ), // NC
 
-        .data_o  ({r_resp_wait_rd, araddr_rd, arlen_rd, arid_rd}),
-        .valid_o (r_fifo_valid_rd),
-        .ready_i (r_fifo_ready_rd)
+        .clk_rd   (clk_axi                                       ),
+        .rst_n_rd (rst_n_axi                                     ),
+
+        .data_o   ({r_resp_wait_rd, araddr_rd, arlen_rd, arid_rd}),
+        .valid_o  (r_fifo_valid_rd                               ),
+        .ready_i  (r_fifo_ready_rd                               ),
+        .count_o  (                                              )  // NC
     );
 
-    always_ff @(posedge clk_i or negedge arstn_i) begin
-        if (!arstn_i) begin
+    always_ff @(posedge clk_axi or negedge rst_n_axi) begin
+        if (!rst_n_axi) begin
             state_r <= IDLE;
             r_wait_cnt <= '0;
+            finished_r <= '0;
         end
         else begin
             state_r <= state_r_next;
             r_wait_cnt <= r_wait_cnt_next;
+            finished_r <= finished_r_next;
         end
     end
 
@@ -303,6 +338,7 @@ module axi_master_loader #(
         m_axi_o.ARVALID = '0;
 
         r_wait_cnt_next = r_wait_cnt;
+        finished_r_next = finished_r;
 
         case (state_r)
             IDLE: begin
@@ -316,9 +352,15 @@ module axi_master_loader #(
                 end
 
                 r_wait_cnt_next = r_wait_cnt + (m_axi_o.ARVALID & m_axi_i.ARREADY) - (m_axi_i.RVALID & m_axi_o.RREADY & m_axi_i.data.r.RLAST);
+                
+                finished_r_next = '0;
             end
             MISO: begin
                 r_wait_cnt_next = r_wait_cnt + (m_axi_o.ARVALID & m_axi_i.ARREADY) - (m_axi_i.RVALID & m_axi_o.RREADY & m_axi_i.data.r.RLAST);
+
+                if (r_wait_cnt == 0 && !r_fifo_valid_rd) begin
+                    finished_r_next = '1;
+                end
             end
             default: begin
             end
