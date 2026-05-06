@@ -34,6 +34,7 @@ module axi_testenv #(
     input  logic                           rst_n_axi                      ,
 
     output logic [ROUTERS_COUNT-1:0]       ld_idle_o                      ,
+    output logic [ROUTERS_COUNT-1:0]       ld_finished_o                  ,
     output logic [AXI_DATA_WIDTH-1:0]      ld_rdata_o      [ROUTERS_COUNT],
 
     axi_if.m                               m_axi_if_o      [ROUTERS_COUNT]                           
@@ -207,27 +208,28 @@ module axi_testenv #(
                 .FIFO_DEPTH     (AXI_LD_FIFO_DEPTH),
                 .LOADER_ID      (i                )
             ) u_axi_master_loader (
-                .clk_in      (clk_in         ),
-                .rst_n_in    (rst_n_in       ),
+                .clk_in      (clk_in           ),
+                .rst_n_in    (rst_n_in         ),
 
-                .resp_wait_i (resp_wait      ),
-                .id_i        (id             ),
-                .write_i     (write          ),
-                .axaddr_i    (axaddr         ),
-                .axlen_i     (axlen          ),
-                .wdata_i     (wdata          ),
-                .wstrb_i     (wstrb          ),
-                .fifo_push_i (ld_valid[i]    ),
+                .resp_wait_i (resp_wait        ),
+                .id_i        (id               ),
+                .write_i     (write            ),
+                .axaddr_i    (axaddr           ),
+                .axlen_i     (axlen            ),
+                .wdata_i     (wdata            ),
+                .wstrb_i     (wstrb            ),
+                .fifo_push_i (ld_valid[i]      ),
 
-                .clk_axi     (clk_axi        ),
-                .rst_n_axi   (rst_n_axi      ),
+                .clk_axi     (clk_axi          ),
+                .rst_n_axi   (rst_n_axi        ),
 
-                .start_i     (start_resynced ),
-                .idle_o      (ld_idle[i]     ),
+                .start_i     (start_resynced   ),
+                .idle_o      (ld_idle[i]       ),
+                .finished_o  (ld_finished_o[i] ),
 
-                .rdata_o     (ld_rdata       ),
+                .rdata_o     (ld_rdata         ),
 
-                .m_axi_if_o  (m_axi_if_o[i]  )
+                .m_axi_if_o  (m_axi_if_o[i]    )
             );
 
             axi_pmu #(

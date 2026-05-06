@@ -161,6 +161,17 @@ logic                       dec_s_readdatavalid                     ;
 logic                       dec_s_waitrequest                       ;
 logic [BAR_ADDR_WIDTH-1:0]  dec_s_address                           ;
 
+logic                       user_msix_m_chipselect                  ;
+logic [TX_DATA_BYTES-1:0]   user_msix_m_byteenable                  ;
+logic [TX_DATA_WIDTH-1:0]   user_msix_m_readdata                    ;
+logic [TX_DATA_WIDTH-1:0]   user_msix_m_writedata                   ;
+logic                       user_msix_m_read                        ;
+logic                       user_msix_m_write                       ;
+logic [TX_BURST_WIDTH-1:0]  user_msix_m_burstcount                  ;
+logic                       user_msix_m_readdatavalid               ;
+logic                       user_msix_m_waitrequest                 ;
+logic [TX_ADDR_WIDTH-1:0]   user_msix_m_address                     ;
+
 logic                       tx_chipselect        [DMA_CHANNEL_COUNT];
 logic [TX_DATA_BYTES-1:0]   tx_byteenable        [DMA_CHANNEL_COUNT];
 logic [TX_DATA_WIDTH-1:0]   tx_readdata          [DMA_CHANNEL_COUNT];
@@ -172,6 +183,15 @@ logic                       tx_readdatavalid     [DMA_CHANNEL_COUNT];
 logic                       tx_waitrequest       [DMA_CHANNEL_COUNT];
 logic [TX_ADDR_WIDTH-1:0]   tx_address           [DMA_CHANNEL_COUNT];
 
+
+always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        user_msix_m_waitrequest <= '1;
+    end
+    else begin
+        user_msix_m_waitrequest <= $urandom();
+    end
+end
 
 generate
     for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : multiply_pmu_dumps
@@ -294,52 +314,63 @@ dma_testenv_top #(
     .PMU_METRIC_COUNT  (PMU_METRIC_COUNT ),
     .PMU_DATA_WIDTH    (PMU_DATA_WIDTH   )
 ) u_dma_testenv_top (
-    .clk_dma              (clk                  ),
-    .rst_n_dma            (rst_n                ),
+    .clk_dma                   (clk                      ),
+    .rst_n_dma                 (rst_n                    ),
 
-    .csr_s_chipselect     (csr_s_chipselect     ),
-    .csr_s_byteenable     (csr_s_byteenable     ),
-    .csr_s_readdata       (csr_s_readdata       ),
-    .csr_s_writedata      (csr_s_writedata      ),
-    .csr_s_read           (csr_s_read           ),
-    .csr_s_write          (csr_s_write          ),
-    .csr_s_readdatavalid  (csr_s_readdatavalid  ),
-    .csr_s_waitrequest    (csr_s_waitrequest    ),
-    .csr_s_address        (csr_s_address        ),
+    .csr_s_chipselect          (csr_s_chipselect         ),
+    .csr_s_byteenable          (csr_s_byteenable         ),
+    .csr_s_readdata            (csr_s_readdata           ),
+    .csr_s_writedata           (csr_s_writedata          ),
+    .csr_s_read                (csr_s_read               ),
+    .csr_s_write               (csr_s_write              ),
+    .csr_s_readdatavalid       (csr_s_readdatavalid      ),
+    .csr_s_waitrequest         (csr_s_waitrequest        ),
+    .csr_s_address             (csr_s_address            ),
 
-    .msix_s_chipselect    (msix_s_chipselect    ),
-    .msix_s_byteenable    (msix_s_byteenable    ),
-    .msix_s_readdata      (msix_s_readdata      ),
-    .msix_s_writedata     (msix_s_writedata     ),
-    .msix_s_read          (msix_s_read          ),
-    .msix_s_write         (msix_s_write         ),
-    .msix_s_readdatavalid (msix_s_readdatavalid ),
-    .msix_s_waitrequest   (msix_s_waitrequest   ),
-    .msix_s_address       (msix_s_address       ),
+    .msix_s_chipselect         (msix_s_chipselect        ),
+    .msix_s_byteenable         (msix_s_byteenable        ),
+    .msix_s_readdata           (msix_s_readdata          ),
+    .msix_s_writedata          (msix_s_writedata         ),
+    .msix_s_read               (msix_s_read              ),
+    .msix_s_write              (msix_s_write             ),
+    .msix_s_readdatavalid      (msix_s_readdatavalid     ),
+    .msix_s_waitrequest        (msix_s_waitrequest       ),
+    .msix_s_address            (msix_s_address           ),
 
-    .dec_s_chipselect     (dec_s_chipselect     ),
-    .dec_s_byteenable     (dec_s_byteenable     ),
-    .dec_s_readdata       (dec_s_readdata       ),
-    .dec_s_writedata      (dec_s_writedata      ),
-    .dec_s_read           (dec_s_read           ),
-    .dec_s_write          (dec_s_write          ),
-    .dec_s_readdatavalid  (dec_s_readdatavalid  ),
-    .dec_s_waitrequest    (dec_s_waitrequest    ),
-    .dec_s_address        (dec_s_address        ),
+    .dec_s_chipselect          (dec_s_chipselect         ),
+    .dec_s_byteenable          (dec_s_byteenable         ),
+    .dec_s_readdata            (dec_s_readdata           ),
+    .dec_s_writedata           (dec_s_writedata          ),
+    .dec_s_read                (dec_s_read               ),
+    .dec_s_write               (dec_s_write              ),
+    .dec_s_readdatavalid       (dec_s_readdatavalid      ),
+    .dec_s_waitrequest         (dec_s_waitrequest        ),
+    .dec_s_address             (dec_s_address            ),
 
-    .tx_chipselect        (tx_chipselect        ),
-    .tx_byteenable        (tx_byteenable        ),
-    .tx_readdata          (tx_readdata          ),
-    .tx_writedata         (tx_writedata         ),
-    .tx_read              (tx_read              ),
-    .tx_write             (tx_write             ),
-    .tx_burstcount        (tx_burstcount        ),
-    .tx_readdatavalid     (tx_readdatavalid     ),
-    .tx_waitrequest       (tx_waitrequest       ),
-    .tx_address           (tx_address           ),
+    .user_msix_m_chipselect    (user_msix_m_chipselect   ),
+    .user_msix_m_byteenable    (user_msix_m_byteenable   ),
+    .user_msix_m_readdata      (user_msix_m_readdata     ),
+    .user_msix_m_writedata     (user_msix_m_writedata    ),
+    .user_msix_m_read          (user_msix_m_read         ),
+    .user_msix_m_write         (user_msix_m_write        ),
+    .user_msix_m_burstcount    (user_msix_m_burstcount   ),
+    .user_msix_m_readdatavalid (user_msix_m_readdatavalid),
+    .user_msix_m_waitrequest   (user_msix_m_waitrequest  ),
+    .user_msix_m_address       (user_msix_m_address      ),
 
-    .clk_noc              (clk_axi              ),
-    .rst_n_noc            (rst_n_axi            )
+    .tx_chipselect             (tx_chipselect            ),
+    .tx_byteenable             (tx_byteenable            ),
+    .tx_readdata               (tx_readdata              ),
+    .tx_writedata              (tx_writedata             ),
+    .tx_read                   (tx_read                  ),
+    .tx_write                  (tx_write                 ),
+    .tx_burstcount             (tx_burstcount            ),
+    .tx_readdatavalid          (tx_readdatavalid         ),
+    .tx_waitrequest            (tx_waitrequest           ),
+    .tx_address                (tx_address               ),
+
+    .clk_noc                   (clk_axi                  ),
+    .rst_n_noc                 (rst_n_axi                )
 );
 
 always #4  clk = ~clk;
@@ -454,7 +485,26 @@ initial begin
         end
         @(posedge clk);
         $write("MSI-X for DMA channel %u: mask 0x%x, data 0x%x, addr 0x%x;\n",
-                4'(i), u_dma_testenv_top.u_avmm_dma_top.msix_mask[i][0], u_dma_testenv_top.u_avmm_dma_top.msix_data[i], u_dma_testenv_top.u_avmm_dma_top.msix_addrs[i]);
+                4'(i), u_dma_testenv_top.u_avmm_dma_top.dma_msix_mask[i][0], u_dma_testenv_top.u_avmm_dma_top.dma_msix_data[i], u_dma_testenv_top.u_avmm_dma_top.dma_msix_addrs[i]);
+    end
+
+    for (int i = DMA_CHANNEL_COUNT; i < DMA_CHANNEL_COUNT*2; i++) begin
+        int index;
+        index = i - DMA_CHANNEL_COUNT;
+        // Write MSIX
+        msix_s_chipselect = '1;
+        msix_s_byteenable = 'hFFFF;
+        msix_s_read       = '0;
+        msix_s_write      = '1;
+        msix_s_writedata  = {32'(0), 32'('hDEADBEE0 + i), 32'('hFEE00000), 32'(i*4)}; // ctrl, data, addr_hi, addr_lo
+        msix_s_address    = i * 'h10;
+        @(posedge clk);
+        while (csr_s_waitrequest) begin
+            @(posedge clk);
+        end
+        @(posedge clk);
+        $write("MSI-X for user %u: mask 0x%x, data 0x%x, addr 0x%x;\n",
+                4'(index), u_dma_testenv_top.u_avmm_dma_top.user_msix_mask[index][0], u_dma_testenv_top.u_avmm_dma_top.user_msix_data[index], u_dma_testenv_top.u_avmm_dma_top.user_msix_addrs[index]);
     end
 
     

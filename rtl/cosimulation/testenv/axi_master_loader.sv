@@ -31,6 +31,7 @@ module axi_master_loader #(
 
     input  logic                        start_i     ,
     output logic                        idle_o      ,
+    output logic                        finished_o  ,
 
     output logic [AXI_DATA_WIDTH-1:0]   rdata_o     ,
 
@@ -69,6 +70,9 @@ module axi_master_loader #(
     logic awlen_resp_wait_rd, awlen_wait;
     logic [7:0] awlen_current;
 
+    logic finished_w, finished_w_next;
+    logic finished_r, finished_r_next;
+
 
     assign m_axi_o.data.aw.AWID    = awid_rd;
     assign m_axi_o.data.aw.AWADDR  = awaddr_rd;
@@ -90,6 +94,7 @@ module axi_master_loader #(
     assign m_axi_o.RREADY = 1'b1;
 
     assign idle_o = w_idle & r_idle;
+    assign finished_o = finished_w & finished_r;
 
     always_ff @(posedge clk_axi or negedge rst_n_axi) begin
         if (!rst_n_axi) begin
@@ -129,10 +134,12 @@ module axi_master_loader #(
         if (!rst_n_axi) begin
             state_w <= IDLE;
             b_wait_cnt <= '0;
+            finished_w <= '0;
         end
         else begin
             state_w <= state_w_next;
             b_wait_cnt <= b_wait_cnt_next;
+            finished_w <= finished_w_next;
         end
     end
 
@@ -179,6 +186,7 @@ module axi_master_loader #(
         m_axi_o.AWVALID = '0;
 
         b_wait_cnt_next = b_wait_cnt;
+        finished_w_next = finished_w;
 
         case (state_w)
             IDLE: begin
@@ -192,9 +200,14 @@ module axi_master_loader #(
                 end
 
                 b_wait_cnt_next = b_wait_cnt + (m_axi_o.AWVALID & m_axi_i.AWREADY) - (m_axi_i.BVALID & m_axi_o.BREADY);
+
+                finished_w_next = '0;
             end
             MISO: begin
                 b_wait_cnt_next = b_wait_cnt + (m_axi_o.AWVALID & m_axi_i.AWREADY) - (m_axi_i.BVALID & m_axi_o.BREADY);
+                if (b_wait_cnt == 0 && !w_fifo_valid_rd) begin
+                    finished_w_next = '1;
+                end
             end
             default: begin
             end
@@ -273,10 +286,12 @@ module axi_master_loader #(
         if (!rst_n_axi) begin
             state_r <= IDLE;
             r_wait_cnt <= '0;
+            finished_r <= '0;
         end
         else begin
             state_r <= state_r_next;
             r_wait_cnt <= r_wait_cnt_next;
+            finished_r <= finished_r_next;
         end
     end
 
@@ -323,6 +338,7 @@ module axi_master_loader #(
         m_axi_o.ARVALID = '0;
 
         r_wait_cnt_next = r_wait_cnt;
+        finished_r_next = finished_r;
 
         case (state_r)
             IDLE: begin
@@ -336,9 +352,15 @@ module axi_master_loader #(
                 end
 
                 r_wait_cnt_next = r_wait_cnt + (m_axi_o.ARVALID & m_axi_i.ARREADY) - (m_axi_i.RVALID & m_axi_o.RREADY & m_axi_i.data.r.RLAST);
+                
+                finished_r_next = '0;
             end
             MISO: begin
                 r_wait_cnt_next = r_wait_cnt + (m_axi_o.ARVALID & m_axi_i.ARREADY) - (m_axi_i.RVALID & m_axi_o.RREADY & m_axi_i.data.r.RLAST);
+
+                if (r_wait_cnt == 0 && !r_fifo_valid_rd) begin
+                    finished_r_next = '1;
+                end
             end
             default: begin
             end
