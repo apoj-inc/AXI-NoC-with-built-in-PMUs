@@ -9,7 +9,7 @@
 #include <time.h>
 
 #define ARRAY_SIZE (uint64_t)(1024*16/8)
-#define DMA_CHANNEL_COUNT 2
+#define DMA_CHANNEL_COUNT 1
 #define ITERATION_COUNT (uint64_t)(10000)
 
 #define FIFO_DEPTH 64
@@ -40,12 +40,20 @@
 uint8_t tasks[DMA_CHANNEL_COUNT][FIFO_DEPTH*ROUTERS_COUNT*2 * COMMAND_BYTES + COMMAND_BYTES];
 uint8_t pmu[DMA_CHANNEL_COUNT][ROUTERS_COUNT * PMU_TRANSFER_BYTES];
 int fd[DMA_CHANNEL_COUNT];
+int user_irq_fd;
 int fail[DMA_CHANNEL_COUNT];
 
 void *dma_test_and_extract (void *index) {
     int index_int = (uint64_t)index;
+    uint8_t user_irq;
+    uint8_t user_irq_clear = 0;
     write(fd[index_int], tasks[index_int], sizeof(tasks[index_int]));
+
+    do {
+        pread(user_irq_fd, &user_irq, sizeof(user_irq), (off_t)index_int);
+    } while (user_irq != 1);
     read(fd[index_int], pmu[index_int], sizeof(pmu[index_int]));
+    pwrite(user_irq_fd, &user_irq_clear, sizeof(user_irq_clear), (off_t)index_int);
 }
 
 int main () {
@@ -71,6 +79,11 @@ int main () {
             }
             return fd[i];
         }
+    }
+
+    user_irq_fd = open("/dev/hdlnocgen_c5p_user_irq", O_RDWR);
+    if (user_irq_fd < 0) {
+        return user_irq_fd;
     }
 
 

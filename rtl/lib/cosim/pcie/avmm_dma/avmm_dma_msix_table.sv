@@ -5,7 +5,7 @@ module avmm_dma_msix_table #(
     parameter USER_MSIX_COUNT = 16   ,
 
     parameter TOTAL_MSIX_COUNT = DMA_MSIX_COUNT + USER_MSIX_COUNT                    ,
-    parameter PBA_OFFSET       = 'h200                                               , // don't change it pls
+    parameter PBA_OFFSET       = 'h300                                               , // don't change it pls
     parameter BAR_DATA_BYTES   = BAR_DATA_WIDTH / 8                                  ,
     parameter PBA_COUNT        = TOTAL_MSIX_COUNT / 64 + (TOTAL_MSIX_COUNT % 64 != 0),
     parameter PBA_PAIRS        = PBA_COUNT / 2 + (PBA_COUNT % 2 != 0)                
