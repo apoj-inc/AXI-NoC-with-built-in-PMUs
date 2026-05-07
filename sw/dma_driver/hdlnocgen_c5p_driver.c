@@ -36,8 +36,11 @@ static char *hdlnocgen_devnode(const struct device *dev, umode_t *mode) {
 // DMA config globs
 static uint16_t dma_channel_count;
 void __iomem *bar0_ptr, *bar2_ptr;
-int irq_index[16] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-int irq_flags[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int dma_irq_index[16] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+uint8_t dma_irq_flags[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+int user_irq_index[16] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+uint8_t user_irq_flags[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // DMA pointer globs
 static void *cpu_addr[16];
@@ -49,30 +52,43 @@ int err, err_index = 0;
 
 static ssize_t read_from_pci(struct file *filp, char __user *user_buf, size_t len, loff_t *off) {
     int channel = MINOR(filp->f_inode->i_rdev);
-    printk(KERN_INFO "hdlnocgen_c5p_driver: Read request to channel %u\n", channel);
+
+    if (channel == dma_channel_count) {
+        int retval = len - 1;
+        if (retval == -1) {
+            return 0;
+        }
+        if (*off > 16) {
+            return -EINVAL;
+        }
+        retval += copy_to_user(user_buf, user_irq_flags+*off, 1);
+
+        return retval;
+    }
+
+    //printk(KERN_INFO "hdlnocgen_c5p_driver: Read request to channel %u\n", channel);
 
     if (len > DMA_BUFFER_SIZE) {
         printk(KERN_ERR "hdlnocgen_c5p_driver: Requested to read %lu bytes, which is larger than size of DMA buffer (%llu bytes)\n", len, (uint64_t)DMA_BUFFER_SIZE);
         return -ENOMEM;
     }
 
-    irq_flags[channel] = 1;
     iowrite64((((uint64_t)len) << 32) | 0, bar2_ptr + 0x1000 + channel*0x10);
-    printk(KERN_INFO "hdlnocgen_c5p_driver: Read from DMA channel %d command sent\n", channel);
+    //printk(KERN_INFO "hdlnocgen_c5p_driver: Read from DMA channel %d command sent\n", channel);
 
     for (int i = 0; i < 1000000; i++) {
-        if (!irq_flags[channel]) {
+        if (dma_irq_flags[channel]) {
             break;
         }
         fsleep(1);
     }
-    if (irq_flags[channel]) {
-        irq_flags[channel] = 0;
+    if (!dma_irq_flags[channel]) {
         printk(KERN_ERR "hdlnocgen_c5p_driver: Read from DMA channel %d timeout\n", channel);
         return -1;
     }
+    dma_irq_flags[channel] = 0;
 
-    printk(KERN_INFO "hdlnocgen_c5p_driver: Read from DMA channel %d finished successfully\n", channel);
+    //printk(KERN_INFO "hdlnocgen_c5p_driver: Read from DMA channel %d finished successfully\n", channel);
 
     uint64_t not_copied = copy_to_user(user_buf, cpu_addr[channel], len);
 
@@ -85,7 +101,21 @@ static ssize_t read_from_pci(struct file *filp, char __user *user_buf, size_t le
 
 static ssize_t write_to_pci(struct file *filp, const char __user *user_buf, size_t len, loff_t *off) {
     int channel = MINOR(filp->f_inode->i_rdev);
-    printk(KERN_INFO "hdlnocgen_c5p_driver: Write request to channel %u\n", channel);
+
+    if (channel == dma_channel_count) {
+        int retval = len - 1;
+        if (retval == -1) {
+            return 0;
+        }
+        if (*off > 16) {
+            return -EINVAL;
+        }
+        retval += copy_from_user(user_irq_flags+*off, user_buf, 1);
+
+        return retval;
+    }
+
+    //printk(KERN_INFO "hdlnocgen_c5p_driver: Write request to channel %u\n", channel);
 
     if (len > DMA_BUFFER_SIZE) {
         printk(KERN_ERR "hdlnocgen_c5p_driver: Requested to write %lu bytes, which is larger than size of DMA buffer (%llu bytes)\n", len, (uint64_t)DMA_BUFFER_SIZE);
@@ -99,23 +129,22 @@ static ssize_t write_to_pci(struct file *filp, const char __user *user_buf, size
         return not_copied;
     }
 
-    irq_flags[channel] = 1;
     iowrite64((((uint64_t)(len-not_copied)) << 32) | 0, bar2_ptr + 0x1008 + channel*0x10);
-    printk(KERN_INFO "hdlnocgen_c5p_driver: Write to DMA channel %d command sent\n", channel);
+    //printk(KERN_INFO "hdlnocgen_c5p_driver: Write to DMA channel %d command sent\n", channel);
 
     for (int i = 0; i < 1000000; i++) {
-        if (!irq_flags[channel]) {
+        if (dma_irq_flags[channel]) {
             break;
         }
         fsleep(1);
     }
-    if (irq_flags[channel]) {
-        irq_flags[channel] = 0;
+    if (!dma_irq_flags[channel]) {
         printk(KERN_ERR "hdlnocgen_c5p_driver: Write to DMA channel %d timeout\n", channel);
         return -1;
     }
+    dma_irq_flags[channel] = 0;
 
-    printk(KERN_INFO "hdlnocgen_c5p_driver: Write to DMA channel %d finished successfully\n", channel);
+    //printk(KERN_INFO "hdlnocgen_c5p_driver: Write to DMA channel %d finished successfully\n", channel);
 
     return not_copied;
 }
@@ -150,14 +179,23 @@ static struct pci_driver hdlnocgen_dma_driver = {
 
 static irqreturn_t dma_finish(int irq, void *dev) {
     for (int i = 0; i < dma_channel_count; i++) {
-        if (irq_index[i] == irq) {
-            irq_flags[i] = 0;
+        if (dma_irq_index[i] == irq) {
+            dma_irq_flags[i] = 1;
             break;
         }
     }
     return IRQ_HANDLED;
 }
 
+static irqreturn_t user_msix_pend(int irq, void *dev) {
+    for (int i = 0; i < dma_channel_count; i++) {
+        if (user_irq_index[i] == irq) {
+            user_irq_flags[i] = 1;
+            break;
+        }
+    }
+    return IRQ_HANDLED;
+}
 
 static int hdlnocgen_dma_probe(struct pci_dev *pdev, const struct pci_device_id *ent) {
     pci_read_config_word(pdev, PCI_VENDOR_ID, &vendor);
@@ -213,13 +251,14 @@ static int hdlnocgen_dma_probe(struct pci_dev *pdev, const struct pci_device_id 
     printk(KERN_INFO "hdlnocgen_c5p_driver: Extracting done. This DMA has %hu channels\n", dma_channel_count);
 
     // Register MSIs
-    err = pci_alloc_irq_vectors(pdev, dma_channel_count, dma_channel_count, PCI_IRQ_MSIX);
+    printk(KERN_INFO "hdlnocgen_c5p_driver: Allocating %hu DMA and %hu user interrupts\n", dma_channel_count, dma_channel_count);
+    err = pci_alloc_irq_vectors(pdev, dma_channel_count*2, dma_channel_count*2, PCI_IRQ_MSIX);
     if (err < 0) {
         printk(KERN_ERR "hdlnocgen_c5p_driver: Failed to register PCIe interrupts\n");
         goto unmap_bar2;
     }
-    else if (err != dma_channel_count) {
-        printk(KERN_ERR "hdlnocgen_c5p_driver: Failed to allocate PCIe interrupts - %hu interrupts required, but %d alocated\n", dma_channel_count, err);
+    else if (err != dma_channel_count*2) {
+        printk(KERN_ERR "hdlnocgen_c5p_driver: Failed to allocate PCIe interrupts - %hu interrupts required, but %d alocated\n", dma_channel_count*2, err);
         goto msi_free;
     }
     printk(KERN_INFO "hdlnocgen_c5p_driver: Allocated %d interrupts using MSIXs\n", err);
@@ -232,19 +271,35 @@ static int hdlnocgen_dma_probe(struct pci_dev *pdev, const struct pci_device_id 
         goto msi_free;
     }
 
-    // Register IRQ handlers
+    // Register DMA IRQ handlers
     for (int i = 0; i < dma_channel_count; i++) {
         // Set IRQ handler
-        irq_index[i] = pci_irq_vector(pdev, i);
-        printk(KERN_INFO "hdlnocgen_c5p_driver: IRQ for channel %d is %d\n", i, irq_index[i]);
+        dma_irq_index[i] = pci_irq_vector(pdev, i);
+        printk(KERN_INFO "hdlnocgen_c5p_driver: DMA IRQ for channel %d is %d\n", i, dma_irq_index[i]);
 
-        err = request_irq(irq_index[i], dma_finish, IRQF_TRIGGER_RISING, DRIVER_NAME, NULL);
+        err = request_irq(dma_irq_index[i], dma_finish, IRQF_TRIGGER_RISING, DRIVER_NAME, NULL);
         if (err) {
-            printk(KERN_INFO "hdlnocgen_c5p_driver: Failed to register IRQ handler for channel %d\n", i);
+            printk(KERN_INFO "hdlnocgen_c5p_driver: Failed to register DMA IRQ handler for channel %d\n", i);
             goto unregister_irq;
         }
         printk(KERN_INFO "hdlnocgen_c5p_driver: Registered IRQ handler for DMA channel %d\n", i);
 
+        err_index = i + 1;
+    }
+
+    // Register user IRQ handlers
+    for (int i = dma_channel_count; i < dma_channel_count*2; i++) {
+        // Set IRQ handler
+        user_irq_index[i-dma_channel_count] = pci_irq_vector(pdev, i);
+        printk(KERN_INFO "hdlnocgen_c5p_driver: User IRQ for channel %d is %d\n", i-dma_channel_count, user_irq_index[i-dma_channel_count]);
+
+        err = request_irq(user_irq_index[i-dma_channel_count], user_msix_pend, IRQF_TRIGGER_RISING, DRIVER_NAME, NULL);
+        if (err) {
+            printk(KERN_INFO "hdlnocgen_c5p_driver: Failed to register user IRQ handler for channel %d\n", i-dma_channel_count);
+            goto unregister_user_irq;
+        }
+        printk(KERN_INFO "hdlnocgen_c5p_driver: Registered IRQ handler for user channel %d\n", i-dma_channel_count);
+        
         err_index = i + 1;
     }
 
@@ -307,6 +362,13 @@ static int hdlnocgen_dma_probe(struct pci_dev *pdev, const struct pci_device_id 
         err_index = i + 1;
     }
 
+    if (!device_create(driver_class, &(pdev->dev), driver_dev_nr+dma_channel_count, NULL, "hdlnocgen_c5p_user_irq")) {
+        printk(KERN_ERR "hdlnocgen_c5p_driver: Could not create device file hdlnocgen_c5p_user_irq\n");
+        err = -ENOMEM;
+        goto destroy_device_file;
+    }
+    printk(KERN_INFO "hdlnocgen_c5p_driver: Created device file hdlnocgen_c5p_user_irq\n");
+
     // Set PCIe as master
     pci_set_master(pdev);
     printk(KERN_INFO "hdlnocgen_c5p_driver: Bus mastered by PCIe device\n");
@@ -331,9 +393,14 @@ free_dma:
         dma_free_coherent(&(pdev->dev), DMA_BUFFER_SIZE, cpu_addr[i], dma_handle[i]);
     }
     err_index = dma_channel_count;
+unregister_user_irq:
+    for (int i = 0; i < err_index; i++) {
+        free_irq(user_irq_index[i], NULL);
+    }
+    err_index = dma_channel_count;
 unregister_irq:
     for (int i = 0; i < err_index; i++) {
-        free_irq(irq_index[i], NULL);
+        free_irq(dma_irq_index[i], NULL);
     }
     err_index = dma_channel_count;
 msi_free:
@@ -356,6 +423,9 @@ static void hdlnocgen_dma_remove(struct pci_dev *pdev) {
     pci_clear_master(pdev);
     printk(KERN_INFO "hdlnocgen_c5p_driver: PCIe device unmastered\n");
 
+    device_destroy(driver_class, driver_dev_nr+dma_channel_count);
+    printk(KERN_INFO "hdlnocgen_c5p_driver: Deleted file hdlnocgen_c5p_user_irq\n");
+
     for (int i = 0; i < dma_channel_count; i++) {
         device_destroy(driver_class, driver_dev_nr+i);
         printk(KERN_INFO "hdlnocgen_c5p_driver: Deleted file hdlnocgen_c5p%d\n", i);
@@ -377,9 +447,13 @@ static void hdlnocgen_dma_remove(struct pci_dev *pdev) {
     printk(KERN_INFO "hdlnocgen_c5p_driver: DMA buffers freed\n");
 
     for (int i = 0; i < dma_channel_count; i++) {
-        free_irq(irq_index[i], NULL);
+        free_irq(dma_irq_index[i], NULL);
     }
     printk(KERN_INFO "hdlnocgen_c5p_driver: Freed IRQ handlers\n");
+
+    for (int i = 0; i < dma_channel_count; i++) {
+        free_irq(user_irq_index[i], NULL);
+    }
 
     pci_free_irq_vectors(pdev);
     printk(KERN_INFO "hdlnocgen_c5p_driver: PCIe MSIXs released\n");
@@ -398,6 +472,11 @@ static void hdlnocgen_dma_remove(struct pci_dev *pdev) {
 
     pci_disable_device(pdev);
     printk(KERN_INFO "hdlnocgen_c5p_driver: PCIe device disabled\n");
+
+    printk(KERN_INFO "hdlnocgen_c5p_driver: User IRQs pending: ");
+    for (int i = 0; i < dma_channel_count; i++) {
+        printk(KERN_CONT "%d ", user_irq_flags[i]);
+    }
 
 }
 
