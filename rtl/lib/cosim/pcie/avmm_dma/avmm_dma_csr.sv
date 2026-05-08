@@ -256,7 +256,7 @@ module avmm_dma_csr #(
                             TQ_DEPTH        : /*dma_csr_struct.tq_depth         <= translated_wdata*/ ; // Read-only
                             WDATA_CONUT     : /*dma_csr_struct.wdata_fifo_count <= translated_wdata*/ ; // Read-only
                             RDATA_FREE      : /*dma_csr_struct.rdata_fifo_free  <= translated_wdata*/ ; // Read-only
-                            default         :                                                    ;
+                            default         :                                                         ;
                         endcase
                     end
 

@@ -4,13 +4,7 @@ parameter     FIFO_DEPTH                            = 64         ;
 
 parameter     PMU_METRIC_COUNT                      = 19         ;
 parameter     PMU_DATA_WIDTH                        = 32         ;
-parameter     ROUTERS_COUNT                         = 16         ;
 parameter     DMA_DATA_WIDTH                        = 128        ;
-
-parameter     AXI_DATA_WIDTH                        = 32         ;
-parameter     AXI_ID_W_WIDTH                        = 5          ;
-parameter     AXI_ID_R_WIDTH                        = 5          ;
-parameter     AXI_ADDR_WIDTH                        = 16         ;
 
 parameter     DMA_CHANNEL_COUNT                     = 8          ;
 
@@ -33,6 +27,17 @@ parameter     TX_DATA_WIDTH                         = 128        ;
 parameter     TX_ADDR_WIDTH                         = 64         ;
 parameter     TX_BURST_WIDTH                        = 6          ;
 
+parameter int ROUTERS_COUNT     [DMA_CHANNEL_COUNT] = '{8 {16  }};
+parameter     MAX_ROUTERS_COUNT                     = 16         ;
+parameter int AXI_DATA_WIDTH    [DMA_CHANNEL_COUNT] = '{8 {32  }};
+parameter int AXI_ADDR_WIDTH    [DMA_CHANNEL_COUNT] = '{8 {16  }};
+parameter int AXI_ID_W_WIDTH    [DMA_CHANNEL_COUNT] = '{8 {5   }};
+parameter int AXI_ID_R_WIDTH    [DMA_CHANNEL_COUNT] = '{8 {5   }};
+parameter     MAX_AXI_DATA_WIDTH                    = 32         ;
+parameter     MAX_AXI_ADDR_WIDTH                    = 16         ;
+parameter     MAX_AXI_ID_W_WIDTH                    = 5          ;
+parameter     MAX_AXI_ID_R_WIDTH                    = 5          ;
+
 parameter PMU_ADDR_WIDTH = PMU_METRIC_COUNT == 1 ? 1 : $clog2(PMU_METRIC_COUNT);
 
 parameter MSI_COUNT               = DMA_CHANNEL_COUNT                     ;
@@ -46,13 +51,13 @@ parameter DMA_BURST_WIDTH         = DMA_BYTES_WIDTH - 4                   ;
 parameter DMA_CHANNEL_COUNT_WIDTH = $clog2(DMA_CHANNEL_COUNT)             ;
 
 
-parameter ROUTERS_COUNT_WIDTH  = (ROUTERS_COUNT == 1) ? 1 : $clog2(ROUTERS_COUNT)                                                            ;
-parameter AXI_MAX_ID_WIDTH     = (AXI_ID_W_WIDTH > AXI_ID_R_WIDTH) ? AXI_ID_W_WIDTH : AXI_ID_R_WIDTH                                         ;
+parameter ROUTERS_COUNT_WIDTH  = (MAX_ROUTERS_COUNT == 1) ? 1 : $clog2(MAX_ROUTERS_COUNT)                                                    ;
+parameter AXI_MAX_ID_WIDTH     = (MAX_AXI_ID_W_WIDTH > MAX_AXI_ID_R_WIDTH) ? MAX_AXI_ID_W_WIDTH : MAX_AXI_ID_R_WIDTH                         ;
 
 parameter ROUTERS_COUNT_BYTES  = ROUTERS_COUNT_WIDTH / 8 + (ROUTERS_COUNT_WIDTH % 8 != 0)                                                    ;
-parameter AXI_DATA_BYTES       = AXI_DATA_WIDTH      / 8 + (AXI_DATA_WIDTH      % 8 != 0)                                                    ;
+parameter AXI_DATA_BYTES       = MAX_AXI_DATA_WIDTH  / 8 + (MAX_AXI_DATA_WIDTH  % 8 != 0)                                                    ;
 parameter AXI_MAX_ID_BYTES     = AXI_MAX_ID_WIDTH    / 8 + (AXI_MAX_ID_WIDTH    % 8 != 0)                                                    ;
-parameter AXI_ADDR_BYTES       = AXI_ADDR_WIDTH      / 8 + (AXI_ADDR_WIDTH      % 8 != 0)                                                    ;
+parameter AXI_ADDR_BYTES       = MAX_AXI_ADDR_WIDTH  / 8 + (MAX_AXI_ADDR_WIDTH  % 8 != 0)                                                    ;
 parameter AXI_WSTRB_BYTES      = AXI_DATA_BYTES      / 8 + (AXI_DATA_BYTES      % 8 != 0)                                                    ;
 
 parameter AXI_CUMULATIVE_WIDTH = (ROUTERS_COUNT_BYTES + 1 + AXI_MAX_ID_BYTES + 1 + AXI_ADDR_BYTES + 1 + AXI_DATA_BYTES + AXI_WSTRB_BYTES) * 8;
@@ -62,7 +67,7 @@ parameter WIDTH_REMAINDER      = (AXI_CUMULATIVE_WIDTH % DMA_DATA_WIDTH == 0) ? 
 
 parameter PMU_WIDTH_RATIO      = (PMU_METRIC_COUNT*PMU_DATA_WIDTH / DMA_DATA_WIDTH) + (PMU_METRIC_COUNT*PMU_DATA_WIDTH % DMA_DATA_WIDTH != 0);
 
-parameter DMA_PMU_READ_BYTES   = (PMU_WIDTH_RATIO*DMA_DATA_WIDTH / 8) * ROUTERS_COUNT;
+parameter DMA_PMU_READ_BYTES   = (PMU_WIDTH_RATIO*DMA_DATA_WIDTH / 8) * MAX_ROUTERS_COUNT;
 
 int queue_sizes [DMA_CHANNEL_COUNT];
 
@@ -76,54 +81,56 @@ generate
 
         initial begin
 
-            for (int j = 0; j < FIFO_DEPTH*ROUTERS_COUNT; j++) begin : create_tasks
-                task_file_queue.push_back({ (ROUTERS_COUNT_BYTES*8)'(                        j / FIFO_DEPTH),
-                                                            (1*8  )'($urandom_range(0,                   1)),
-                                            (AXI_MAX_ID_BYTES*8   )'(      $urandom(                      )),
-                                                            (1*8  )'(                                     1),
-                                                (AXI_ADDR_BYTES*8 )'(                                    '0),
-                                                            (1*8  )'($urandom_range(0,                   4)),
-                                                (AXI_DATA_BYTES*8 )'(      $urandom(                      )),
-                                                (AXI_WSTRB_BYTES*8)'(      $urandom(                      ))
-                                        });
-            end
-
-            for (int j = 0; j < FIFO_DEPTH*ROUTERS_COUNT; j++) begin : create_tasks
-                task_file_queue.push_back({ (ROUTERS_COUNT_BYTES*8)'(                        j / FIFO_DEPTH),
-                                                            (1*8  )'($urandom_range(0,                   1)),
-                                            (AXI_MAX_ID_BYTES*8   )'(      $urandom(                      )),
-                                                            (1*8  )'(                                     0),
-                                                (AXI_ADDR_BYTES*8 )'(                                    '0),
-                                                            (1*8  )'($urandom_range(0,                   4)),
-                                                (AXI_DATA_BYTES*8 )'(      $urandom(                      )),
-                                                (AXI_WSTRB_BYTES*8)'(      $urandom(                      ))
-                                        });
-            end
-
-            while (task_file_queue.size()) begin
-                current_slice = 0;
-                current_task = task_file_queue.pop_front();
-
-                while (current_slice < WIDTH_RATIO) begin
-                    if (current_slice + 1 < WIDTH_RATIO) begin
-                        tx_readdata_queue.push_back(current_task[current_slice*DMA_DATA_WIDTH +: DMA_DATA_WIDTH]);
-                    end
-                    else begin
-                        tx_readdata_queue.push_back(current_task[current_slice*DMA_DATA_WIDTH +: WIDTH_REMAINDER]);
-                    end
-                    current_slice = current_slice + 1;
+            for (int iter = 0; iter < 2; iter++) begin
+                for (int j = 0; j < FIFO_DEPTH*ROUTERS_COUNT[i]; j++) begin : create_tasks
+                    task_file_queue.push_back({ (ROUTERS_COUNT_BYTES*8)'(                        j / FIFO_DEPTH),
+                                                                (1*8  )'(                                     0),
+                                                (AXI_MAX_ID_BYTES*8   )'(      $urandom(                      )),
+                                                                (1*8  )'(                                     1),
+                                                    (AXI_ADDR_BYTES*8 )'(                                    '0),
+                                                                (1*8  )'(                                     4),
+                                                    (AXI_DATA_BYTES*8 )'(      $urandom(                      )),
+                                                    (AXI_WSTRB_BYTES*8)'(      $urandom(                      ))
+                                            });
                 end
-            end
-            tx_readdata_queue.push_back('1);
 
-            queue_sizes[i] = tx_readdata_queue.size()+1;
+                for (int j = 0; j < FIFO_DEPTH*ROUTERS_COUNT[i]; j++) begin : create_tasks
+                    task_file_queue.push_back({ (ROUTERS_COUNT_BYTES*8)'(                        j / FIFO_DEPTH),
+                                                                (1*8  )'(                                     0),
+                                                (AXI_MAX_ID_BYTES*8   )'(      $urandom(                      )),
+                                                                (1*8  )'(                                     0),
+                                                    (AXI_ADDR_BYTES*8 )'(                                    '0),
+                                                                (1*8  )'(                                      2),
+                                                    (AXI_DATA_BYTES*8 )'(      $urandom(                      )),
+                                                    (AXI_WSTRB_BYTES*8)'(      $urandom(                      ))
+                                            });
+                end
+
+                while (task_file_queue.size()) begin
+                    current_slice = 0;
+                    current_task = task_file_queue.pop_front();
+
+                    while (current_slice < WIDTH_RATIO) begin
+                        if (current_slice + 1 < WIDTH_RATIO) begin
+                            tx_readdata_queue.push_back(current_task[current_slice*DMA_DATA_WIDTH +: DMA_DATA_WIDTH]);
+                        end
+                        else begin
+                            tx_readdata_queue.push_back(current_task[current_slice*DMA_DATA_WIDTH +: WIDTH_REMAINDER]);
+                        end
+                        current_slice = current_slice + 1;
+                    end
+                end
+                tx_readdata_queue.push_back('1);
+            end
+            
+            queue_sizes[i] = tx_readdata_queue.size();
         end
     end
 endgenerate
 
 
-logic                           test_done           ;
-logic [15:0]                    current_struct      ;
+logic        test_done           ;
+logic [15:0] current_struct      ;
 
 logic                       clk                                     ;
 logic                       rst_n                                   ;
@@ -172,6 +179,16 @@ logic                       user_msix_m_readdatavalid               ;
 logic                       user_msix_m_waitrequest                 ;
 logic [TX_ADDR_WIDTH-1:0]   user_msix_m_address                     ;
 
+logic                       env_csr_s_chipselect                    ;
+logic [BAR_DATA_BYTES-1:0]  env_csr_s_byteenable                    ;
+logic [BAR_DATA_WIDTH-1:0]  env_csr_s_readdata                      ;
+logic [BAR_DATA_WIDTH-1:0]  env_csr_s_writedata                     ;
+logic                       env_csr_s_read                          ;
+logic                       env_csr_s_write                         ;
+logic                       env_csr_s_readdatavalid                 ;
+logic                       env_csr_s_waitrequest                   ;
+logic [BAR_ADDR_WIDTH-1:0]  env_csr_s_address                       ;
+
 logic                       tx_chipselect        [DMA_CHANNEL_COUNT];
 logic [TX_DATA_BYTES-1:0]   tx_byteenable        [DMA_CHANNEL_COUNT];
 logic [TX_DATA_WIDTH-1:0]   tx_readdata          [DMA_CHANNEL_COUNT];
@@ -195,8 +212,8 @@ end
 
 generate
     for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : multiply_pmu_dumps
-        logic [PMU_WIDTH_RATIO*DMA_DATA_WIDTH-1:0] pmu_dump [ROUTERS_COUNT];
-        for (genvar j = 0; j < ROUTERS_COUNT; j++) begin : extract_all_pmus
+        logic [PMU_WIDTH_RATIO*DMA_DATA_WIDTH-1:0] pmu_dump [ROUTERS_COUNT[i]];
+        for (genvar j = 0; j < ROUTERS_COUNT[i]; j++) begin : extract_all_pmus
             assign pmu_dump[j] = {u_dma_testenv_top.testenvs[i].u_axi_testenv.pmus_and_generators[j].u_axi_pmu.clock_counter,
                                   u_dma_testenv_top.testenvs[i].u_axi_testenv.pmus_and_generators[j].u_axi_pmu.wc,
                                   u_dma_testenv_top.testenvs[i].u_axi_testenv.pmus_and_generators[j].u_axi_pmu.rc};
@@ -226,7 +243,7 @@ generate
         always @(posedge clk or negedge rst_n) begin
             if (!rst_n) begin
                 tx_waitrequest[i] <= '1;
-                tx_readdata[i]    <= '0;
+                tx_readdata[i]    <= task_files[i].tx_readdata_queue.pop_front();
             end
             else begin
                 tx_waitrequest[i] <= '0;
@@ -288,31 +305,40 @@ generate
 endgenerate
 
 dma_testenv_top #(
-    .DMA_CHANNEL_COUNT (DMA_CHANNEL_COUNT),
+    .DMA_CHANNEL_COUNT  (DMA_CHANNEL_COUNT ),
 
-    .DMA_BYTES_WIDTH   (DMA_BYTES_WIDTH  ),
-    .DMA_OFFFSET_WIDTH (DMA_OFFFSET_WIDTH),
+    .DMA_BYTES_WIDTH    (DMA_BYTES_WIDTH   ),
+    .DMA_OFFFSET_WIDTH  (DMA_OFFFSET_WIDTH ),
 
-    .DMA_WORD_BYTES    (DMA_WORD_BYTES   ),
-    .DMA_WQ_DEPTH      (DMA_WQ_DEPTH     ),
-    .DMA_RQ_DEPTH      (DMA_RQ_DEPTH     ),
-    .DMA_TQ_DEPTH      (DMA_TQ_DEPTH     ),
+    .DMA_WORD_BYTES     (DMA_WORD_BYTES    ),
+    .DMA_WQ_DEPTH       (DMA_WQ_DEPTH      ),
+    .DMA_RQ_DEPTH       (DMA_RQ_DEPTH      ),
+    .DMA_TQ_DEPTH       (DMA_TQ_DEPTH      ),
 
-    .MAX_WQ_DEPTH      (MAX_WQ_DEPTH     ),
-    .MAX_RQ_DEPTH      (MAX_RQ_DEPTH     ),
-    .MAX_TQ_DEPTH      (MAX_TQ_DEPTH     ),
+    .MAX_WQ_DEPTH       (MAX_WQ_DEPTH      ),
+    .MAX_RQ_DEPTH       (MAX_RQ_DEPTH      ),
+    .MAX_TQ_DEPTH       (MAX_TQ_DEPTH      ),
 
-    .BAR_DATA_WIDTH    (BAR_DATA_WIDTH   ),
-    .BAR_ADDR_WIDTH    (BAR_ADDR_WIDTH   ),
+    .BAR_DATA_WIDTH     (BAR_DATA_WIDTH    ),
+    .BAR_ADDR_WIDTH     (BAR_ADDR_WIDTH    ),
 
-    .TX_DATA_WIDTH     (TX_DATA_WIDTH    ),
-    .TX_ADDR_WIDTH     (TX_ADDR_WIDTH    ),
-    .TX_BURST_WIDTH    (TX_BURST_WIDTH   ),
+    .TX_DATA_WIDTH      (TX_DATA_WIDTH     ),
+    .TX_ADDR_WIDTH      (TX_ADDR_WIDTH     ),
+    .TX_BURST_WIDTH     (TX_BURST_WIDTH    ),
 
-    .AXI_LD_FIFO_DEPTH (FIFO_DEPTH       ),
+    .AXI_LD_FIFO_DEPTH  (FIFO_DEPTH        ),
 
-    .PMU_METRIC_COUNT  (PMU_METRIC_COUNT ),
-    .PMU_DATA_WIDTH    (PMU_DATA_WIDTH   )
+    .PMU_METRIC_COUNT   (PMU_METRIC_COUNT  ),
+    .PMU_DATA_WIDTH     (PMU_DATA_WIDTH    ),
+
+    .ROUTERS_COUNT      (ROUTERS_COUNT     ),
+    .MAX_ROUTERS_COUNT  (MAX_ROUTERS_COUNT ),
+
+    .AXI_DATA_WIDTH     (AXI_DATA_WIDTH    ),
+    .AXI_ADDR_WIDTH     (AXI_ADDR_WIDTH    ),
+    .AXI_ID_W_WIDTH     (AXI_ID_W_WIDTH    ),
+    .AXI_ID_R_WIDTH     (AXI_ID_R_WIDTH    ),
+    .MAX_AXI_DATA_WIDTH (MAX_AXI_DATA_WIDTH)
 ) u_dma_testenv_top (
     .clk_dma                   (clk                      ),
     .rst_n_dma                 (rst_n                    ),
@@ -358,6 +384,16 @@ dma_testenv_top #(
     .user_msix_m_waitrequest   (user_msix_m_waitrequest  ),
     .user_msix_m_address       (user_msix_m_address      ),
 
+    .env_csr_s_chipselect      (env_csr_s_chipselect     ),
+    .env_csr_s_byteenable      (env_csr_s_byteenable     ),
+    .env_csr_s_readdata        (env_csr_s_readdata       ),
+    .env_csr_s_writedata       (env_csr_s_writedata      ),
+    .env_csr_s_read            (env_csr_s_read           ),
+    .env_csr_s_write           (env_csr_s_write          ),
+    .env_csr_s_readdatavalid   (env_csr_s_readdatavalid  ),
+    .env_csr_s_waitrequest     (env_csr_s_waitrequest    ),
+    .env_csr_s_address         (env_csr_s_address        ),
+
     .tx_chipselect             (tx_chipselect            ),
     .tx_byteenable             (tx_byteenable            ),
     .tx_readdata               (tx_readdata              ),
@@ -369,8 +405,7 @@ dma_testenv_top #(
     .tx_waitrequest            (tx_waitrequest           ),
     .tx_address                (tx_address               ),
 
-    .clk_noc                   (clk_axi                  ),
-    .rst_n_noc                 (rst_n_axi                )
+    .clk_noc                   (clk_axi                  )
 );
 
 always #4  clk = ~clk;
@@ -507,42 +542,66 @@ initial begin
                 4'(index), u_dma_testenv_top.u_avmm_dma_top.user_msix_mask[index][0], u_dma_testenv_top.u_avmm_dma_top.user_msix_data[index], u_dma_testenv_top.u_avmm_dma_top.user_msix_addrs[index]);
     end
 
-    
-    // DMA action
-    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
-        dec_s_chipselect = '1;
-        dec_s_byteenable = 'hFF00;
-        dec_s_read       = '0;
-        dec_s_write      = '1;
-        dec_s_writedata  = (((22'(queue_sizes[i]*16)) << 32) | 22'('h100)) << 64;
-        dec_s_address    = i << 4;
+    for (int iter = 0; iter < 2; iter++) begin
+        // Reset stuff
+        env_csr_s_chipselect = '1;
+        env_csr_s_byteenable = 'h0F00;
+        env_csr_s_writedata  = '1;
+        env_csr_s_write      = '1;
+        env_csr_s_address    = '0;
         @(posedge clk);
         while (dec_s_waitrequest) begin
             @(posedge clk);
         end
-        dec_s_write      = '0;
-    end
-    repeat (10000) @(posedge clk);
-
-    for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
-        dec_s_chipselect = '1;
-        dec_s_byteenable = 'h00FF;
-        dec_s_read       = '0;
-        dec_s_write      = '1;
-        dec_s_writedata  = ((22'(DMA_PMU_READ_BYTES)) << 32) | 22'('h0);
-        dec_s_address    = i << 4;
+        env_csr_s_chipselect = '1;
+        env_csr_s_byteenable = 'h0F00;
+        env_csr_s_writedata  = '1;
+        env_csr_s_write      = '0;
+        env_csr_s_address    = '0;
         @(posedge clk);
         while (dec_s_waitrequest) begin
             @(posedge clk);
         end
-        dec_s_write      = '0;
-    end
-    repeat (1000) @(posedge clk);
-    
-    start_validate = 1;
+        env_csr_s_write      = '0;
 
-    while (finish_validate == 0) begin
-        @(posedge clk);
+        // DMA action
+        for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+            dec_s_chipselect = '1;
+            dec_s_byteenable = 'hFF00;
+            dec_s_read       = '0;
+            dec_s_write      = '1;
+            dec_s_writedata  = (((22'(queue_sizes[i]/2*16)) << 32) | 22'('h100)) << 64;
+            dec_s_address    = i << 4;
+            @(posedge clk);
+            while (dec_s_waitrequest) begin
+                @(posedge clk);
+            end
+            dec_s_write      = '0;
+        end
+        repeat (10000) @(posedge clk);
+
+        for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+            dec_s_chipselect = '1;
+            dec_s_byteenable = 'h00FF;
+            dec_s_read       = '0;
+            dec_s_write      = '1;
+            dec_s_writedata  = ((22'(DMA_PMU_READ_BYTES)) << 32) | 22'('h0);
+            dec_s_address    = i << 4;
+            @(posedge clk);
+            while (dec_s_waitrequest) begin
+                @(posedge clk);
+            end
+            dec_s_write      = '0;
+        end
+        repeat (1000) @(posedge clk);
+        
+        start_validate = 1;
+        repeat (4) @(posedge clk);
+        start_validate = 0;
+
+        while (finish_validate == 0) begin
+            @(posedge clk);
+        end
     end
 
     test_done = '1;
@@ -557,38 +616,41 @@ generate
         int current_router;
         
         initial begin
-            current_slice = 0;
-            current_router = 0;
-            finish_validate = 0;
+            for (int iter = 0; iter < 2; iter++) begin
+                current_slice = 0;
+                current_router = 0;
+                finish_validate = 0;
 
-            while (start_validate == 0) begin
-                @(posedge clk);
-            end
+                while (start_validate == 0) begin
+                    @(posedge clk);
+                end
 
-            assert (log_queues[i].tx_writedata_queue.size() == DMA_PMU_READ_BYTES / (DMA_DATA_WIDTH/8))
-            else begin
-                $error("Channel %d no writedata from DMA: expected %d, got %d", i, DMA_PMU_READ_BYTES / (DMA_DATA_WIDTH/8), log_queues[i].tx_writedata_queue.size());
-                $finish();
-            end
-
-            while (log_queues[i].tx_writedata_queue.size()) begin
-                current_tx_writedata = log_queues[i].tx_writedata_queue.pop_front();
-
-                expected = (multiply_pmu_dumps[i].pmu_dump[current_router][current_slice +: DMA_DATA_WIDTH]);
-                assert (current_tx_writedata == expected)
-                else   begin
-                    $error("Wrong PMU data router %d slice %d:%d through DMA channel %d: expected %h, got %h",
-                            current_router, current_slice+DMA_DATA_WIDTH, current_slice, i, expected, current_tx_writedata);
+                assert (log_queues[i].tx_writedata_queue.size() == DMA_PMU_READ_BYTES / (DMA_DATA_WIDTH/8))
+                else begin
+                    $error("%d Channel %d no writedata from DMA: expected %d, got %d", 22'($time), i, DMA_PMU_READ_BYTES / (DMA_DATA_WIDTH/8), log_queues[i].tx_writedata_queue.size());
                     $finish();
                 end
-                $display("Real PMU data router %d slice %d:%d through DMA channel %d: expected %h, got %h",
-                        current_router, current_slice+DMA_DATA_WIDTH, current_slice, i, expected, current_tx_writedata);
 
-                current_router = (current_slice + DMA_DATA_WIDTH >= PMU_DATA_WIDTH*PMU_METRIC_COUNT) ? current_router + 1 : current_router;
-                current_slice = (current_slice + DMA_DATA_WIDTH >= PMU_DATA_WIDTH*PMU_METRIC_COUNT) ? '0 : current_slice + DMA_DATA_WIDTH;
+                while (log_queues[i].tx_writedata_queue.size()) begin
+                    current_tx_writedata = log_queues[i].tx_writedata_queue.pop_front();
+
+                    expected = (multiply_pmu_dumps[i].pmu_dump[current_router][current_slice +: DMA_DATA_WIDTH]);
+                    assert (current_tx_writedata == expected)
+                    else   begin
+                        $error("%d Wrong PMU data router %d slice %d:%d through DMA channel %d: expected %h, got %h",
+                                22'($time), current_router, current_slice+DMA_DATA_WIDTH, current_slice, i, expected, current_tx_writedata);
+                        $finish();
+                    end
+                    $display("%d Real PMU data router %d slice %d:%d through DMA channel %d: expected %h, got %h",
+                            22'($time), current_router, current_slice+DMA_DATA_WIDTH, current_slice, i, expected, current_tx_writedata);
+
+                    current_router = (current_slice + DMA_DATA_WIDTH >= PMU_DATA_WIDTH*PMU_METRIC_COUNT) ? current_router + 1 : current_router;
+                    current_slice = (current_slice + DMA_DATA_WIDTH >= PMU_DATA_WIDTH*PMU_METRIC_COUNT) ? '0 : current_slice + DMA_DATA_WIDTH;
+                end
+
+                finish_validate = 1;
+                repeat (5) @(posedge clk);
             end
-
-            finish_validate = 1;
         end
     end
 endgenerate
