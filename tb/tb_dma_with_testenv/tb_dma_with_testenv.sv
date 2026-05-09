@@ -6,15 +6,15 @@ parameter     PMU_METRIC_COUNT                      = 19         ;
 parameter     PMU_DATA_WIDTH                        = 32         ;
 parameter     DMA_DATA_WIDTH                        = 128        ;
 
-parameter     DMA_CHANNEL_COUNT                     = 8          ;
+parameter     DMA_CHANNEL_COUNT                     = 1          ;
 
 parameter     DMA_BYTES_WIDTH                       = 22         ;
 parameter     DMA_OFFFSET_WIDTH                     = 22         ;
 
-parameter int DMA_WORD_BYTES    [DMA_CHANNEL_COUNT] = '{8 {16  }};
-parameter int DMA_WQ_DEPTH      [DMA_CHANNEL_COUNT] = '{8 {1024}};
-parameter int DMA_RQ_DEPTH      [DMA_CHANNEL_COUNT] = '{8 {1024}};
-parameter int DMA_TQ_DEPTH      [DMA_CHANNEL_COUNT] = '{8 {16  }};
+parameter int DMA_WORD_BYTES    [DMA_CHANNEL_COUNT] = '{1 {16  }};
+parameter int DMA_WQ_DEPTH      [DMA_CHANNEL_COUNT] = '{1 {1024}};
+parameter int DMA_RQ_DEPTH      [DMA_CHANNEL_COUNT] = '{1 {1024}};
+parameter int DMA_TQ_DEPTH      [DMA_CHANNEL_COUNT] = '{1 {16  }};
 
 parameter int MAX_WQ_DEPTH                          = 1024       ;
 parameter int MAX_RQ_DEPTH                          = 1024       ;
@@ -27,14 +27,14 @@ parameter     TX_DATA_WIDTH                         = 128        ;
 parameter     TX_ADDR_WIDTH                         = 64         ;
 parameter     TX_BURST_WIDTH                        = 6          ;
 
-parameter int ROUTERS_COUNT     [DMA_CHANNEL_COUNT] = '{8 {16  }};
-parameter     MAX_ROUTERS_COUNT                     = 16         ;
-parameter int AXI_DATA_WIDTH    [DMA_CHANNEL_COUNT] = '{8 {32  }};
-parameter int AXI_ADDR_WIDTH    [DMA_CHANNEL_COUNT] = '{8 {16  }};
-parameter int AXI_ID_W_WIDTH    [DMA_CHANNEL_COUNT] = '{8 {5   }};
-parameter int AXI_ID_R_WIDTH    [DMA_CHANNEL_COUNT] = '{8 {5   }};
+parameter int ROUTERS_COUNT     [DMA_CHANNEL_COUNT] = '{1 {20  }};
+parameter     MAX_ROUTERS_COUNT                     = 20         ;
+parameter int AXI_DATA_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {32  }};
+parameter int AXI_ADDR_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {8   }};
+parameter int AXI_ID_W_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {5   }};
+parameter int AXI_ID_R_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {5   }};
 parameter     MAX_AXI_DATA_WIDTH                    = 32         ;
-parameter     MAX_AXI_ADDR_WIDTH                    = 16         ;
+parameter     MAX_AXI_ADDR_WIDTH                    = 8          ;
 parameter     MAX_AXI_ID_W_WIDTH                    = 5          ;
 parameter     MAX_AXI_ID_R_WIDTH                    = 5          ;
 
@@ -70,6 +70,7 @@ parameter PMU_WIDTH_RATIO      = (PMU_METRIC_COUNT*PMU_DATA_WIDTH / DMA_DATA_WID
 parameter DMA_PMU_READ_BYTES   = (PMU_WIDTH_RATIO*DMA_DATA_WIDTH / 8) * MAX_ROUTERS_COUNT;
 
 int queue_sizes [DMA_CHANNEL_COUNT];
+int usermsi_counter;
 
 generate
     for (genvar i = 0; i < DMA_CHANNEL_COUNT; i++) begin : task_files
@@ -578,7 +579,12 @@ initial begin
             end
             dec_s_write      = '0;
         end
-        repeat (10000) @(posedge clk);
+
+        usermsi_counter = 0;
+        while (usermsi_counter != DMA_CHANNEL_COUNT) begin
+            usermsi_counter += user_msix_m_write & user_msix_m_chipselect & !user_msix_m_waitrequest;
+            @(posedge clk);
+        end
 
         for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
             dec_s_chipselect = '1;

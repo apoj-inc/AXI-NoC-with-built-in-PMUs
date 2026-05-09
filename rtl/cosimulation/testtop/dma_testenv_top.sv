@@ -126,9 +126,41 @@ module dma_testenv_top #(
     logic [ROUTERS_COUNT_WIDTH-1:0] ld_rdata_selector [DMA_CHANNEL_COUNT];
     logic [MAX_AXI_DATA_WIDTH-1:0]  ld_rdata          [DMA_CHANNEL_COUNT];
 
-    logic [DMA_CHANNEL_COUNT-1:0] testenv_rst_status;
-    logic [DMA_CHANNEL_COUNT-1:0] testenv_rst_assert;
-    logic [DMA_CHANNEL_COUNT-1:0] testenv_rst_synced;
+    logic testenv_rst_status;
+    logic testenv_rst_assert;
+
+    logic testenv_rst_sync_axi;
+    
+    logic rst_n_dma_csr, rst_n_noc;
+    
+    sync_rst #(
+        .FF3 (0)
+    ) u_sync_rst_to_noc (
+        .rst_n_i (~testenv_rst_assert),
+
+        .clk_tgt (clk_noc            ),
+        .rst_n_o (rst_n_noc          )
+    );
+    
+    sync_rst #(
+        .FF3 (0)
+    ) u_sync_rst_to_dma (
+        .rst_n_i (~testenv_rst_assert),
+
+        .clk_tgt (clk_dma            ),
+        .rst_n_o (rst_n_dma_csr      )
+    );
+
+    sync_ff #(
+        .FF3        (0),
+        .DATA_WIDTH (1)
+    ) u_sync_ff_rst_reverse (
+        .data_i   (rst_n_noc         ),
+
+        .clk_rd   (clk_dma           ),
+        .rst_n_rd (rst_n_dma         ),
+        .data_o   (testenv_rst_status)
+    );
 
     avmm_dma_top #(
         .DMA_CHANNEL_COUNT (DMA_CHANNEL_COUNT),
@@ -254,8 +286,6 @@ module dma_testenv_top #(
 
         for (i = 0; i < DMA_CHANNEL_COUNT; i++) begin : testenvs
 
-            logic rst_n_noc, rst_n_noc_resync;
-
             logic                       command_valid;
             logic                       command_ready;
             logic [TX_DATA_WIDTH-1:0]   command_data ;
@@ -268,40 +298,18 @@ module dma_testenv_top #(
             logic [ROUTERS_COUNT[i]-1:0]  ld_finished_loc                   ;
             logic [AXI_DATA_WIDTH[i]-1:0] ld_rdata_loc    [ROUTERS_COUNT[i]];
 
-            assign user_irq_i[i] = |ld_finished_loc;
-
-            assign testenv_rst_status[i] = ~rst_n_noc_resync;
+            assign user_irq_i[i] = &ld_finished_loc;
 
             assign ld_idle[i]     = {{MAX_ROUTERS_COUNT -ROUTERS_COUNT[i] {1'b0}}, ld_idle_loc    };
             assign ld_finished[i] = {{MAX_ROUTERS_COUNT -ROUTERS_COUNT[i] {1'b0}}, ld_finished_loc};
             assign ld_rdata[i]    = {{MAX_AXI_DATA_WIDTH-AXI_DATA_WIDTH[i]{1'b0}}, ld_rdata_loc[ld_rdata_selector[i] >= ROUTERS_COUNT[i] ? '0 : ld_rdata_selector[i]]};
-
-            sync_rst #(
-                .FF3 (0)
-            ) u_sync_rst_to_noc (
-                .rst_n_i (~testenv_rst_assert[i]),
-
-                .clk_tgt (clk_noc               ),
-                .rst_n_o (rst_n_noc             )
-            );
-
-            sync_ff #(
-                .FF3        (0),
-                .DATA_WIDTH (1)
-            ) u_sync_ff_rst_reverse (
-                .data_i   (rst_n_noc       ),
-
-                .clk_rd   (clk_dma         ),
-                .rst_n_rd (rst_n_dma       ),
-                .data_o   (rst_n_noc_resync)
-            );
 
             axi_if #(
                 .AXI_DATA_WIDTH (AXI_DATA_WIDTH[i]),
                 .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH[i]),
                 .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH[i]),
                 .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH[i])
-            ) u_axi_if[ROUTERS_COUNT[i]]();
+            ) u_axi_if[ROUTERS_COUNT[i]](), u_axi_if_ram[ROUTERS_COUNT[i]]();
 
             stream_fifo #(
                 .DATA_WIDTH (TX_DATA_WIDTH  ),
@@ -355,7 +363,7 @@ module dma_testenv_top #(
                 .PMU_DATA_WIDTH      (PMU_DATA_WIDTH   )
             ) u_axi_testenv (
                 .clk_in          (clk_dma        ),
-                .rst_n_in        (rst_n_dma      ),
+                .rst_n_in        (rst_n_dma_csr  ),
 
                 .command_data_i  (command_data   ),
                 .command_valid_i (command_valid  ),
@@ -377,6 +385,19 @@ module dma_testenv_top #(
 
             // NOC GOES HERE 
             //     vvvv
+            mesh #(
+                .AXI_ADDR_WIDTH(12),
+                .MAX_ROUTERS_X(5),
+                .MAX_ROUTERS_Y(4),
+                .AXIS_DATA_WIDTH(40)
+            ) dut (
+                .ACLK   (clk_noc     ),
+                .ARESETn(rst_n_noc   ),
+
+                .s_axi_i(u_axi_if    ),
+                .m_axi_o(u_axi_if_ram)
+            );
+
             genvar j;
             for (j = 0; j < ROUTERS_COUNT[i]; j++) begin : rams
                 axi_ram #(
@@ -388,7 +409,7 @@ module dma_testenv_top #(
                     .clk_i   (clk_noc    ),
                     .rst_n_i (rst_n_noc  ),
                     
-                    .s_axi_i (u_axi_if[j])
+                    .s_axi_i (u_axi_if_ram[j])
                 );
             end
             //     ^^^^

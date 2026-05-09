@@ -30,8 +30,8 @@ module avmm_testenv_csr #(
     input  logic [MAX_ROUTERS_COUNT-1:0]   ld_idle_i            [DMA_CHANNEL_COUNT],
     input  logic [MAX_AXI_DATA_WIDTH-1:0]  ld_rdata_i           [DMA_CHANNEL_COUNT],
 
-    input  logic [DMA_CHANNEL_COUNT-1:0]   testenv_rst_status_i                    ,
-    output logic [DMA_CHANNEL_COUNT-1:0]   testenv_rst_assert_o                    
+    input  logic                           testenv_rst_status_i                    ,
+    output logic                           testenv_rst_assert_o                    
 );
 
     typedef struct packed {
