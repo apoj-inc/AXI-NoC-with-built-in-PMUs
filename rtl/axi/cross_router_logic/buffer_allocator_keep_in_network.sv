@@ -66,11 +66,10 @@ module buffer_allocator_keep_in_network #(
                             end
                         end
 
-                        target_channel = '0;
                         for (current_channel = '0; current_channel < CHANNELS; current_channel++) begin
                             done = 1'b0;
                             if(in_mosi_i[current_channel].TVALID && allocated_to[current_channel] == '1) begin
-                                for (target_channel=target_channel; (target_channel < CHANNELS) && !done; target_channel++) begin
+                                for (target_channel='0; (target_channel < CHANNELS) && !done; target_channel++) begin
                                     if(!busy_next[target_channel] && out_miso_i[target_channel].TREADY) begin
                                         busy_next[target_channel] = 1'b1;
                                         done = 1'b1;
