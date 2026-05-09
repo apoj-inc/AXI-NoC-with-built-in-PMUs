@@ -254,7 +254,7 @@ module dma_testenv_top #(
 
         for (i = 0; i < DMA_CHANNEL_COUNT; i++) begin : testenvs
 
-            logic rst_n_noc;
+            logic rst_n_noc, rst_n_noc_resync;
 
             logic                       command_valid;
             logic                       command_ready;
@@ -270,7 +270,7 @@ module dma_testenv_top #(
 
             assign user_irq_i[i] = |ld_finished_loc;
 
-            assign testenv_rst_status[i] = clk_noc;
+            assign testenv_rst_status[i] = ~rst_n_noc_resync;
 
             assign ld_idle[i]     = {{MAX_ROUTERS_COUNT -ROUTERS_COUNT[i] {1'b0}}, ld_idle_loc    };
             assign ld_finished[i] = {{MAX_ROUTERS_COUNT -ROUTERS_COUNT[i] {1'b0}}, ld_finished_loc};
@@ -283,6 +283,17 @@ module dma_testenv_top #(
 
                 .clk_tgt (clk_noc               ),
                 .rst_n_o (rst_n_noc             )
+            );
+
+            sync_ff #(
+                .FF3        (0),
+                .DATA_WIDTH (1)
+            ) u_sync_ff_rst_reverse (
+                .data_i   (rst_n_noc       ),
+
+                .clk_rd   (clk_dma         ),
+                .rst_n_rd (rst_n_dma       ),
+                .data_o   (rst_n_noc_resync)
             );
 
             axi_if #(
