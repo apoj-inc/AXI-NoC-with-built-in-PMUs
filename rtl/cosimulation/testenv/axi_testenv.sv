@@ -30,12 +30,12 @@ module axi_testenv #(
     output logic                           pmu_valid_o                    ,
     input  logic                           pmu_ready_i                    ,
 
-    input  logic                           clk_axi                        ,
-    input  logic                           rst_n_axi                      ,
-
     output logic [ROUTERS_COUNT-1:0]       ld_idle_o                      ,
     output logic [ROUTERS_COUNT-1:0]       ld_finished_o                  ,
     output logic [AXI_DATA_WIDTH-1:0]      ld_rdata_o      [ROUTERS_COUNT],
+
+    input  logic                           clk_axi                        ,
+    input  logic                           rst_n_axi                      ,
 
     axi_if.m                               m_axi_if_o      [ROUTERS_COUNT]                           
 );
@@ -51,7 +51,8 @@ module axi_testenv #(
     
     logic start, start_resynced, start_waiter, start_resync_ready;
 
-    logic [ROUTERS_COUNT-1:0] ld_idle, ld_idle_resynced;
+    logic [ROUTERS_COUNT-1:0] ld_idle    , ld_idle_resynced    ;
+    logic [ROUTERS_COUNT-1:0] ld_finished, ld_finished_resynced;
 
     logic [PMU_ADDR_WIDTH-1:0] pmu_addr                ;
     logic [PMU_DATA_WIDTH-1:0] pmu_data [ROUTERS_COUNT];
@@ -62,7 +63,8 @@ module axi_testenv #(
     logic                           pmu_resync_fifo_ready;
 
 
-    assign ld_idle_o = ld_idle_resynced;
+    assign ld_idle_o     = ld_idle_resynced    ;
+    assign ld_finished_o = ld_finished_resynced;
     assign command_ready_o = '1;
 
 
@@ -190,13 +192,13 @@ module axi_testenv #(
 
             sync_ff #(
                 .FF3        (1), // if 0 - 2FF used, if 1 - 3FF used
-                .DATA_WIDTH (1 + AXI_DATA_WIDTH)
+                .DATA_WIDTH (1 + 1 + AXI_DATA_WIDTH)
             ) u_sync_ff_from_ld (
-                .data_i   ({ld_idle[i]         , ld_rdata         }),
+                .data_i   ({ld_idle[i]         , ld_finished[i]         , ld_rdata         }),
 
-                .clk_rd   (clk_in                                  ),
-                .rst_n_rd (rst_n_in                                ),
-                .data_o   ({ld_idle_resynced[i], ld_rdata_resynced})
+                .clk_rd   (clk_in                                                           ),
+                .rst_n_rd (rst_n_in                                                         ),
+                .data_o   ({ld_idle_resynced[i], ld_finished_resynced[i], ld_rdata_resynced})
             );
 
             axi_master_loader #(
@@ -225,7 +227,7 @@ module axi_testenv #(
 
                 .start_i     (start_resynced   ),
                 .idle_o      (ld_idle[i]       ),
-                .finished_o  (ld_finished_o[i] ),
+                .finished_o  (ld_finished[i]   ),
 
                 .rdata_o     (ld_rdata         ),
 

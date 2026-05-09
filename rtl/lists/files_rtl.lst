@@ -25,9 +25,6 @@ rtl/axi/mesh/mesh.sv
 rtl/axi/torus/torus.sv
 rtl/axi/axi_demux.sv
 rtl/axi/axi_if.sv
-rtl/cosimulation/testenv/axi_master_loader.sv
-rtl/cosimulation/testenv/axi_pmu.sv
-rtl/cosimulation/testenv/axi_testenv.sv
 rtl/axi/axi_mux.sv
 rtl/lib/axi/axi_ram.sv
 rtl/axi/axi2axis.sv
@@ -45,6 +42,10 @@ rtl/cosimulation/decoders/dma_pmu_collector.sv
 rtl/cosimulation/decoders/dma_task_dispatcher.sv
 rtl/cosimulation/decoders/uart_control.sv
 rtl/cosimulation/noc/mesh_with_loaders.sv
+rtl/cosimulation/testenv/axi_master_loader.sv
+rtl/cosimulation/testenv/axi_pmu.sv
+rtl/cosimulation/testenv/axi_testenv.sv
+rtl/cosimulation/testenv/avmm_testenv_csr.sv
 rtl/cosimulation/testtop/cosim_top.sv
 rtl/cosimulation/testtop/dma_testenv_top.sv
 rtl/de10standard_top.sv
@@ -57,5 +58,6 @@ rtl/lib/cosim/pcie/avmm_dma/avmm_dma_user_msix.sv
 rtl/lib/cosim/pcie/avmm_dma/avmm_dma_top.sv
 rtl/lib/primitives/cdc/cdc_stream_afifo.sv
 rtl/lib/primitives/cdc/sync_ff.sv
+rtl/lib/primitives/cdc/sync_rst.sv
 rtl/lib/primitives/memory/dual_clock_memory.sv
 rtl/lib/primitives/cdc/gray_converter.sv

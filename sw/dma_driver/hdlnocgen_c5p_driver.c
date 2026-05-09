@@ -56,12 +56,22 @@ static ssize_t read_from_pci(struct file *filp, char __user *user_buf, size_t le
     if (channel == dma_channel_count) {
         int retval = len - 1;
         if (retval == -1) {
-            return 0;
+            return retval;
         }
         if (*off > 16) {
             return -EINVAL;
         }
         retval += copy_to_user(user_buf, user_irq_flags+*off, 1);
+
+        return retval;
+    }
+    else if (channel == dma_channel_count+1) {
+        int retval = len - 4;
+        if (retval < 0) {
+            return retval;
+        }
+        uint32_t read_value = ioread32(bar2_ptr+0x2000+*off);
+        retval += copy_to_user(user_buf, &read_value, 4);
 
         return retval;
     }
@@ -111,6 +121,17 @@ static ssize_t write_to_pci(struct file *filp, const char __user *user_buf, size
             return -EINVAL;
         }
         retval += copy_from_user(user_irq_flags+*off, user_buf, 1);
+
+        return retval;
+    }
+    else if (channel == dma_channel_count+1) {
+        int retval = len - 4;
+        if (retval < 0) {
+            return retval;
+        }
+        uint32_t write_value;
+        retval += copy_from_user(&write_value, user_buf, 4);
+        iowrite32(write_value, bar2_ptr+0x2000+*off);
 
         return retval;
     }
@@ -369,13 +390,21 @@ static int hdlnocgen_dma_probe(struct pci_dev *pdev, const struct pci_device_id 
     }
     printk(KERN_INFO "hdlnocgen_c5p_driver: Created device file hdlnocgen_c5p_user_irq\n");
 
+    if (!device_create(driver_class, &(pdev->dev), driver_dev_nr+dma_channel_count+1, NULL, "hdlnocgen_c5p_env_csr")) {
+        printk(KERN_ERR "hdlnocgen_c5p_driver: Could not create device file hdlnocgen_c5p_env_csr\n");
+        err = -ENOMEM;
+        goto destroy_user_irq_file;
+    }
+    printk(KERN_INFO "hdlnocgen_c5p_driver: Created device file hdlnocgen_c5p_env_csr\n");
+
     // Set PCIe as master
     pci_set_master(pdev);
     printk(KERN_INFO "hdlnocgen_c5p_driver: Bus mastered by PCIe device\n");
 
     return 0;
 
-
+destroy_user_irq_file:
+    device_destroy(driver_class, driver_dev_nr+dma_channel_count);
 destroy_device_file:
     for (int i = 0; i < err_index; i++) {
         device_destroy(driver_class, driver_dev_nr+i);
@@ -422,6 +451,9 @@ pci_disable:
 static void hdlnocgen_dma_remove(struct pci_dev *pdev) {
     pci_clear_master(pdev);
     printk(KERN_INFO "hdlnocgen_c5p_driver: PCIe device unmastered\n");
+
+    device_destroy(driver_class, driver_dev_nr+dma_channel_count+1);
+    printk(KERN_INFO "hdlnocgen_c5p_driver: Deleted file hdlnocgen_c5p_env_csr\n");
 
     device_destroy(driver_class, driver_dev_nr+dma_channel_count);
     printk(KERN_INFO "hdlnocgen_c5p_driver: Deleted file hdlnocgen_c5p_user_irq\n");
