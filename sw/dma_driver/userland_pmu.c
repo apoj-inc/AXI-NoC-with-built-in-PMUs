@@ -41,12 +41,21 @@ uint8_t tasks[DMA_CHANNEL_COUNT][FIFO_DEPTH*ROUTERS_COUNT*2 * COMMAND_BYTES + CO
 uint8_t pmu[DMA_CHANNEL_COUNT][ROUTERS_COUNT * PMU_TRANSFER_BYTES];
 int fd[DMA_CHANNEL_COUNT];
 int user_irq_fd;
+int env_csr_fd;
 int fail[DMA_CHANNEL_COUNT];
 
 void *dma_test_and_extract (void *index) {
     int index_int = (uint64_t)index;
     uint8_t user_irq;
     uint8_t user_irq_clear = 0;
+    uint32_t rst_assert = 0xFFFFFFFF;
+    uint32_t rst_state;
+
+    pwrite(env_csr_fd, &rst_assert, 4, (off_t)0x8);
+    do {
+        pread(env_csr_fd, &rst_state, 4, (off_t)0x4);
+    } while (rst_state != 0);
+
     write(fd[index_int], tasks[index_int], sizeof(tasks[index_int]));
 
     do {
@@ -84,6 +93,11 @@ int main () {
     user_irq_fd = open("/dev/hdlnocgen_c5p_user_irq", O_RDWR);
     if (user_irq_fd < 0) {
         return user_irq_fd;
+    }
+
+    env_csr_fd = open("/dev/hdlnocgen_c5p_env_csr", O_RDWR);
+    if (env_csr_fd < 0) {
+        return env_csr_fd;
     }
 
 
