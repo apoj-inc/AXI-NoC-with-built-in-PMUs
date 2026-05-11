@@ -1,108 +1,115 @@
-# FPGA-multicore-soft-CPU
-An open-source and free to use NoC description using SystemVerilog. Includes a 4x4 mesh NoC, an array of modified schoolRISCV cores connected to each of the routers and a shared memory, which is distributed across all of the routers in equally. The NoC provides a connection between each of the cores and the memory.
+# AXI NoC with Built-in PMUs
 
-![noc](https://github.com/user-attachments/assets/aa34831d-684f-4f62-a5ef-b4c694798db7)
+SystemVerilog implementation of a configurable Network-on-Chip (NoC) with AXI-Stream based router datapaths, multiple topologies, cocotb simulation flow, and Quartus release packaging.
 
-### Key features
-* A router equipped with input buffers, arbiter and a routing algorithm with all of the connections being full duplex;
-* Packet adapters that can mitigate a length mismatch between full data packets and transferrable data packets;
-* Modified schoolRISC core that can work with data memory thus modelling CPU's behaviour to test the NoC;
-* A controller that connects CPU to the NoC through converters;
-* Written in SystemVerilog;
-* ModelSim simulation capabilities out of the box;
-* Everything ready to be programmed on a DE10-Standard board;
-* Full documentation.
+## Highlights
 
-## Repository contents
+- Parametric router architecture with input buffering, arbitration, routing, and channel remapping.
+- Topology support: `Mesh`, `Torus`, `Circulant`.
+- Routing algorithm support: `XY`, `EWn_SNe`, `Clockwise` (depends on topology).
+- Virtual channel and virtual network partitioning support.
+- Optional simultaneous virtual-network routing mode.
+- Cocotb + Questa simulation flow with reusable testbench layout.
+- Quartus project/release generation under `release/*` and `build_system/quartus`.
 
-### main
-| Directiry | Description |
-| --------- | ----------- |
-| doc | |
-| └ UserManual.pdf | user manual for this project |
-| boards | HDL files and scripts for programming FPGA boards |
-| ├ *board\_name* | a directory containing files for generating a Quartus project for a specific board |
-| ├ toplevel.sv | a common toplevel module to be used in board-specific modules for hardware-on-loop |
-| └ toplevel\_onboard.sv | a common toplevel module to be used in board-specific modules for self-contained |
-| cores | HDL files for schoolRISCV soft core and supporting modules |
-| ├ converters | HDL files for converters between memory controller (MC) packets and NoC packets |
-| <p>├ packet\_collector.sv</p> | converter from NoC to MC |
-| <p>└ splitter.sv</p> | converter from MC to NoC |
-| └ src | HDL files for the schoolRISCV soft core |
-| <p>├ cpu\_with\_ram.sv</p> | module that connects CPU and RAM to the MC |
-| <p>├ ram.sv</p> | a two-port RAM |
-| <p>├ sm\_register.v</p> | a DFF for an instruction counter |
-| <p>├ sm\_rom.v</p> | preloaded instructions |
-| <p>├ sr\_cpu.v</p> | a CPU module with a counter, decoder, register file, ALU, AGU and a control unit |
-| <p>├ sr\_cpu.vh</p> | `define macros for RISCV opcodes and ALU/AGU oper codes |
-| <p>├ sr\_mem\_ctrl.sv</p> | a memory controller (MC) connecting CPU to RAM through the NoC |
-| <p>└ sr\_mem\_ctrl.svh</p> | `define macros for MC instructions |
-| cpu | HDL files for the 16-core CPU on a NoC |
-| ├ noc\_with\_cores.sv | connects 16 CPU cores to the mesh 4x4 NoC |
-| └ uart.sv | hooks up the 16-core CPU to the UART to monitor RAM data at a given address |
-| mesh\_4x4 | HDL files for the 4x4 mesh NoC |
-| ├ inc | `define macros for NoC configuration |
-| <p>├ noc.svh</p> | macros for general NoC parameters |
-| <p>├ noc\_XY.svh</p> | macros for topology-specific (mesh) parameters |
-| <p>├ queue.svh</p> | macros for queue parameters |
-| <p>└ router.svh</p> | macros for router parameters |
-| ├ noc | |
-| <p>└ noc.sv</p> | module that connects 16 routers into a NoC |
-| └ src | HDL files for router components |
-| <p>├ algorithm.sv</p> | an XY algorithm for packet switching |
-| <p>├ arbiter.sv</p> | a module that chooses a packet to be switched |
-| <p>├ queue.sv</p> | FIFOs for collecting incoming packets |
-| <p>└ router.sv</p> | a module that creates a router from its components |
-| modelsim | |
-| ├ ram\_image\_0..5.hex | RAM images that contain a picture |
-| ├ instr\_node\_0..15.hex | RAM images that contain RISCV codes for each core|
-| ├ modelsim\_run.bat | a batch file that launches ModelSim using modelsim\_script.tcl script |
-| └ modelsim\_script.tcl | a script, according to which the simulation is ran |
-| tb | HDL files for testbenches |
-| └ tb.sv | a testbench files that tests the CPU, dumping RAM contents at the end |
+## Repository Map
 
-### network-with-generators
+- `rtl/`: synthesizable RTL.
+  - `rtl/router/`: router subsystem (main router, algorithm, arbiter, buffers, allocators, channel utilities).
+  - `rtl/mesh`, `rtl/torus`, `rtl/circulant`: topology wrappers.
+  - `rtl/axi`, `rtl/lib`, `rtl/cores`, `rtl/cosimulation`: infrastructure and integration modules.
+- `tb/`: cocotb/SystemVerilog testbenches (`tb_<name>` layout).
+- `doc/`: design diagrams and documentation assets (including Mermaid).
+- `build_system/`: simulator and Quartus helper makefiles/scripts.
+- `release/`: packaged source lists and Quartus project artifacts.
+- `sw/`: software-side drivers and userland support.
+- `utils/`: TCL/Python/Bash utilities.
 
-This is a secondary branch of this project, which contains an HDL description of the NoC connection subsystem
-itself at ./mesh_3x3 and the "core substitute" at ./generators. A complete description contains a single 3x3 mesh
-with 3 "core substitutes", one for each router on the main diagonal. Core substitute consists of 2 modules
-for generating pseudo-random 32-bit data packet and splitting it up into transferrable data flits and
-1 module for receiving data flits and assembling back them into valid 32-bit packets.
+## Quick Start
 
-Along with the SystemVerilog code there are tcl-scripts for simulation in ModelSim 
-(./modelsim/modelsim_script.tcl) and compilation in Quartus Prime Lite 17.1 for a DE10-Lite board
-(./board/de10lite/quartus_project.tcl). These scripts have been tested for Quartus Prime Lite 17.1 and for a
-ModelSim version, that comes bundled with it, and there is no guarantee that they will work for any other
-configuration.
+### Prerequisites
 
-As long as you have both ModelSim executable and Quartus executables folders in PATH, the usage for the scripts should be:
+- Linux/WSL-like shell environment for `make` flow (`/bin/bash` is assumed in makefiles).
+- Python 3 with venv support.
+- Questa/ModelSim-compatible simulator for cocotb tests.
+- Quartus Prime for FPGA compile/release targets.
+
+### Run a cocotb test
+
+Run default test:
+
+```bash
+make test
 ```
-vsim -do .\modelsim_script.tcl          # Launches a ModelSim GUI with relevant signals in the wave window
+
+Run a specific testbench (example: mesh parallel):
+
+```bash
+make test GENERAL_TOPLEVEL=tb_mesh_parallel
 ```
+
+Open waveform from previous cocotb run:
+
+```bash
+make wave GENERAL_TOPLEVEL=tb_mesh_parallel
 ```
-quartus_sh -t .\quartus_project.tcl     # compiles a quartus project fully in CLI
+
+Run pytest-oriented flow:
+
+```bash
+make run_pytest
 ```
-For more information regarding the NoC read the ```UserManual.pdf``` in the ```main``` branch
 
-## Necessary software
-* Quartus Prime Lite (only verified version - 17.1)
-* Modelsim - Intel FPGA Starter Edition 10.5b (came bundled with Quartus)
+### Quartus / Release flow
 
-Make sure that the folder containing Quartus executables and ModelSim executable are in PATH 
+Compile with Quartus make wrapper:
 
-### Simulation quick start guide
-Run ```modelsim_run.bat``` from the ```modelsim``` repository to launch ModelSim and run the simulation. The process generates multiple new files: ```latency_log_*.csv``` and ```output_image_chunk_*.hex```, that contain ```lw``` and ```sw``` latencies in clock cycles for each of the cores and the RAM contents of each of the RAM chunks, that contain the resulting image, respectively. For more details refer to the ```UserManual.pdf```.
-
-### Programming quick start guide
-Run the following cmd command from the ```boards/DE10-Standard``` directory:
+```bash
+make run_quartus TOPLEVEL=<top_module_name>
 ```
-quartus_sh -t quartus_onboard.tcl
+
+Create packaged releases:
+
+```bash
+make make_release
 ```
-This creates a Quartus project, that can be then opened so you can program the board from there using Device Programmer. For more details refer to the ```UserManual.pdf```.
 
-## Credits
-Special thanks to Grushevskiy Nikita Ivanovich for taking a huge part in developing different router componoetnts
-and different topologies of the NoC connection subsystem. *github handle*
+Clean release artifacts:
 
-Special thanks to Nigmatullin Nikolay Rafaelevich for developing componentry that is being used for
-"core substitutes". *github handle*
+```bash
+make clean_release
+```
+
+## Router Configuration Overview
+
+Router implementation is centered in `rtl/router/src/router.sv` and configured via parameters for:
+
+- AXI stream widths.
+- Physical and virtual channel counts.
+- Virtual network partition (`VIRTUAL_NETWORKS`).
+- Buffering strategy (`BUFFER_ALLOCATOR`).
+- Topology and routing algorithm selection.
+- Coordinate model (`COORDINATES = "XY" | "N"`).
+
+The router validates key constraints with assertions (channel-count consistency, virtual-network allocation, target width derivation).
+
+For full details see [Router Documentation](rtl/router/README.md).
+
+## Documentation Index
+
+- Router subsystem docs:
+  - [Router Main README](rtl/router/README.md)
+  - [Router Source Docs](rtl/router/src/README.md)
+- Mermaid router diagrams (canonical set):
+  - [General Router Diagrams](doc/diagrams/mermaid/router/general)
+  - [Internal Router Blocks](doc/diagrams/mermaid/router/internal)
+  - [New router architecture/flow docs](doc/diagrams/mermaid/router)
+- Topology diagrams:
+  - [Mesh](doc/diagrams/drawio/svg/mesh.svg)
+  - [Torus](doc/diagrams/drawio/svg/torus.svg)
+  - [Circulant](doc/diagrams/drawio/svg/circulant.svg)
+
+## Notes
+
+- Deprecated modules are kept under `rtl/deprecated` and are not the primary implementation path.
+- Some older diagram filenames use legacy spelling (`Simultanious`/`Simultainous`); docs in this refresh use corrected terminology in captions and references.

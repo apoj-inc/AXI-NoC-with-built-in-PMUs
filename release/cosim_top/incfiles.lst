@@ -3,5 +3,5 @@ rtl/inc/XY_compas.svh
 rtl/axi/inc/axi_defines.svh
 rtl/axi/inc/axis_defines.svh
 rtl/axi/inc/axi2axis_typedef.svh
-rtl/axi/router/inc/virtual_networks_utils.svh
-rtl/axi/router/inc/virtual_channels_utils.svh
+rtl/router/inc/virtual_networks_utils.svh
+rtl/router/inc/virtual_channels_utils.svh
