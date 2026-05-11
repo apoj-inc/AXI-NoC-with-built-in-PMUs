@@ -213,5 +213,55 @@ module axi_pmu #(
             end
         end
     end
+
+    // For testing
+    typedef struct {
+        logic [PMU_DATA_WIDTH-1:0] r_handshake ;
+        logic [PMU_DATA_WIDTH-1:0] rready_stall;
+        logic [PMU_DATA_WIDTH-1:0] rvalid_stall;
+        logic [PMU_DATA_WIDTH-1:0] ar_handshake;
+        logic [PMU_DATA_WIDTH-1:0] ar_stall    ;
+        logic [PMU_DATA_WIDTH-1:0] outstanding ;
+        logic [PMU_DATA_WIDTH-1:0] idle        ;
+    } read_counters_unpacked;
+
+    typedef struct {
+        logic [PMU_DATA_WIDTH-1:0] b_handshake ;
+        logic [PMU_DATA_WIDTH-1:0] bready_stall;
+        logic [PMU_DATA_WIDTH-1:0] bvalid_stall;
+        logic [PMU_DATA_WIDTH-1:0] w_handshake ;
+        logic [PMU_DATA_WIDTH-1:0] wready_stall;
+        logic [PMU_DATA_WIDTH-1:0] wvalid_stall;
+        logic [PMU_DATA_WIDTH-1:0] aw_handshake;
+        logic [PMU_DATA_WIDTH-1:0] aw_stall    ;
+        logic [PMU_DATA_WIDTH-1:0] responding  ;
+        logic [PMU_DATA_WIDTH-1:0] outstanding ;
+        logic [PMU_DATA_WIDTH-1:0] idle        ;
+    } write_counters_unpacked;
+
+    read_counters_unpacked  rc_u;
+    write_counters_unpacked wc_u;
+
+    always_comb begin
+        rc_u.r_handshake  = rc.r_handshake ;
+        rc_u.rready_stall = rc.rready_stall;
+        rc_u.rvalid_stall = rc.rvalid_stall;
+        rc_u.ar_handshake = rc.ar_handshake;
+        rc_u.ar_stall     = rc.ar_stall    ;
+        rc_u.outstanding  = rc.outstanding ;
+        rc_u.idle         = rc.idle        ;
+
+        wc_u.b_handshake  = wc.b_handshake ;
+        wc_u.bready_stall = wc.bready_stall;
+        wc_u.bvalid_stall = wc.bvalid_stall;
+        wc_u.w_handshake  = wc.w_handshake ;
+        wc_u.wready_stall = wc.wready_stall;
+        wc_u.wvalid_stall = wc.wvalid_stall;
+        wc_u.aw_handshake = wc.aw_handshake;
+        wc_u.aw_stall     = wc.aw_stall    ;
+        wc_u.responding   = wc.responding  ;
+        wc_u.outstanding  = wc.outstanding ;
+        wc_u.idle         = wc.idle        ;
+    end
     
 endmodule

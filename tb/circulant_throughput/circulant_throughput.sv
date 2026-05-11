@@ -1,14 +1,13 @@
 `timescale 1ns/1ps
 
-module mesh_throughput #(
-    parameter AXI_DATA_WIDTH = 8 ,
-    parameter AXI_ADDR_WIDTH = 12,
-    
-    parameter MAX_ROUTERS_X  = 3,
-    parameter MAX_ROUTERS_Y  = 3,
+module circulant_throughput #(
+    parameter     AXI_DATA_WIDTH               = 8 ,
+    parameter     AXI_ADDR_WIDTH               = 12,
+    parameter     ROUTERS_COUNT                = 9 ,
+    parameter     GENERATICS_COUNT             = 2 ,
+    parameter int GENERATICS[GENERATICS_COUNT] = '{3, 1},
 
-    parameter ROUTERS_COUNT    = MAX_ROUTERS_X*MAX_ROUTERS_Y,
-    parameter AXI_MAX_ID_WIDTH = $clog2(ROUTERS_COUNT+1)    ,
+    parameter AXI_MAX_ID_WIDTH = $clog2(ROUTERS_COUNT+1),
     parameter AXI_DATA_BYTES   = AXI_DATA_WIDTH / 8         
 ) (
     input aresetn,
@@ -109,13 +108,16 @@ module mesh_throughput #(
         end
     endgenerate
 
-    mesh #(
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH  ),
-        .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH  ),
-        .AXI_ID_R_WIDTH(AXI_MAX_ID_WIDTH),
-        .AXI_ID_W_WIDTH(AXI_MAX_ID_WIDTH),
-        .MAX_ROUTERS_X (MAX_ROUTERS_X   ),
-        .MAX_ROUTERS_Y (MAX_ROUTERS_Y   ),
+    circulant #(
+        .AXI_DATA_WIDTH   (AXI_DATA_WIDTH  ),
+        .AXI_ADDR_WIDTH   (AXI_ADDR_WIDTH  ),
+        .AXI_ID_R_WIDTH   (AXI_MAX_ID_WIDTH),
+        .AXI_ID_W_WIDTH   (AXI_MAX_ID_WIDTH),
+
+        .ROUTERS_COUNT    (ROUTERS_COUNT    ),
+        .GENERATICS_COUNT (GENERATICS_COUNT ),
+        .GENERATICS       (GENERATICS       ),
+
         .VIRTUAL_CHANNEL_NUMBER(2),
         .VIRTUAL_NETWORKS('{1, 1}),
         .BUFFER_ALLOCATOR("KeepInNetwork"),

@@ -59,6 +59,7 @@ module axi_ram
     end
 
     ram #(
+        .DATA_WIDTH(AXI_DATA_WIDTH),
         .ADDR_WIDTH(AXI_ADDR_WIDTH),
         .BYTE_WIDTH(BYTE_WIDTH)
     ) coupled_ram (
