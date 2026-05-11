@@ -105,9 +105,9 @@ For full details see [Router Documentation](rtl/router/README.md).
   - [Internal Router Blocks](doc/diagrams/mermaid/router/internal)
   - [New router architecture/flow docs](doc/diagrams/mermaid/router)
 - Topology diagrams:
-  - [Mesh](doc/diagrams/mermaid/topologies/Mesh.md)
-  - [Torus](doc/diagrams/mermaid/topologies/Torus.md)
-  - [Circulant](doc/diagrams/mermaid/topologies/Circulant.md)
+  - [Mesh](doc/diagrams/drawio/svg/mesh.svg)
+  - [Torus](doc/diagrams/drawio/svg/torus.svg)
+  - [Circulant](doc/diagrams/drawio/svg/circulant.svg)
 
 ## Notes
 
