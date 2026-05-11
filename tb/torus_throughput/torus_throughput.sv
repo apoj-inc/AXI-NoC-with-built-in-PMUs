@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module mesh_throughput #(
+module torus_throughput #(
     parameter AXI_DATA_WIDTH = 8 ,
     parameter AXI_ADDR_WIDTH = 12,
     
@@ -109,13 +109,14 @@ module mesh_throughput #(
         end
     endgenerate
 
-    mesh #(
+    torus #(
         .AXI_DATA_WIDTH(AXI_DATA_WIDTH  ),
         .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH  ),
         .AXI_ID_R_WIDTH(AXI_MAX_ID_WIDTH),
         .AXI_ID_W_WIDTH(AXI_MAX_ID_WIDTH),
         .MAX_ROUTERS_X (MAX_ROUTERS_X   ),
         .MAX_ROUTERS_Y (MAX_ROUTERS_Y   ),
+        .ALGORITHM("EWn_SNe"),
         .VIRTUAL_CHANNEL_NUMBER(2),
         .VIRTUAL_NETWORKS('{1, 1}),
         .BUFFER_ALLOCATOR("KeepInNetwork"),

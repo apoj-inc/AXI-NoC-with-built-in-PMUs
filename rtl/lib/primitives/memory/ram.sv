@@ -1,18 +1,18 @@
 module ram #(
-    parameter AXI_DATA_WIDTH = 32,
-    parameter ADDR_WIDTH     = 16,
-    parameter BYTE_WIDTH     = 8,
+    parameter DATA_WIDTH = 32,
+    parameter ADDR_WIDTH = 16,
+    parameter BYTE_WIDTH = 8,
 
-    parameter BATCH_SIZE     = AXI_DATA_WIDTH / BYTE_WIDTH
+    parameter BATCH_SIZE = DATA_WIDTH / BYTE_WIDTH
 ) (
     input clk_i,
 
     // Port a 
-    input  logic [ADDR_WIDTH-1:0]     waddr, raddr,
-    input  logic [AXI_DATA_WIDTH-1:0] wdata,
-    input  logic [BATCH_SIZE-1:0]     be,
-    input  logic                      we,
-    output logic [AXI_DATA_WIDTH-1:0] rdata
+    input  logic [ADDR_WIDTH-1:0] waddr, raddr,
+    input  logic [DATA_WIDTH-1:0] wdata,
+    input  logic [BATCH_SIZE-1:0] be,
+    input  logic                  we,
+    output logic [DATA_WIDTH-1:0] rdata
 );
 
     logic [BATCH_SIZE-1:0][BYTE_WIDTH-1:0] ram [2**ADDR_WIDTH];

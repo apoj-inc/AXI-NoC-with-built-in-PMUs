@@ -66,6 +66,7 @@ module buffer_allocator_keep_in_network #(
                             end
                         end
 
+                        target_channel='0;
                         for (current_channel = '0; current_channel < CHANNELS; current_channel++) begin
                             done = 1'b0;
                             if(in_mosi_i[current_channel].TVALID && allocated_to[current_channel] == '1) begin
