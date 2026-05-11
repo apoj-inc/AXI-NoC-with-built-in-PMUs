@@ -26,25 +26,25 @@ module avmm_testenv_csr #(
     output logic                           avmm_s_waitrequest                      ,
     input  logic [BAR_ADDR_WIDTH-1:0]      avmm_s_address                          ,
 
+    output logic [DMA_CHANNEL_COUNT-1:0]   ld_read_pmu_o                           ,
+
     output logic [ROUTERS_COUNT_WIDTH-1:0] ld_rdata_selector_o  [DMA_CHANNEL_COUNT],
-    input  logic [MAX_ROUTERS_COUNT-1:0]   ld_idle_i            [DMA_CHANNEL_COUNT],
     input  logic [MAX_AXI_DATA_WIDTH-1:0]  ld_rdata_i           [DMA_CHANNEL_COUNT],
+    input  logic [MAX_ROUTERS_COUNT-1:0]   ld_idle_i            [DMA_CHANNEL_COUNT],
+    output logic [MAX_ROUTERS_COUNT-1:0]   ld_masked_o          [DMA_CHANNEL_COUNT],
 
     input  logic                           testenv_rst_status_i                    ,
     output logic                           testenv_rst_assert_o                    
 );
 
     typedef struct packed {
-        logic [31:0]                             cap_next_ptr    ;
-        logic [ALIGN_ROUTERS_COUNT*32-1:0]       ld_idle_reg     ;
+        logic [31:0]                             ld_read_pmu_reg ;
         logic [ALIGN_ROUTERS_COUNT_WIDTH*32-1:0] ld_rdata_sel_reg;
         logic [ALIGN_AXI_DATA_WIDTH*32-1:0]      ld_rdata_reg    ;
+        logic [ALIGN_ROUTERS_COUNT*32-1:0]       ld_idle_reg     ;
+        logic [ALIGN_ROUTERS_COUNT*32-1:0]       ld_masked_reg   ;
+        logic [31:0]                             cap_next_ptr    ;
     } testenv_struct_t;
-
-    localparam RDATA_ADDR     = 'h0000;
-    localparam RDATA_SEL_ADDR = RDATA_ADDR     + ALIGN_AXI_DATA_WIDTH*32;
-    localparam IDLE_ADDR      = RDATA_SEL_ADDR + ALIGN_ROUTERS_COUNT_WIDTH*32;
-    localparam PTR_ADDR       = IDLE_ADDR      + ALIGN_ROUTERS_COUNT*32;
 
     localparam TESTENV_STRUCT_BITS       = $bits(testenv_struct_t)                                   ;
     localparam TESTENV_STRUCT_BYTES      = TESTENV_STRUCT_BITS / 8 + ((TESTENV_STRUCT_BITS % 8) != 0);
@@ -167,6 +167,8 @@ module avmm_testenv_csr #(
 
             assign struct_addr_enable = ((translated_addr >> TESTENV_STRUCT_ADDR_WIDTH) == (i+1));
 
+            assign ld_masked_o[i]   = testenv_struct.ld_masked_reg;
+            assign ld_read_pmu_o[i] = testenv_struct.ld_read_pmu_reg;
             // Read data logic
             always_ff @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
@@ -174,7 +176,7 @@ module avmm_testenv_csr #(
                 end
                 else begin
                     if (struct_addr_enable) begin
-                        csr_rdata_struct[i] <= testenv_struct[(translated_addr<<3) +: 32];
+                        csr_rdata_struct[i] <= testenv_struct[32'(translated_addr[TESTENV_STRUCT_ADDR_WIDTH-1:0])<<3 +: 32];
                     end
                     else begin
                         csr_rdata_struct[i] <= '0;
@@ -186,22 +188,24 @@ module avmm_testenv_csr #(
             
             always_ff @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
-                    testenv_struct.ld_rdata_sel_reg <= '0;
+                    testenv_struct.ld_read_pmu_reg  <= '0;
 
                     testenv_struct.cap_next_ptr     <= '0;
                     testenv_struct.ld_idle_reg      <= '0;
+                    testenv_struct.ld_masked_reg    <= '0;
+                    testenv_struct.ld_rdata_sel_reg <= '0;
                     testenv_struct.ld_rdata_reg     <= '0;
                 end
                 else begin
+                    // Write singlepulse registers from hardware
+                    testenv_struct.ld_read_pmu_reg <= '0;
+
                     // Write registers from interface
                     if (struct_addr_enable && avmm_s_write) begin
-                        case (translated_addr[TESTENV_STRUCT_ADDR_WIDTH-1:0])
-                            RDATA_SEL_ADDR: testenv_struct.ld_rdata_sel_reg <= translated_wdata;
-                            default       :                                                    ;
-                        endcase
+                        testenv_struct[32'(translated_addr[TESTENV_STRUCT_ADDR_WIDTH-1:0])<<3 +: 32] <= translated_wdata;
                     end
 
-                    // Write registers from hardware
+                    // Write rdonly registers from hardware
                     testenv_struct.cap_next_ptr <= (i == (DMA_CHANNEL_COUNT-1)) ? '0 : ((i+2) << TESTENV_STRUCT_ADDR_WIDTH);
                     testenv_struct.ld_idle_reg  <= ld_idle_i[i]                                                            ;
                     testenv_struct.ld_rdata_reg <= ld_rdata_i[i]                                                           ;

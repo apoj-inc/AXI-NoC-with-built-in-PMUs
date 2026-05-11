@@ -11,40 +11,29 @@ module dma_pmu_collector #(
     
     parameter EXT_FIFO_DATA_WIDTH_W = EXT_FIFO_DATA_WIDTH == 1 ? 1 : $clog2(EXT_FIFO_DATA_WIDTH)
 ) (
-    input  logic                           clk                       ,
-    input  logic                           rst_n                     ,
+    input  logic                           clk                          ,
+    input  logic                           rst_n                        ,
 
-    output logic [PMU_ADDR_WIDTH-1:0]      pmu_addr_o                ,
-    input  logic [PMU_DATA_WIDTH-1:0]      pmu_data_i [ROUTERS_COUNT],
+    output logic [PMU_ADDR_WIDTH-1:0]      pmu_addr_o                   ,
+    input  logic [PMU_DATA_WIDTH-1:0]      pmu_data_i    [ROUTERS_COUNT],
 
-    input  logic [ROUTERS_COUNT-1:0]       ld_idle_i                 ,
+    input  logic                           ld_read_pmu_i                ,
 
-    output logic                           dma_valid_o               ,
-    input  logic                           dma_ready_i               ,
-    output logic [EXT_FIFO_DATA_WIDTH-1:0] dma_data_o                
+    output logic                           dma_valid_o                  ,
+    input  logic                           dma_ready_i                  ,
+    output logic [EXT_FIFO_DATA_WIDTH-1:0] dma_data_o                   
 );
 
-    logic [ROUTERS_COUNT-1:0] ld_idle_ff;
-    logic [ROUTERS_COUNT-1:0] ld_idle_pending, ld_idle_pending_clear;
+    logic ld_read_pmu_pending, ld_read_pmu_pending_clear;
     logic [ROUTERS_COUNT_WIDTH-1:0] current_channel;
     logic [EXT_FIFO_DATA_WIDTH_W-1:0] dma_packet_slice;
 
-    // posedge detector
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            ld_idle_ff <= '1;
+            ld_read_pmu_pending <= '0;
         end        
         else begin
-            ld_idle_ff <= ld_idle_i;
-        end
-    end
-
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            ld_idle_pending <= '0;
-        end        
-        else begin
-            ld_idle_pending <= (ld_idle_pending | (~ld_idle_ff & ld_idle_i)) & ~ld_idle_pending_clear;
+            ld_read_pmu_pending <= (ld_read_pmu_pending | ld_read_pmu_i) & ~ld_read_pmu_pending_clear;
         end
     end
 
@@ -55,7 +44,7 @@ module dma_pmu_collector #(
             dma_packet_slice <= '0;
 
             current_channel <= '0;
-            ld_idle_pending_clear <= '0;
+            ld_read_pmu_pending_clear <= '0;
 
             dma_valid_o <= '0;
             dma_data_o  <= '0;
@@ -74,19 +63,24 @@ module dma_pmu_collector #(
                 end
             end
             else begin
-                if (ld_idle_pending[current_channel]) begin
+                if (ld_read_pmu_pending) begin
                     pmu_addr_o <= pmu_addr_o + 1;
                     dma_packet_slice <= dma_packet_slice + PMU_DATA_WIDTH;
                 end
             end
 
-            ld_idle_pending_clear <= '0;
+            ld_read_pmu_pending_clear <= '0;
             if (dma_valid_o && dma_ready_i && (pmu_addr_o == (PMU_METRIC_COUNT-1))) begin
-                current_channel <= ((current_channel + 1) < ROUTERS_COUNT) ? (current_channel + 1) : '0;
-                ld_idle_pending_clear[current_channel] <= '1;
+                if (((current_channel + 1) < ROUTERS_COUNT)) begin
+                    current_channel <= current_channel + 1;
+                end
+                else begin
+                    current_channel <= '0;
+                    ld_read_pmu_pending_clear <= '1;
+                end
             end
 
-            if (ld_idle_pending[current_channel]) begin
+            if (ld_read_pmu_pending) begin
                 if (dma_valid_o && dma_ready_i && (pmu_addr_o == (PMU_METRIC_COUNT-1))) begin
                     dma_valid_o <= '0;
                 end
