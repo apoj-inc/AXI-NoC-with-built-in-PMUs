@@ -83,8 +83,8 @@ generate
         initial begin
 
             for (int iter = 0; iter < 2; iter++) begin
-                for (int j = 0; j < FIFO_DEPTH*ROUTERS_COUNT[i]; j++) begin : create_tasks
-                    task_file_queue.push_back({ (ROUTERS_COUNT_BYTES*8)'(                        j / FIFO_DEPTH),
+                for (int j = 0; j < FIFO_DEPTH*ROUTERS_COUNT[i]/2; j++) begin : create_tasks
+                    task_file_queue.push_back({ (ROUTERS_COUNT_BYTES*8)'(                  2 * (j / FIFO_DEPTH)),
                                                                 (1*8  )'(                                     0),
                                                 (AXI_MAX_ID_BYTES*8   )'(      $urandom(                      )),
                                                                 (1*8  )'(                                     1),
@@ -95,8 +95,8 @@ generate
                                             });
                 end
 
-                for (int j = 0; j < FIFO_DEPTH*ROUTERS_COUNT[i]; j++) begin : create_tasks
-                    task_file_queue.push_back({ (ROUTERS_COUNT_BYTES*8)'(                        j / FIFO_DEPTH),
+                for (int j = 0; j < FIFO_DEPTH*ROUTERS_COUNT[i]/2; j++) begin : create_tasks
+                    task_file_queue.push_back({ (ROUTERS_COUNT_BYTES*8)'(                  2 * (j / FIFO_DEPTH)),
                                                                 (1*8  )'(                                     0),
                                                 (AXI_MAX_ID_BYTES*8   )'(      $urandom(                      )),
                                                                 (1*8  )'(                                     0),
@@ -438,6 +438,13 @@ initial begin
     msix_s_write      = '0;
     msix_s_address    = '0;
 
+    env_csr_s_chipselect = '0;
+    env_csr_s_byteenable = '0;
+    env_csr_s_writedata  = '0;
+    env_csr_s_read       = '0;
+    env_csr_s_write      = '0;
+    env_csr_s_address    = '0;
+
     dec_s_chipselect  = '0;
     dec_s_byteenable  = '0;
     dec_s_writedata   = '0;
@@ -549,18 +556,37 @@ initial begin
         env_csr_s_byteenable = 'h0F00;
         env_csr_s_writedata  = '1;
         env_csr_s_write      = '1;
+        env_csr_s_read       = '0;
         env_csr_s_address    = '0;
         @(posedge clk);
-        while (dec_s_waitrequest) begin
+        while (env_csr_s_waitrequest) begin
             @(posedge clk);
         end
+
+        // Read pointer
         env_csr_s_chipselect = '1;
-        env_csr_s_byteenable = 'h0F00;
-        env_csr_s_writedata  = '1;
+        env_csr_s_byteenable = 'h000F;
         env_csr_s_write      = '0;
+        env_csr_s_read       = '1;
         env_csr_s_address    = '0;
         @(posedge clk);
-        while (dec_s_waitrequest) begin
+        while (env_csr_s_waitrequest) begin
+            @(posedge clk);
+        end
+        env_csr_s_read       = '0;
+        while (!env_csr_s_readdatavalid) begin
+            @(posedge clk);
+        end
+        current_struct = env_csr_s_readdata;
+
+        // Set active cores
+        env_csr_s_chipselect = '1;
+        env_csr_s_byteenable = 'h00F0;
+        env_csr_s_writedata  = ('b10101010101010101010) << 32;
+        env_csr_s_write      = '1;
+        env_csr_s_address    = current_struct;
+        @(posedge clk);
+        while (env_csr_s_waitrequest) begin
             @(posedge clk);
         end
         env_csr_s_write      = '0;
@@ -586,6 +612,18 @@ initial begin
             @(posedge clk);
         end
 
+        // Start writing pmu
+        env_csr_s_chipselect = '1;
+        env_csr_s_byteenable = 'h00F0;
+        env_csr_s_writedata  = '1;
+        env_csr_s_write      = '1;
+        env_csr_s_address    = current_struct+'h10;
+        @(posedge clk);
+        while (env_csr_s_waitrequest) begin
+            @(posedge clk);
+        end
+        env_csr_s_write      = '0;
+
         for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
             dec_s_chipselect = '1;
             dec_s_byteenable = 'h00FF;
@@ -599,7 +637,7 @@ initial begin
             end
             dec_s_write      = '0;
         end
-        repeat (1000) @(posedge clk);
+        repeat (3000) @(posedge clk);
         
         start_validate = 1;
         repeat (4) @(posedge clk);

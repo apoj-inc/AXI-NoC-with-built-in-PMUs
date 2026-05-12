@@ -120,8 +120,10 @@ module dma_testenv_top #(
     logic [TX_DATA_WIDTH-1:0]   dma_rddata_data    [DMA_CHANNEL_COUNT];
 
     logic [DMA_CHANNEL_COUNT-1:0] user_irq_i;
+    logic [DMA_CHANNEL_COUNT-1:0] ld_read_pmu;
 
     logic [MAX_ROUTERS_COUNT-1:0]   ld_idle           [DMA_CHANNEL_COUNT];
+    logic [MAX_ROUTERS_COUNT-1:0]   ld_masked         [DMA_CHANNEL_COUNT];
     logic [MAX_ROUTERS_COUNT-1:0]   ld_finished       [DMA_CHANNEL_COUNT];
     logic [ROUTERS_COUNT_WIDTH-1:0] ld_rdata_selector [DMA_CHANNEL_COUNT];
     logic [MAX_AXI_DATA_WIDTH-1:0]  ld_rdata          [DMA_CHANNEL_COUNT];
@@ -273,9 +275,11 @@ module dma_testenv_top #(
         .avmm_s_waitrequest   (env_csr_s_waitrequest  ),
         .avmm_s_address       (env_csr_s_address      ),
 
+        .ld_read_pmu_o        (ld_read_pmu            ),
         .ld_rdata_selector_o  (ld_rdata_selector      ),
-        .ld_idle_i            (ld_idle                ),
         .ld_rdata_i           (ld_rdata               ),
+        .ld_idle_i            (ld_idle                ),
+        .ld_masked_o          (ld_masked              ),
 
         .testenv_rst_status_i (testenv_rst_status     ),
         .testenv_rst_assert_o (testenv_rst_assert     )
@@ -294,12 +298,16 @@ module dma_testenv_top #(
             logic                       pmu_ready;
             logic [TX_DATA_WIDTH-1:0]   pmu_data ;
 
+            logic ld_read_pmu_loc, ld_read_pmu_waiter, ld_read_pmu_ready;
+
+            logic [ROUTERS_COUNT[i]-1:0]  ld_masked_loc                     ;
             logic [ROUTERS_COUNT[i]-1:0]  ld_idle_loc                       ;
             logic [ROUTERS_COUNT[i]-1:0]  ld_finished_loc                   ;
             logic [AXI_DATA_WIDTH[i]-1:0] ld_rdata_loc    [ROUTERS_COUNT[i]];
 
-            assign user_irq_i[i] = &ld_finished_loc;
+            assign ld_masked_loc  = ld_masked[i];
 
+            assign user_irq_i[i]  = &(ld_finished_loc | ld_masked_loc);
             assign ld_idle[i]     = {{MAX_ROUTERS_COUNT -ROUTERS_COUNT[i] {1'b0}}, ld_idle_loc    };
             assign ld_finished[i] = {{MAX_ROUTERS_COUNT -ROUTERS_COUNT[i] {1'b0}}, ld_finished_loc};
             assign ld_rdata[i]    = {{MAX_AXI_DATA_WIDTH-AXI_DATA_WIDTH[i]{1'b0}}, ld_rdata_loc[ld_rdata_selector[i] >= ROUTERS_COUNT[i] ? '0 : ld_rdata_selector[i]]};
@@ -310,6 +318,41 @@ module dma_testenv_top #(
                 .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH[i]),
                 .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH[i])
             ) u_axi_if[ROUTERS_COUNT[i]](), u_axi_if_ram[ROUTERS_COUNT[i]]();
+
+            cdc_stream_afifo #(
+                .DATA_WIDTH (1),
+                .ADDR_WIDTH (2)
+            ) u_cdc_stream_afifo_ld_read_pmu_resync (
+                .clk_wr   (clk_dma           ),
+                .rst_n_wr (rst_n_dma_csr     ),
+
+                .data_i   (ld_read_pmu_waiter),
+                .valid_i  ('1                ),
+                .ready_o  (ld_read_pmu_ready ),
+                .free_o   (                  ),
+
+                .clk_rd   (clk_noc           ),
+                .rst_n_rd (rst_n_noc         ),
+
+                .data_o   (ld_read_pmu_loc   ),
+                .valid_o  (                  ),
+                .ready_i  ('1                ),
+                .count_o  (                  )
+            );
+
+            always @(posedge clk_dma or negedge rst_n_dma_csr) begin
+                if (!rst_n_dma_csr) begin
+                    ld_read_pmu_waiter <= '0;
+                end
+                else begin
+                    if (ld_read_pmu[i]) begin
+                        ld_read_pmu_waiter <= '1;
+                    end
+                    if (ld_read_pmu_waiter && ld_read_pmu_ready) begin
+                        ld_read_pmu_waiter <= '0;
+                    end
+                end
+            end
 
             stream_fifo #(
                 .DATA_WIDTH (TX_DATA_WIDTH  ),
@@ -372,6 +415,8 @@ module dma_testenv_top #(
                 .pmu_data_o      (pmu_data       ),
                 .pmu_valid_o     (pmu_valid      ),
                 .pmu_ready_i     (pmu_ready      ),
+
+                .ld_read_pmu_i   (ld_read_pmu_loc),
                 
                 .ld_idle_o       (ld_idle_loc    ),
                 .ld_finished_o   (ld_finished_loc),
@@ -385,11 +430,17 @@ module dma_testenv_top #(
 
             // NOC GOES HERE 
             //     vvvv
-            mesh #(
-                .AXI_ADDR_WIDTH(12),
+            mesh #(.AXI_DATA_WIDTH(AXI_DATA_WIDTH[i]),
+                .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH[i]),
+                .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH[i]),
+                .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH[i]),
                 .MAX_ROUTERS_X(5),
                 .MAX_ROUTERS_Y(4),
-                .AXIS_DATA_WIDTH(40)
+                .VIRTUAL_CHANNEL_NUMBER(2),
+                .VIRTUAL_NETWORKS('{1, 1}),
+                //.ALGORITHM("EWn_SNe"),
+                .BUFFER_ALLOCATOR("KeepInNetwork"),
+                .SIMULTANIOUS_VIRTUAL_NETWORK_ROUTING(1)
             ) dut (
                 .ACLK   (clk_noc     ),
                 .ARESETn(rst_n_noc   ),

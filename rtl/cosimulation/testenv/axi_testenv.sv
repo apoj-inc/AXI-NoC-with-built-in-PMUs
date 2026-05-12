@@ -30,6 +30,7 @@ module axi_testenv #(
     output logic                           pmu_valid_o                    ,
     input  logic                           pmu_ready_i                    ,
 
+    input  logic                           ld_read_pmu_i                  ,
     output logic [ROUTERS_COUNT-1:0]       ld_idle_o                      ,
     output logic [ROUTERS_COUNT-1:0]       ld_finished_o                  ,
     output logic [AXI_DATA_WIDTH-1:0]      ld_rdata_o      [ROUTERS_COUNT],
@@ -139,17 +140,17 @@ module axi_testenv #(
 
         .EXT_FIFO_DATA_WIDTH (EXT_FIFO_DATA_WIDTH)
     ) u_dma_pmu_collector (
-        .clk         (clk_axi  ),
-        .rst_n       (rst_n_axi),
+        .clk           (clk_axi              ),
+        .rst_n         (rst_n_axi            ),
 
-        .pmu_addr_o  (pmu_addr ),
-        .pmu_data_i  (pmu_data ),
+        .pmu_addr_o    (pmu_addr             ),
+        .pmu_data_i    (pmu_data             ),
 
-        .ld_idle_i   (ld_idle  ),
+        .ld_read_pmu_i (ld_read_pmu_i        ),
 
-        .dma_valid_o (pmu_resync_fifo_valid),
-        .dma_ready_i (pmu_resync_fifo_ready),
-        .dma_data_o  (pmu_resync_fifo_data )
+        .dma_valid_o   (pmu_resync_fifo_valid),
+        .dma_ready_i   (pmu_resync_fifo_ready),
+        .dma_data_o    (pmu_resync_fifo_data )
     );
     
     cdc_stream_afifo #(
