@@ -26,6 +26,7 @@ module avmm_testenv_csr #(
     output logic                           avmm_s_waitrequest                      ,
     input  logic [BAR_ADDR_WIDTH-1:0]      avmm_s_address                          ,
 
+    output logic [DMA_CHANNEL_COUNT-1:0]   ld_start_o                              ,
     output logic [DMA_CHANNEL_COUNT-1:0]   ld_read_pmu_o                           ,
 
     output logic [ROUTERS_COUNT_WIDTH-1:0] ld_rdata_selector_o  [DMA_CHANNEL_COUNT],
@@ -38,6 +39,7 @@ module avmm_testenv_csr #(
 );
 
     typedef struct packed {
+        logic [31:0]                             ld_start_reg    ;
         logic [31:0]                             ld_read_pmu_reg ;
         logic [ALIGN_ROUTERS_COUNT_WIDTH*32-1:0] ld_rdata_sel_reg;
         logic [ALIGN_AXI_DATA_WIDTH*32-1:0]      ld_rdata_reg    ;
@@ -167,8 +169,9 @@ module avmm_testenv_csr #(
 
             assign struct_addr_enable = ((translated_addr >> TESTENV_STRUCT_ADDR_WIDTH) == (i+1));
 
-            assign ld_masked_o[i]   = testenv_struct.ld_masked_reg;
+            assign ld_masked_o[i]   = testenv_struct.ld_masked_reg  ;
             assign ld_read_pmu_o[i] = testenv_struct.ld_read_pmu_reg;
+            assign ld_start_o[i]    = testenv_struct.ld_start_reg   ;
             // Read data logic
             always_ff @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
@@ -188,6 +191,7 @@ module avmm_testenv_csr #(
             
             always_ff @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
+                    testenv_struct.ld_start_reg     <= '0;
                     testenv_struct.ld_read_pmu_reg  <= '0;
 
                     testenv_struct.cap_next_ptr     <= '0;
@@ -198,6 +202,7 @@ module avmm_testenv_csr #(
                 end
                 else begin
                     // Write singlepulse registers from hardware
+                    testenv_struct.ld_start_reg    <= '0;
                     testenv_struct.ld_read_pmu_reg <= '0;
 
                     // Write registers from interface

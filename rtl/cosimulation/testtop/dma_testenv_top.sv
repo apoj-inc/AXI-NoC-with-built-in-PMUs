@@ -120,6 +120,7 @@ module dma_testenv_top #(
     logic [TX_DATA_WIDTH-1:0]   dma_rddata_data    [DMA_CHANNEL_COUNT];
 
     logic [DMA_CHANNEL_COUNT-1:0] user_irq_i;
+    logic [DMA_CHANNEL_COUNT-1:0] ld_start;
     logic [DMA_CHANNEL_COUNT-1:0] ld_read_pmu;
 
     logic [MAX_ROUTERS_COUNT-1:0]   ld_idle           [DMA_CHANNEL_COUNT];
@@ -275,6 +276,7 @@ module dma_testenv_top #(
         .avmm_s_waitrequest   (env_csr_s_waitrequest  ),
         .avmm_s_address       (env_csr_s_address      ),
 
+        .ld_start_o           (ld_start               ),
         .ld_read_pmu_o        (ld_read_pmu            ),
         .ld_rdata_selector_o  (ld_rdata_selector      ),
         .ld_rdata_i           (ld_rdata               ),
@@ -416,6 +418,7 @@ module dma_testenv_top #(
                 .pmu_valid_o     (pmu_valid      ),
                 .pmu_ready_i     (pmu_ready      ),
 
+                .ld_start_i      (ld_start[i]    ),
                 .ld_read_pmu_i   (ld_read_pmu_loc),
                 
                 .ld_idle_o       (ld_idle_loc    ),
@@ -434,7 +437,7 @@ module dma_testenv_top #(
                 .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH[i]),
                 .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH[i]),
                 .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH[i]),
-                .MAX_ROUTERS_X(5),
+                .MAX_ROUTERS_X(4),
                 .MAX_ROUTERS_Y(4),
                 .VIRTUAL_CHANNEL_NUMBER(2),
                 .VIRTUAL_NETWORKS('{1, 1}),

@@ -27,8 +27,8 @@ parameter     TX_DATA_WIDTH                         = 128        ;
 parameter     TX_ADDR_WIDTH                         = 64         ;
 parameter     TX_BURST_WIDTH                        = 6          ;
 
-parameter int ROUTERS_COUNT     [DMA_CHANNEL_COUNT] = '{1 {20  }};
-parameter     MAX_ROUTERS_COUNT                     = 20         ;
+parameter int ROUTERS_COUNT     [DMA_CHANNEL_COUNT] = '{1 {16  }};
+parameter     MAX_ROUTERS_COUNT                     = 16         ;
 parameter int AXI_DATA_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {32  }};
 parameter int AXI_ADDR_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {8   }};
 parameter int AXI_ID_W_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {5   }};
@@ -121,7 +121,6 @@ generate
                         current_slice = current_slice + 1;
                     end
                 end
-                tx_readdata_queue.push_back('1);
             end
             
             queue_sizes[i] = tx_readdata_queue.size();
@@ -605,6 +604,18 @@ initial begin
             end
             dec_s_write      = '0;
         end
+        repeat (3000) @(posedge clk);
+        // Start operation
+        env_csr_s_chipselect = '1;
+        env_csr_s_byteenable = 'h0F00;
+        env_csr_s_writedata  = '1;
+        env_csr_s_write      = '1;
+        env_csr_s_address    = current_struct+'h10;
+        @(posedge clk);
+        while (env_csr_s_waitrequest) begin
+            @(posedge clk);
+        end
+        env_csr_s_write      = '0;
 
         usermsi_counter = 0;
         while (usermsi_counter != DMA_CHANNEL_COUNT) begin

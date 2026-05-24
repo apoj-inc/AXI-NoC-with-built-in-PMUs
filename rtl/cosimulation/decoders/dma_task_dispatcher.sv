@@ -53,9 +53,7 @@ module dma_task_dispatcher #(
     output logic [AXI_ADDR_WIDTH-1:0]      axaddr_o    ,
     output logic [7:0]                     axlen_o     ,
     output logic [AXI_DATA_WIDTH-1:0]      wdata_o     ,
-    output logic [AXI_DATA_BYTES-1:0]      wstrb_o     ,
-
-    output logic                           start_o     
+    output logic [AXI_DATA_BYTES-1:0]      wstrb_o      
 );
 
     logic [WIDTH_RATIO_WIDTH-1:0]    section_counter;
@@ -95,15 +93,6 @@ module dma_task_dispatcher #(
                     ld_valid_bit <= '1;
                 end
             end
-        end
-    end
-
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            start_o <= '0;
-        end
-        else begin
-            start_o <= (&dma_data_i) & dma_valid_i;
         end
     end
 

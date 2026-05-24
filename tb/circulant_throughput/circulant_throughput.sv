@@ -48,7 +48,7 @@ module circulant_throughput #(
 
     logic aclk;
 
-    always #1 aclk = ~aclk;
+    always #10 aclk = ~aclk;
 
     initial begin
         aclk = 1;
