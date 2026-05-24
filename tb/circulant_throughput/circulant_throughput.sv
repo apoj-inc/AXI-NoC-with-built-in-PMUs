@@ -117,6 +117,7 @@ module circulant_throughput #(
         .ROUTERS_COUNT    (ROUTERS_COUNT    ),
         .GENERATICS_COUNT (GENERATICS_COUNT ),
         .GENERATICS       (GENERATICS       ),
+        .ALGORITHM        ("Greedy"         ),
 
         .VIRTUAL_CHANNEL_NUMBER(2),
         .VIRTUAL_NETWORKS('{1, 1}),

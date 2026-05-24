@@ -95,7 +95,8 @@ module tb_circulant (
         .GENERATICS('{5,2,1}),
         .VIRTUAL_CHANNEL_NUMBER(7),
         .VIRTUAL_NETWORKS('{3, 4}),
-        .BUFFER_ALLOCATOR("KeepInNetwork")
+        .BUFFER_ALLOCATOR("KeepInNetwork"),
+        .ALGORITHM("Greedy")
     ) dut (
         .ACLK(aclk),
         .ARESETn(aresetn),

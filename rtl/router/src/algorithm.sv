@@ -146,6 +146,18 @@ module algorithm #(
                     .selector_o(ctrl_logical)
                 );
             end
+            else if (ALGORITHM == "Greedy") begin : greedy_alg
+                algorithm_selector_greedy #(
+                    .ROUTER_N(ROUTER_N),
+                    .ROUTERS_COUNT(ROUTERS_COUNT),
+                    .GENERATICS_COUNT(GENERATICS_COUNT),
+                    .GENERATICS(GENERATICS),
+                    .CHANNEL_NUMBER(PHYSICAL_CHANNEL_NUMBER)
+                ) algorithm_selector (
+                    .target_i(target_i),
+                    .selector_o(ctrl_logical)
+                );
+            end
             else begin : circulant_alg_error
                 initial $error("Wrong algorithm for the topology %s! (ALGORITHM == %s)", TOPOLOGY, ALGORITHM);
             end
