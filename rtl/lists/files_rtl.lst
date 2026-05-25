@@ -5,6 +5,7 @@ rtl/cores/src/sr_cpu.v
 rtl/cores/src/sr_cpu_axi.sv
 rtl/cores/src/sr_axi_adapter.sv
 rtl/router/src/algorithm_selectors/circulant/algorithm_selector_clockwise.sv
+rtl/router/src/algorithm_selectors/circulant/algorithm_selector_greedy.sv
 rtl/router/src/algorithm_selectors/mesh/algorithm_selector_mesh_XY.sv
 rtl/router/src/algorithm_selectors/torus/algorithm_selector_torus_XY.sv
 rtl/router/src/algorithm_selectors/torus/algorithm_selector_torus_XY_one_way.sv

@@ -30,6 +30,7 @@ module axi_testenv #(
     output logic                           pmu_valid_o                    ,
     input  logic                           pmu_ready_i                    ,
 
+    input  logic                           ld_start_i                     ,
     input  logic                           ld_read_pmu_i                  ,
     output logic [ROUTERS_COUNT-1:0]       ld_idle_o                      ,
     output logic [ROUTERS_COUNT-1:0]       ld_finished_o                  ,
@@ -51,6 +52,7 @@ module axi_testenv #(
     logic [AXI_DATA_BYTES-1:0]   wstrb     ;
     
     logic start, start_resynced, start_waiter, start_resync_ready;
+    assign start = ld_start_i;
 
     logic [ROUTERS_COUNT-1:0] ld_idle    , ld_idle_resynced    ;
     logic [ROUTERS_COUNT-1:0] ld_finished, ld_finished_resynced;
@@ -92,9 +94,7 @@ module axi_testenv #(
         .axaddr_o    (axaddr              ),
         .axlen_o     (axlen               ),
         .wdata_o     (wdata               ),
-        .wstrb_o     (wstrb               ),
-
-        .start_o     (start               )
+        .wstrb_o     (wstrb               )
     );
 
     cdc_stream_afifo #(
