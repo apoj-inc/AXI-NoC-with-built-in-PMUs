@@ -1,4 +1,6 @@
 SHELL := /bin/bash
+LAUNCH_PYTHON := $(shell python3 build_system/utils/collect_lists.py)
+
 
 TOPLEVEL_LANG ?= verilog
 
@@ -9,14 +11,13 @@ COCOTB_TOPLEVEL ?= tb_uart_loop
 COCOTB_TEST_MODULES ?= tb_example
 TB_DIR ?= $(CURDIR)/tb
 TB_EXT ?= sv
+TB_FILES ?=  $(foreach file,$(shell find tb/tb_* -type f -name '*.sv'),$(CURDIR)/$(file))
 
-LIST_DIR ?= $(RTL_PATH)/lists
+LIST_DIR ?= $(CACHE_DIR)/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
 
-INCDIRS_PATH ?= $(RTL_PATH)/incdirs.lst
+INCDIRS_PATH ?= $(LIST_DIR)/incdirs.lst
 INCLUDE_DIRS ?= $(foreach file,$(shell cat $(INCDIRS_PATH) | grep -v "#"),$(CURDIR)/$(file))
-
-TB_FILES ?=  $(foreach file,$(shell find tb/tb_* -type f -name '*.sv'),$(CURDIR)/$(file))
 
 SIM ?= questa-compat
 

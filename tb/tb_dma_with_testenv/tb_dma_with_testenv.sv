@@ -14,11 +14,10 @@ parameter     DMA_OFFFSET_WIDTH                     = 22         ;
 parameter int DMA_WORD_BYTES    [DMA_CHANNEL_COUNT] = '{1 {16  }};
 parameter int DMA_WQ_DEPTH      [DMA_CHANNEL_COUNT] = '{1 {1024}};
 parameter int DMA_RQ_DEPTH      [DMA_CHANNEL_COUNT] = '{1 {1024}};
-parameter int DMA_TQ_DEPTH      [DMA_CHANNEL_COUNT] = '{1 {16  }};
+parameter int DMA_TQ_DEPTH                          = 8          ;
 
 parameter int MAX_WQ_DEPTH                          = 1024       ;
 parameter int MAX_RQ_DEPTH                          = 1024       ;
-parameter int MAX_TQ_DEPTH                          = 16         ;
 
 parameter     BAR_DATA_WIDTH                        = 128        ;
 parameter     BAR_ADDR_WIDTH                        = 12         ;
@@ -45,7 +44,7 @@ parameter BAR_DATA_BYTES          = BAR_DATA_WIDTH / 8                    ;
 parameter TX_DATA_BYTES           = TX_DATA_WIDTH / 8                     ;
 parameter DMA_WQ_ADDR_WIDTH       = $clog2(MAX_WQ_DEPTH)                  ;
 parameter DMA_RQ_ADDR_WIDTH       = $clog2(MAX_RQ_DEPTH)                  ;
-parameter DMA_TQ_ADDR_WIDTH       = $clog2(MAX_TQ_DEPTH)                  ;
+parameter DMA_TQ_ADDR_WIDTH       = $clog2(DMA_TQ_DEPTH)                  ;
 parameter PBA_COUNT               = MSI_COUNT / 64 + (MSI_COUNT % 64 != 0);
 parameter DMA_BURST_WIDTH         = DMA_BYTES_WIDTH - 4                   ;
 parameter DMA_CHANNEL_COUNT_WIDTH = $clog2(DMA_CHANNEL_COUNT)             ;
@@ -168,16 +167,16 @@ logic                       dec_s_readdatavalid                     ;
 logic                       dec_s_waitrequest                       ;
 logic [BAR_ADDR_WIDTH-1:0]  dec_s_address                           ;
 
-logic                       user_msix_m_chipselect                  ;
-logic [TX_DATA_BYTES-1:0]   user_msix_m_byteenable                  ;
-logic [TX_DATA_WIDTH-1:0]   user_msix_m_readdata                    ;
-logic [TX_DATA_WIDTH-1:0]   user_msix_m_writedata                   ;
-logic                       user_msix_m_read                        ;
-logic                       user_msix_m_write                       ;
-logic [TX_BURST_WIDTH-1:0]  user_msix_m_burstcount                  ;
-logic                       user_msix_m_readdatavalid               ;
-logic                       user_msix_m_waitrequest                 ;
-logic [TX_ADDR_WIDTH-1:0]   user_msix_m_address                     ;
+logic                       msix_m_chipselect                       ;
+logic [TX_DATA_BYTES-1:0]   msix_m_byteenable                       ;
+logic [TX_DATA_WIDTH-1:0]   msix_m_readdata                         ;
+logic [TX_DATA_WIDTH-1:0]   msix_m_writedata                        ;
+logic                       msix_m_read                             ;
+logic                       msix_m_write                            ;
+logic [TX_BURST_WIDTH-1:0]  msix_m_burstcount                       ;
+logic                       msix_m_readdatavalid                    ;
+logic                       msix_m_waitrequest                      ;
+logic [TX_ADDR_WIDTH-1:0]   msix_m_address                          ;
 
 logic                       env_csr_s_chipselect                    ;
 logic [BAR_DATA_BYTES-1:0]  env_csr_s_byteenable                    ;
@@ -203,10 +202,10 @@ logic [TX_ADDR_WIDTH-1:0]   tx_address           [DMA_CHANNEL_COUNT];
 
 always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-        user_msix_m_waitrequest <= '1;
+        msix_m_waitrequest <= '1;
     end
     else begin
-        user_msix_m_waitrequest <= $urandom();
+        msix_m_waitrequest <= $urandom();
     end
 end
 
@@ -317,7 +316,6 @@ dma_testenv_top #(
 
     .MAX_WQ_DEPTH       (MAX_WQ_DEPTH      ),
     .MAX_RQ_DEPTH       (MAX_RQ_DEPTH      ),
-    .MAX_TQ_DEPTH       (MAX_TQ_DEPTH      ),
 
     .BAR_DATA_WIDTH     (BAR_DATA_WIDTH    ),
     .BAR_ADDR_WIDTH     (BAR_ADDR_WIDTH    ),
@@ -373,16 +371,16 @@ dma_testenv_top #(
     .dec_s_waitrequest         (dec_s_waitrequest        ),
     .dec_s_address             (dec_s_address            ),
 
-    .user_msix_m_chipselect    (user_msix_m_chipselect   ),
-    .user_msix_m_byteenable    (user_msix_m_byteenable   ),
-    .user_msix_m_readdata      (user_msix_m_readdata     ),
-    .user_msix_m_writedata     (user_msix_m_writedata    ),
-    .user_msix_m_read          (user_msix_m_read         ),
-    .user_msix_m_write         (user_msix_m_write        ),
-    .user_msix_m_burstcount    (user_msix_m_burstcount   ),
-    .user_msix_m_readdatavalid (user_msix_m_readdatavalid),
-    .user_msix_m_waitrequest   (user_msix_m_waitrequest  ),
-    .user_msix_m_address       (user_msix_m_address      ),
+    .msix_m_chipselect         (msix_m_chipselect        ),
+    .msix_m_byteenable         (msix_m_byteenable        ),
+    .msix_m_readdata           (msix_m_readdata          ),
+    .msix_m_writedata          (msix_m_writedata         ),
+    .msix_m_read               (msix_m_read              ),
+    .msix_m_write              (msix_m_write             ),
+    .msix_m_burstcount         (msix_m_burstcount        ),
+    .msix_m_readdatavalid      (msix_m_readdatavalid     ),
+    .msix_m_waitrequest        (msix_m_waitrequest       ),
+    .msix_m_address            (msix_m_address           ),
 
     .env_csr_s_chipselect      (env_csr_s_chipselect     ),
     .env_csr_s_byteenable      (env_csr_s_byteenable     ),
@@ -546,7 +544,7 @@ initial begin
         end
         @(posedge clk);
         $write("MSI-X for user %u: mask 0x%x, data 0x%x, addr 0x%x;\n",
-                4'(index), u_dma_testenv_top.u_avmm_dma_top.user_msix_mask[index][0], u_dma_testenv_top.u_avmm_dma_top.user_msix_data[index], u_dma_testenv_top.u_avmm_dma_top.user_msix_addrs[index]);
+                4'(index), u_dma_testenv_top.u_avmm_dma_top.msix_mask[index][0], u_dma_testenv_top.u_avmm_dma_top.user_msix_data[index], u_dma_testenv_top.u_avmm_dma_top.user_msix_addrs[index]);
     end
 
     for (int iter = 0; iter < 2; iter++) begin
@@ -619,7 +617,7 @@ initial begin
 
         usermsi_counter = 0;
         while (usermsi_counter != DMA_CHANNEL_COUNT) begin
-            usermsi_counter += user_msix_m_write & user_msix_m_chipselect & !user_msix_m_waitrequest;
+            usermsi_counter += msix_m_write & msix_m_chipselect & !msix_m_waitrequest;
             @(posedge clk);
         end
 
@@ -649,6 +647,32 @@ initial begin
             dec_s_write      = '0;
         end
         repeat (3000) @(posedge clk);
+
+        csr_s_chipselect = '1;
+        csr_s_byteenable = 'h000F;
+        csr_s_read       = '1;
+        csr_s_write      = '0;
+        csr_s_writedata  = '0;
+        csr_s_address    = '0;
+        @(posedge clk);
+        csr_s_read       = '0;
+        while (!csr_s_readdatavalid) begin
+            @(posedge clk);
+        end
+        current_struct = csr_s_readdata[31:16];
+
+        for (int i = 0; i < DMA_CHANNEL_COUNT; i++) begin
+            csr_s_chipselect = '1;
+            csr_s_byteenable = 'h000F;
+            csr_s_read       = '0;
+            csr_s_write      = '1;
+            csr_s_writedata  = 'b11;
+            csr_s_address    = current_struct + 'h20;
+            @(posedge clk);
+            while (csr_s_waitrequest) begin
+                @(posedge clk);
+            end
+        end
         
         start_validate = 1;
         repeat (4) @(posedge clk);

@@ -1,6 +1,6 @@
-rtl/cores/src/sr_cpu.vh 
-rtl/cores/src/sm_register.v 
-rtl/cores/src/sm_rom.v 
+rtl/cores/src/sr_cpu.vh
+rtl/cores/src/sm_register.v
+rtl/cores/src/sm_rom.v
 rtl/cores/src/sr_cpu.v
 rtl/cores/src/sr_cpu_axi.sv
 rtl/cores/src/sr_axi_adapter.sv
@@ -50,13 +50,6 @@ rtl/cosimulation/testenv/avmm_testenv_csr.sv
 rtl/cosimulation/testtop/cosim_top.sv
 rtl/cosimulation/testtop/dma_testenv_top.sv
 rtl/de10standard_top.sv
-rtl/lib/cosim/pcie/avmm_dma/avmm_dma_decoder.sv
-rtl/lib/cosim/pcie/avmm_dma/avmm_dma_task_demux.sv
-rtl/lib/cosim/pcie/avmm_dma/avmm_dma_csr.sv
-rtl/lib/cosim/pcie/avmm_dma/avmm_dma_engine.sv
-rtl/lib/cosim/pcie/avmm_dma/avmm_dma_msix_table.sv
-rtl/lib/cosim/pcie/avmm_dma/avmm_dma_user_msix.sv
-rtl/lib/cosim/pcie/avmm_dma/avmm_dma_top.sv
 rtl/lib/primitives/cdc/cdc_stream_afifo.sv
 rtl/lib/primitives/cdc/sync_ff.sv
 rtl/lib/primitives/cdc/sync_rst.sv
