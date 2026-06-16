@@ -49,6 +49,7 @@ rtl/cosimulation/testenv/axi_testenv.sv
 rtl/cosimulation/testenv/avmm_testenv_csr.sv
 rtl/cosimulation/testtop/cosim_top.sv
 rtl/cosimulation/testtop/dma_testenv_top.sv
+rtl/cosimulation/testtop/pcie_top.sv
 rtl/de10standard_top.sv
 rtl/lib/primitives/cdc/cdc_stream_afifo.sv
 rtl/lib/primitives/cdc/sync_ff.sv
