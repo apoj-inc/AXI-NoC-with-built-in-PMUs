@@ -35,7 +35,6 @@ jobs:
         with:
           name: altera_tools-dev
           path: ${{ runner.temp }}/altera_tools-dev.tar
-  
           
   test_docker_test_image:
     runs-on: ubuntu-latest
@@ -43,6 +42,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -108,6 +109,8 @@ jobs:
     needs: build_docker_test_image
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: Download artifact
       uses: actions/download-artifact@v4
