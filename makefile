@@ -1,4 +1,5 @@
 SHELL := /bin/bash
+LAUNCH_PYTHON := $(shell python3 build_system/utils/collect_lists.py)
 
 BUILD_SYSTEM_DIR ?= $(CURDIR)/build_system
 
@@ -10,10 +11,11 @@ RTL_PATH  ?= $(CURDIR)/rtl
 VENV_DIR ?= $(CACHE_DIR)/.venv
 COCOTB_DIR ?= $(CACHE_DIR)/cctb
 
-INCDIRS_PATH ?= $(RTL_PATH)/lists/incdirs.lst
+LIST_DIR ?= $(CACHE_DIR)/lists
+
+INCDIRS_PATH ?= $(LIST_DIR)/incdirs.lst
 INCLUDE_DIRS ?= $(foreach file,$(shell cat $(INCDIRS_PATH) | grep -v "#"),$(CURDIR)/$(file))
 
-LIST_DIR ?= $(RTL_PATH)/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
 VERILOG_SOURCES ?= $(foreach file,$(shell cat $(LIST_RTL) | grep -v "#"),$(CURDIR)/$(file))
 
