@@ -24,6 +24,10 @@ CUSTOM_IP := $(shell cat $(NAMES_QSYS_PATH) | tr '\n' ',')
 
 CUSTOM_ASSIGNMENTS ?= custom_assignments.tcl
 
+RELEASE_DIR ?= $(CURDIR)/release
+RELEASE_DIRS ?= $(wildcard $(RELEASE_DIR)/*/) 
+RELEASE_FILES ?= $(foreach directory,$(RELEASE_DIRS), $(directory)$(shell basename $(directory)).qar)
+
 DEVICE_FAMILY ?= "\"Cyclone V\""
 DEVICE_PART ?= "5CGTFD9D5F27C7"
 
