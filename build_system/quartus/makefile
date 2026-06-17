@@ -48,7 +48,7 @@ all: compile
 
 compile: $(VARS_TCL_PATH)/output_files/$(TOPLEVEL).sof
 
-$(VARS_TCL_PATH)/output_files/$(TOPLEVEL).sof: $(VERILOG_SOURCES) $(HEX_SOURCES) $(QSYS_SOURCES) $(IP_SOURCES) $(NAMES_QSYS)
+$(VARS_TCL_PATH)/output_files/$(TOPLEVEL).sof: $(VERILOG_SOURCES) $(HEX_SOURCES) $(IP_SOURCES) $(NAMES_QSYS)
 	cp $(QUARTUS_BUILD_PATH)/$(CUSTOM_ASSIGNMENTS) $(VARS_TCL_PATH)/$(CUSTOM_ASSIGNMENTS)
 	cp $(QUARTUS_BUILD_PATH)/setup_sh.tcl $(VARS_TCL_PATH)/setup_sh.tcl
 
@@ -73,7 +73,7 @@ $(VARS_TCL_PATH)/output_files/$(TOPLEVEL).sof: $(VERILOG_SOURCES) $(HEX_SOURCES)
 	@cd $(VARS_TCL_PATH);\
 	quartus_sh -t setup_sh.tcl
 
-$(NAMES_QSYS): $(shell find $(CURDIR)/fpga/quartus/qsys -type f | tr '\n' ' ')
+$(NAMES_QSYS):
 	@mkdir -p $(VARS_TCL_PATH)
 	
 	@cd $(VARS_TCL_PATH);\
