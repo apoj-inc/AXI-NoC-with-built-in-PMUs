@@ -26,8 +26,8 @@ parameter     TX_DATA_WIDTH                         = 128        ;
 parameter     TX_ADDR_WIDTH                         = 64         ;
 parameter     TX_BURST_WIDTH                        = 6          ;
 
-parameter int ROUTERS_COUNT     [DMA_CHANNEL_COUNT] = '{1 {16  }};
-parameter     MAX_ROUTERS_COUNT                     = 16         ;
+parameter int ROUTERS_COUNT     [DMA_CHANNEL_COUNT] = '{1 {9   }};
+parameter     MAX_ROUTERS_COUNT                     = 9          ;
 parameter int AXI_DATA_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {32  }};
 parameter int AXI_ADDR_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {8   }};
 parameter int AXI_ID_W_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {5   }};
@@ -85,7 +85,7 @@ generate
                 for (int j = 0; j < FIFO_DEPTH*ROUTERS_COUNT[i]/2; j++) begin : create_tasks
                     task_file_queue.push_back({ (ROUTERS_COUNT_BYTES*8)'(                  2 * (j / FIFO_DEPTH)),
                                                                 (1*8  )'(                                     0),
-                                                (AXI_MAX_ID_BYTES*8   )'(      $urandom(                      )),
+                                                (AXI_MAX_ID_BYTES*8   )'(      $urandom( )%ROUTERS_COUNT[i] + 1),
                                                                 (1*8  )'(                                     1),
                                                     (AXI_ADDR_BYTES*8 )'(                                    '0),
                                                                 (1*8  )'(                                     4),
@@ -97,10 +97,10 @@ generate
                 for (int j = 0; j < FIFO_DEPTH*ROUTERS_COUNT[i]/2; j++) begin : create_tasks
                     task_file_queue.push_back({ (ROUTERS_COUNT_BYTES*8)'(                  2 * (j / FIFO_DEPTH)),
                                                                 (1*8  )'(                                     0),
-                                                (AXI_MAX_ID_BYTES*8   )'(      $urandom(                      )),
+                                                (AXI_MAX_ID_BYTES*8   )'(      $urandom( )%ROUTERS_COUNT[i] + 1),
                                                                 (1*8  )'(                                     0),
                                                     (AXI_ADDR_BYTES*8 )'(                                    '0),
-                                                                (1*8  )'(                                      2),
+                                                                (1*8  )'(                                     2),
                                                     (AXI_DATA_BYTES*8 )'(      $urandom(                      )),
                                                     (AXI_WSTRB_BYTES*8)'(      $urandom(                      ))
                                             });
