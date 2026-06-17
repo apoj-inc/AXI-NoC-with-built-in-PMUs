@@ -24,9 +24,12 @@ CUSTOM_IP := $(shell cat $(NAMES_QSYS_PATH) | tr '\n' ',')
 
 CUSTOM_ASSIGNMENTS ?= custom_assignments.tcl
 
-RELEASE_DIR ?= $(CURDIR)/release
-RELEASE_DIRS ?= $(wildcard $(RELEASE_DIR)/*/) 
-RELEASE_FILES ?= $(foreach directory,$(RELEASE_DIRS), $(directory)$(shell basename $(directory)).qar)
+RELEASE_DIR 	?= $(CURDIR)/release
+RELEASE_DIRS  	?= $(wildcard $(RELEASE_DIR)/*/) 
+RELEASE_FILES	?= $(foreach directory,$(RELEASE_DIRS), $(directory)$(shell basename $(directory)).qar)
+
+RELEASE_VARS_TCL_PATH ?= $(CURDIR)/.cache/quartus
+RELEASE_VARS_TCL ?= $(RELEASE_VARS_TCL_PATH)/vars.tcl
 
 DEVICE_FAMILY ?= "\"Cyclone V\""
 DEVICE_PART ?= "5CGTFD9D5F27C7"
@@ -34,13 +37,18 @@ DEVICE_PART ?= "5CGTFD9D5F27C7"
 CABLE_NAME ?= C5P
 JTAG_CHAIN_DEVNUM ?= 1
 
+VERILOG_SOURCES := $(shell cat $(FILES_RTL_PATH) | tr '\n' ' ')
+HEX_SOURCES := $(shell cat $(FILES_HEX_PATH) | tr '\n' ' ')
+QSYS_SOURCES := $(shell cat $(NAMES_QSYS_PATH) | tr '\n' ' ')
+IP_SOURCES := $(shell cat $(CUSTOM_IP_PATH) | tr '\n' ' ')
+
 .PHONY: all compile program create_releases clean_releases clean
 
 all: compile
 
 compile: $(VARS_TCL_PATH)/output_files/$(TOPLEVEL).sof
 
-$(VARS_TCL_PATH)/output_files/$(TOPLEVEL).sof: $(shell find $(CURDIR)/rtl -type f | tr '\n' ' ') $(NAMES_QSYS)
+$(VARS_TCL_PATH)/output_files/$(TOPLEVEL).sof: $(VERILOG_SOURCES) $(HEX_SOURCES) $(QSYS_SOURCES) $(IP_SOURCES) $(NAMES_QSYS)
 	cp $(QUARTUS_BUILD_PATH)/$(CUSTOM_ASSIGNMENTS) $(VARS_TCL_PATH)/$(CUSTOM_ASSIGNMENTS)
 	cp $(QUARTUS_BUILD_PATH)/setup_sh.tcl $(VARS_TCL_PATH)/setup_sh.tcl
 
@@ -96,12 +104,12 @@ $(RELEASE_FILES):\
 	@$(foreach file,$(shell cat $(abspath $(dir $@)sources.lst) | grep -v "#") , cp $(CURDIR)/$(file) $(dir $@)package/src;)
 	@$(foreach file,$(shell cat $(abspath $(dir $@)incfiles.lst) | grep -v "#"), cp $(CURDIR)/$(file) $(dir $@)package/inc;)
 
-	@mkdir -p $(VARS_TCL_PATH)
-	@echo set TOPLEVEL $(notdir $(basename $@)) > $(VARS_TCL)
-	@echo set RTL_FILES {$(foreach file,$(shell cat $(abspath $(dir $@)sources.lst) | grep -v "#"), src/$(notdir $(file))) } >> $(VARS_TCL)
-	@echo set INCDIR inc >> $(VARS_TCL)
-	@echo set DEVICE_FAMILY \"$(DEVICE_FAMILY)\" >> $(VARS_TCL)
-	@echo set DEVICE_PART $(DEVICE_PART) >> $(VARS_TCL)
+	@mkdir -p $(RELEASE_VARS_TCL_PATH)
+	@echo set TOPLEVEL $(notdir $(basename $@)) > $(RELEASE_VARS_TCL)
+	@echo set RTL_FILES {$(foreach file,$(shell cat $(abspath $(dir $@)sources.lst) | grep -v "#"), src/$(notdir $(file))) } >> $(RELEASE_VARS_TCL)
+	@echo set INCDIR inc >> $(RELEASE_VARS_TCL)
+	@echo set DEVICE_FAMILY $(DEVICE_FAMILY) >> $(RELEASE_VARS_TCL)
+	@echo set DEVICE_PART $(DEVICE_PART) >> $(RELEASE_VARS_TCL)
 
 	@cd $(dir $@)package;\
 		quartus_sh -t $(QUARTUS_BUILD_PATH)/package.tcl
@@ -112,4 +120,3 @@ $(RELEASE_FILES):\
 
 clean_releases:
 	@rm -f $(wildcard $(RELEASE_DIR)/*/*.qar)
-
