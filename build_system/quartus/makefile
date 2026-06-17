@@ -31,7 +31,7 @@ RELEASE_FILES	?= $(foreach directory,$(RELEASE_DIRS), $(directory)$(shell basena
 RELEASE_VARS_TCL_PATH ?= $(CURDIR)/.cache/quartus
 RELEASE_VARS_TCL ?= $(RELEASE_VARS_TCL_PATH)/vars.tcl
 
-DEVICE_FAMILY ?= \"Cyclone V\"
+DEVICE_FAMILY ?= {Cyclone V}
 DEVICE_PART ?= "5CGTFD9D5F27C7"
 
 CABLE_NAME ?= C5P
