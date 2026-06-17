@@ -118,6 +118,8 @@ module dma_testenv_top #(
     logic [DMA_RQ_ADDR_WIDTH:0] dma_rddata_free    [DMA_CHANNEL_COUNT];
     logic [TX_DATA_WIDTH-1:0]   dma_rddata_data    [DMA_CHANNEL_COUNT];
 
+    logic                       dma_resetn                            ;
+
     logic [DMA_CHANNEL_COUNT-1:0] user_irq_i;
     logic [DMA_CHANNEL_COUNT-1:0] ld_start;
     logic [DMA_CHANNEL_COUNT-1:0] ld_read_pmu;
@@ -250,7 +252,9 @@ module dma_testenv_top #(
         .dma_rddata_valid_o   (dma_rddata_valid     ),
         .dma_rddata_ready_i   (dma_rddata_ready     ),
         .dma_rddata_free_i    (dma_rddata_free      ),
-        .dma_rddata_data_o    (dma_rddata_data      )
+        .dma_rddata_data_o    (dma_rddata_data      ),
+
+        .dma_resetn_o         (dma_resetn           )
     );
 
     avmm_testenv_csr #(
@@ -262,7 +266,7 @@ module dma_testenv_top #(
         .BAR_ADDR_WIDTH     (BAR_ADDR_WIDTH    )
     ) u_avmm_testenv_csr (
         .clk                  (clk_dma                ),
-        .rst_n                (rst_n_dma              ),
+        .rst_n                (dma_resetn             ),
 
         .avmm_s_chipselect    (env_csr_s_chipselect   ),
         .avmm_s_byteenable    (env_csr_s_byteenable   ),
@@ -359,7 +363,7 @@ module dma_testenv_top #(
                 .FIFO_DEPTH (DMA_WQ_DEPTH[i])
             ) u_stream_fifo_dmawr (
                 .ACLK    (clk_dma            ),
-                .ARESETn (rst_n_dma          ),
+                .ARESETn (dma_resetn         ),
 
                 .data_i  (pmu_data           ),
                 .valid_i (pmu_valid          ),
@@ -377,7 +381,7 @@ module dma_testenv_top #(
                 .FIFO_DEPTH (DMA_WQ_DEPTH[i])
             ) u_stream_fifo_dmard (
                 .ACLK    (clk_dma            ),
-                .ARESETn (rst_n_dma          ),
+                .ARESETn (dma_resetn         ),
 
                 .data_i  (dma_rddata_data [i]),
                 .valid_i (dma_rddata_valid[i]),
@@ -435,8 +439,8 @@ module dma_testenv_top #(
                 .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH[i]),
                 .AXI_ID_W_WIDTH(AXI_ID_W_WIDTH[i]),
                 .AXI_ID_R_WIDTH(AXI_ID_R_WIDTH[i]),
-                .MAX_ROUTERS_X(4),
-                .MAX_ROUTERS_Y(4),
+                .MAX_ROUTERS_X(3),
+                .MAX_ROUTERS_Y(3),
                 .VIRTUAL_CHANNEL_NUMBER(2),
                 .VIRTUAL_NETWORKS('{1, 1}),
                 //.ALGORITHM("EWn_SNe"),

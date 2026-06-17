@@ -31,7 +31,7 @@
 //Date:  Tue Nov 21 13:54:58 2017
 // ============================================================================
 
-module avmm_dma_example_top(
+module pcie_top(
 
     //////////// CLOCK //////////
     input                           CLOCK_50_B3B,
@@ -130,8 +130,8 @@ parameter     AXI_LD_FIFO_DEPTH                     = 64         ;
 parameter     PMU_METRIC_COUNT                      = 19         ;
 parameter     PMU_DATA_WIDTH                        = 32         ;
 
-parameter int ROUTERS_COUNT     [DMA_CHANNEL_COUNT] = '{1 {15  }};
-parameter     MAX_ROUTERS_COUNT                     = 15         ;
+parameter int ROUTERS_COUNT     [DMA_CHANNEL_COUNT] = '{1 {9   }};
+parameter     MAX_ROUTERS_COUNT                     = 9          ;
 
 parameter int AXI_DATA_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {32  }};
 parameter int AXI_ADDR_WIDTH    [DMA_CHANNEL_COUNT] = '{1 {8   }};
@@ -275,7 +275,7 @@ dma_testenv_top #(
     .AXI_ID_W_WIDTH     (AXI_ID_W_WIDTH    ),
     .AXI_ID_R_WIDTH     (AXI_ID_R_WIDTH    ),
     .MAX_AXI_DATA_WIDTH (MAX_AXI_DATA_WIDTH)               
-) (
+) u_dma_testenv_top (
     .clk_dma                 (core_clk_clk                                        ),
     .rst_n_dma               (core_reset_reset_n                                  ),
 

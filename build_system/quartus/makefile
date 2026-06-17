@@ -12,10 +12,12 @@ VARS_TCL_PATH ?= $(CURDIR)/.cache/quartus/$(TOPLEVEL)
 VARS_TCL ?= $(VARS_TCL_PATH)/vars.tcl
 
 FILES_RTL_PATH ?= $(LIST_DIR)/files_rtl.lst
+FILES_HEX_PATH ?= $(LIST_DIR)/files_hex.lst
 INCDIRS_PATH ?= $(LIST_DIR)/incdirs.lst
-FILES_SDC_PATH ?= $(LIST_DIR)/files_sdc.lst
 NAMES_QSYS_PATH ?= $(LIST_DIR)/names_qsys.lst
 CUSTOM_IP_PATH ?= $(LIST_DIR)/ip_paths.lst
+
+FILES_SDC_PATH ?= $(CURDIR)/sdc/lists/files_sdc.lst
 
 NAMES_QSYS := $(foreach name,$(shell cat $(NAMES_QSYS_PATH) | tr '\n' ' '), $(VARS_TCL_PATH)/$(shell basename $(name)).qsys)
 CUSTOM_IP := $(shell cat $(NAMES_QSYS_PATH) | tr '\n' ',')
