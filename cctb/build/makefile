@@ -1,4 +1,6 @@
 SHELL := /bin/bash
+LAUNCH_PYTHON := $(shell ./build_system/utils/collect_lists.py)
+
 
 TOPLEVEL_LANG ?= verilog
 
@@ -9,14 +11,13 @@ COCOTB_TOPLEVEL ?= tb_uart_loop
 COCOTB_TEST_MODULES ?= tb_example
 TB_DIR ?= $(CURDIR)/tb
 TB_EXT ?= sv
+TB_FILES ?=  $(foreach file,$(shell find tb/tb_* -type f -name '*.sv'),$(CURDIR)/$(file))
 
-LIST_DIR ?= $(RTL_PATH)/lists
+LIST_DIR ?= $(CACHE_DIR)/lists
 LIST_RTL ?= $(LIST_DIR)/files_rtl.lst
 
-INCDIRS_PATH ?= $(RTL_PATH)/incdirs.lst
+INCDIRS_PATH ?= $(LIST_DIR)/incdirs.lst
 INCLUDE_DIRS ?= $(foreach file,$(shell cat $(INCDIRS_PATH) | grep -v "#"),$(CURDIR)/$(file))
-
-TB_FILES ?=  $(foreach file,$(shell find tb/tb_* -type f -name '*.sv'),$(CURDIR)/$(file))
 
 SIM ?= questa-compat
 
@@ -43,7 +44,7 @@ TOPLEVEL_LIBRARY ?= work
 
 .PHONY: run wave clean_module
 
-run: $(VENV_DIR) $(VERILOG_SOURCES)
+run: $(VENV_DIR)/bin/activate $(VERILOG_SOURCES)
 	@mkdir -p $(SIM_BUILD)
 	@rm -f $(CCTB_DIR)/runsim.do
 	@cp -r $(TB_DIR)/$(COCOTB_TEST_MODULES) $(SIM_BUILD)/..
@@ -57,7 +58,7 @@ run: $(VENV_DIR) $(VERILOG_SOURCES)
 wave:
 	vsim -view $(SIM_BUILD)/vsim.wlf
 
-$(VENV_DIR): cctb/build/user_requirements.txt cctb/build/requirements.txt
+$(VENV_DIR)/bin/activate: cctb/build/user_requirements.txt cctb/build/requirements.txt
 	python3 -m venv $(VENV_DIR)
 	source $(VENV_DIR)/bin/activate; \
 	pip install -r cctb/build/requirements.txt; \

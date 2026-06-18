@@ -1,0 +1,3 @@
+[submodule "submodules/src/Cyclone-V-PCIe-AVMM-DMA"]
+	path = submodules/src/Cyclone-V-PCIe-AVMM-DMA
+	url = git@github.com:apoj-inc/Cyclone-V-PCIe-AVMM-DMA.git
