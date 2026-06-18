@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-LAUNCH_PYTHON := $(shell python3 build_system/utils/collect_lists.py)
+LAUNCH_PYTHON := $(shell ./build_system/utils/collect_lists.py)
 
 TOPLEVEL ?= toplevel
 
@@ -31,7 +31,7 @@ RELEASE_FILES	?= $(foreach directory,$(RELEASE_DIRS), $(directory)$(shell basena
 RELEASE_VARS_TCL_PATH ?= $(CURDIR)/.cache/quartus
 RELEASE_VARS_TCL ?= $(RELEASE_VARS_TCL_PATH)/vars.tcl
 
-DEVICE_FAMILY ?= {Cyclone V}
+DEVICE_FAMILY ?= Cyclone V
 DEVICE_PART ?= "5CGTFD9D5F27C7"
 
 CABLE_NAME ?= C5P
@@ -67,7 +67,7 @@ $(VARS_TCL_PATH)/output_files/$(TOPLEVEL).sof: $(VERILOG_SOURCES) $(HEX_SOURCES)
 	
 	@echo set NAMES_QSYS_PATH $(NAMES_QSYS_PATH) >> $(VARS_TCL)
 	
-	@echo set DEVICE_FAMILY $(DEVICE_FAMILY) >> $(VARS_TCL)
+	@echo set DEVICE_FAMILY {$(DEVICE_FAMILY)} >> $(VARS_TCL)
 	@echo set DEVICE_PART $(DEVICE_PART) >> $(VARS_TCL)
 
 	@cd $(VARS_TCL_PATH);\

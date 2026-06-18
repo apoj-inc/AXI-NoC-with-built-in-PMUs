@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-LAUNCH_PYTHON := $(shell python3 build_system/utils/collect_lists.py)
+LAUNCH_PYTHON := $(shell ./build_system/utils/collect_lists.py)
 
 
 TOPLEVEL_LANG ?= verilog
@@ -44,7 +44,7 @@ TOPLEVEL_LIBRARY ?= work
 
 .PHONY: run wave clean_module
 
-run: $(VENV_DIR) $(VERILOG_SOURCES)
+run: $(VENV_DIR)/bin/activate $(VERILOG_SOURCES)
 	@mkdir -p $(SIM_BUILD)
 	@rm -f $(CCTB_DIR)/runsim.do
 	@cp -r $(TB_DIR)/$(COCOTB_TEST_MODULES) $(SIM_BUILD)/..
@@ -58,7 +58,7 @@ run: $(VENV_DIR) $(VERILOG_SOURCES)
 wave:
 	vsim -view $(SIM_BUILD)/vsim.wlf
 
-$(VENV_DIR): cctb/build/user_requirements.txt cctb/build/requirements.txt
+$(VENV_DIR)/bin/activate: cctb/build/user_requirements.txt cctb/build/requirements.txt
 	python3 -m venv $(VENV_DIR)
 	source $(VENV_DIR)/bin/activate; \
 	pip install -r cctb/build/requirements.txt; \
