@@ -2,24 +2,17 @@ build_system/questa/*
 !build_system/questa/questa_script.tcl
 !build_system/questa/makefile
 
-build_system/modelsim/*
-!build_system/modelsim/modelsim_script.tcl
-!build_system/modelsim/makefile
-
 build_system/quartus/*
 !build_system/quartus/setup_sh.tcl
 !build_system/quartus/makefile
 !build_system/quartus/custom_assignments.tcl
 
-build_system/icarus/*
-!build_system/icarus/makefile
-
-cctb/*
-!cctb/build
-!cctb/build/makefile
-!cctb/build/move_files.py
-!cctb/build/requirements.py
-!cctb/build/user_requirements.py
+build_system/cctb/*
+!build_system/cctb/cctb_script.tcl
+!build_system/cctb/makefile
+!build_system/cctb/questa_after_vsim.do
+!build_system/cctb/requirements.txt
+!build_system/cctb/user_requirements.txt
 
 rtl/boards/*
 !rtl/boards/*.sv

@@ -5,10 +5,9 @@ LAUNCH_PYTHON := $(shell ./build_system/utils/collect_lists.py)
 TOPLEVEL_LANG ?= verilog
 
 CACHE_DIR ?= $(CURDIR)/.cache
-RTL_PATH  ?= $(CURDIR)/rtl
 
 COCOTB_TOPLEVEL ?= tb_uart_loop
-COCOTB_TEST_MODULES ?= tb_example
+COCOTB_TEST_MODULES ?= $(COCOTB_TOPLEVEL)
 TB_DIR ?= $(CURDIR)/tb
 TB_EXT ?= sv
 TB_FILES ?=  $(foreach file,$(shell find tb/tb_* -type f -name '*.sv'),$(CURDIR)/$(file))
@@ -28,7 +27,7 @@ endif
 ifndef SIM_ARGS
 SIM_ARGS :=
 SIM_ARGS += -suppress 12110 -autofindloop -suppress 12130
-SIM_ARGS += -do $(CURDIR)/cctb/build/questa_after_vsim.do
+SIM_ARGS += -do $(CURDIR)/build_system/cctb/questa_after_vsim.do
 endif
 
 CCTB_DIR ?= $(CACHE_DIR)/cctb
@@ -58,11 +57,11 @@ run: $(VENV_DIR)/bin/activate $(VERILOG_SOURCES)
 wave:
 	vsim -view $(SIM_BUILD)/vsim.wlf
 
-$(VENV_DIR)/bin/activate: cctb/build/user_requirements.txt cctb/build/requirements.txt
+$(VENV_DIR)/bin/activate: build_system/cctb/user_requirements.txt build_system/cctb/requirements.txt
 	python3 -m venv $(VENV_DIR)
 	source $(VENV_DIR)/bin/activate; \
-	pip install -r cctb/build/requirements.txt; \
-	pip install -r cctb/build/user_requirements.txt
+	pip install -r build_system/cctb/requirements.txt; \
+	pip install -r build_system/cctb/user_requirements.txt
 
 
 clean_module:
