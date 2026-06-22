@@ -1,3 +1,6 @@
 [submodule "submodules/src/Cyclone-V-PCIe-AVMM-DMA"]
 	path = submodules/src/Cyclone-V-PCIe-AVMM-DMA
 	url = git@github.com:apoj-inc/Cyclone-V-PCIe-AVMM-DMA.git
+[submodule "build_system"]
+	path = build_system
+	url = git@github.com:apoj-inc/build_system.git
