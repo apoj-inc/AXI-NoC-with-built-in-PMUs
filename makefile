@@ -3,7 +3,7 @@ LAUNCH_PYTHON := $(shell ./build_system/utils/collect_lists.py)
 
 BUILD_SYSTEM_DIR ?= $(CURDIR)/build_system
 
-CCTB_MAKEFILE ?= $(CURDIR)/cctb/build/makefile
+CCTB_MAKEFILE ?= $(CURDIR)/build_system/cctb/makefile
 QUARTUS_MAKEFILE ?= $(BUILD_SYSTEM_DIR)/quartus/makefile
 
 CACHE_DIR ?= $(CURDIR)/.cache
