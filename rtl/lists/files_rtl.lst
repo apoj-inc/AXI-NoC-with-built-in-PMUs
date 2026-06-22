@@ -1,7 +1,7 @@
 rtl/cores/src/sr_cpu.vh
 rtl/cores/src/sm_register.v
 rtl/cores/src/sm_rom.v
-rtl/cores/src/sr_cpu.v
+rtl/cores/src/sr_cpu.sv
 rtl/cores/src/sr_cpu_axi.sv
 rtl/cores/src/sr_axi_adapter.sv
 rtl/router/src/algorithm_selectors/circulant/algorithm_selector_clockwise.sv

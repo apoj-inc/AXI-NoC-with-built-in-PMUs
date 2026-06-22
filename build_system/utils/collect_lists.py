@@ -35,6 +35,11 @@ lst_names = ["files_hex.lst",
 
 for path in paths_list:
     for i, lst_suffix in enumerate(lst_suffixes):
+        filepath = f"{path}/{lst_suffix}"
+
+        if not os.path.isfile(filepath):
+            continue
+
         with open(f"{path}/{lst_suffix}", "r") as f:
             current_lst = f.read().splitlines()
             for j in range(len(current_lst)):
