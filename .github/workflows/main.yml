@@ -61,8 +61,8 @@ jobs:
       - name: Run docker image tests
         shell: bash
         run: |
-          chmod +x configure
-          docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "./configure --prefix=QUESTA; \
+          chmod +x build_system/autotest/configure
+          docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "./build_system/autotest/configure --prefix=QUESTA; \
           make -f build_system/cctb/makefile run; \
           make -f build_system/autotest/makefile run_pytest TESTS_DIRS=tb/tb_uart_loop"
         timeout-minutes: 15
