@@ -1,7 +1,0 @@
-cocotb>=2.0.0
-coverage
-pytest
-ipython
-cocotbext_axi
-cocotbext_uart
-numpy
