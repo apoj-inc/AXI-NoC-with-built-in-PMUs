@@ -22,7 +22,7 @@ jobs:
       - name: Build test image
         uses: docker/build-push-action@v6
         with:
-          context: ".docker/altera_tools"
+          context: "build_system/.docker/altera_tools"
           target: test
           tags: |
             altera_tools-dev:latest
@@ -61,8 +61,8 @@ jobs:
         run: |
           chmod +x configure
           docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "./configure --prefix=QUESTA; \
-          make test; \
-          make run_pytest TESTS_DIRS=tb/tb_example"
+          make -f build_system/cctb/makefile run; \
+          make -f build_system/autotest/makefile run_pytest TESTS_DIRS=tb/tb_uart_loop"
         timeout-minutes: 15
 
   build_altera_tools:
@@ -87,7 +87,7 @@ jobs:
     - name: Build and push amd64-arch production image
       uses: docker/build-push-action@v6
       with:
-        context: ".docker/altera_tools"
+        context: "build_system/.docker/altera_tools"
         platforms: linux/amd64
         target: production
         tags: |
@@ -125,7 +125,7 @@ jobs:
       
     - name: Run pytest
       shell: bash
-      run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "make run_pytest"
+      run: docker run ${{env.ALTERA_TOOLS_ARGS}} altera_tools-dev:latest "make -f build_system/autotest/makefile run_pytest"
       timeout-minutes: 120
   
   check_releases:
@@ -149,5 +149,5 @@ jobs:
       
     - name: Run build release
       shell: bash
-      run: docker run ${{env.ALTERA_TOOLS_ARGS}} ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest "make make_release"
+      run: docker run ${{env.ALTERA_TOOLS_ARGS}} ${{ secrets.DOCKER_USERNAME }}/altera_tools:latest "make -f build_system/quartus/makefile create_releases"
       timeout-minutes: 60
