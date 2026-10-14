@@ -1,6 +1,6 @@
 rtl/inc/defines.svh
-rtl/axi/inc/axi_defines.svh
-rtl/axi/inc/axis_defines.svh
+submodules/src/rtl-lib/rtl/src/amba/inc/axi_defines.svh
+submodules/src/rtl-lib/rtl/src/amba/inc/axis_defines.svh
 rtl/axi/inc/axi2axis_typedef.svh
 rtl/router/inc/virtual_networks_utils.svh
 rtl/router/inc/virtual_channels_utils.svh
