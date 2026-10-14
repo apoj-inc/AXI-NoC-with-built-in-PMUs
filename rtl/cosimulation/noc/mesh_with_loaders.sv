@@ -106,8 +106,7 @@ module mesh_with_loaders # (
                 .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
                 .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
                 .AXI_ID_W_WIDTH (AXI_ID_W_WIDTH),
-                .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH),
-                .BYTE_WIDTH(8)
+                .AXI_ID_R_WIDTH (AXI_ID_R_WIDTH)
             ) ram (
                 .clk_i(aclk),
                 .rst_n_i(aresetn),
