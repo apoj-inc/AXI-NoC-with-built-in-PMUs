@@ -1,13 +1,13 @@
-rtl/axi/axi_if.sv
-rtl/axi/axis_if.sv
+submodules/src/rtl-lib/rtl/src/amba/interfaces/axi_if.sv
+submodules/src/rtl-lib/rtl/src/amba/interfaces/axis_if.sv
 rtl/circulant/circulant.sv
 rtl/axi/axi2axis.sv
 rtl/router/src/algorithm_selectors/circulant/algorithm_selector_clockwise.sv
 rtl/router/src/buffer_allocators/buffer_allocator_straight.sv
 rtl/router/src/buffer_allocators/buffer_allocator_keep_in_network.sv
 rtl/router/src/router.sv
-rtl/lib/stream/stream_arbiter.sv
-rtl/lib/stream/stream_fifo.sv
+submodules/src/rtl-lib/rtl/src/stream/stream_arbiter.sv
+submodules/src/rtl-lib/rtl/src/stream/stream_fifo.sv
 rtl/axi/axis_fifo_buffer.sv
 rtl/router/src/router_buffer.sv
 rtl/router/src/utils/channel_decoder.sv

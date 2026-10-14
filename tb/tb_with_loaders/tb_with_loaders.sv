@@ -1,3 +1,5 @@
+`timescale 1ps/1ps
+
 module tb_with_loaders #(
     parameter ID_W_WIDTH = 5,
     parameter ID_R_WIDTH = 5,

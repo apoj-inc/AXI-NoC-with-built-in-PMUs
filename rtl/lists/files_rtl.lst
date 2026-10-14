@@ -24,18 +24,7 @@ rtl/router/src/utils/network_channel_narrower.sv
 rtl/circulant/circulant.sv
 rtl/mesh/mesh.sv
 rtl/torus/torus.sv
-rtl/axi/axi_demux.sv
-rtl/axi/axi_if.sv
-rtl/axi/axi_mux.sv
-rtl/lib/axi/axi_ram.sv
 rtl/axi/axi2axis.sv
-rtl/lib/axi/axi2ram.sv
-rtl/axi/axis_if_demux.sv
-rtl/axi/axis_if_mux.sv
-rtl/axi/axis_if.sv
-rtl/lib/primitives/memory/ram.sv
-rtl/lib/stream/stream_arbiter.sv
-rtl/lib/stream/stream_fifo.sv
 rtl/axi/axis_fifo_buffer.sv
 rtl/lib/cosim/uart/receiver.sv
 rtl/lib/cosim/uart/transmitter.sv
@@ -51,8 +40,3 @@ rtl/cosimulation/testtop/cosim_top.sv
 rtl/cosimulation/testtop/dma_testenv_top.sv
 rtl/cosimulation/testtop/pcie_top.sv
 rtl/de10standard_top.sv
-rtl/lib/primitives/cdc/cdc_stream_afifo.sv
-rtl/lib/primitives/cdc/sync_ff.sv
-rtl/lib/primitives/cdc/sync_rst.sv
-rtl/lib/primitives/memory/dual_clock_memory.sv
-rtl/lib/primitives/cdc/gray_converter.sv
