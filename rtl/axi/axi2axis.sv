@@ -226,137 +226,135 @@ module axi2axis #(
         endcase
     end
 
-    generate
-        always_comb begin
-            aw_send_bits_count_next = aw_send_bits_count;
-            w_send_bits_count_next = w_send_bits_count;
-            ar_send_bits_count_next = ar_send_bits_count;
-            w_send_next = w_send;
+    assign request_ready_i = m_axis_req_i.TREADY & m_axis_req_o.TVALID & m_axis_req_o.data.TLAST;
 
-            routing_header_req_XY_o = '0;
-            routing_header_req_N_o = '0;
+    always_comb begin
+        aw_send_bits_count_next = aw_send_bits_count;
+        w_send_bits_count_next = w_send_bits_count;
+        ar_send_bits_count_next = ar_send_bits_count;
+        w_send_next = w_send;
 
-            s_axi_o.AWREADY = '0;
-            s_axi_o.ARREADY = '0;
-            s_axi_o.WREADY = '0;
-            
-            m_axis_req_o.data.TDATA = '0;
-            m_axis_req_o.TVALID = '0;
-            m_axis_req_o.data.TID = ROUTING_HEADER_READ;
-            m_axis_req_o.data.TLAST = '0;
-            m_axis_req_o.data.TSTRB = '1;
+        routing_header_req_XY_o = '0;
+        routing_header_req_N_o = '0;
 
-            request_ready_i = m_axis_req_i.TREADY & m_axis_req_o.TVALID & m_axis_req_o.data.TLAST;
+        s_axi_o.AWREADY = '0;
+        s_axi_o.ARREADY = '0;
+        s_axi_o.WREADY = '0;
+        
+        m_axis_req_o.data.TDATA = '0;
+        m_axis_req_o.TVALID = '0;
+        m_axis_req_o.data.TID = ROUTING_HEADER_READ;
+        m_axis_req_o.data.TLAST = '0;
+        m_axis_req_o.data.TSTRB = '1;
 
-            case (out_req_state)
-                GENERATE_HEADER: begin
+        case (out_req_state)
+            GENERATE_HEADER: begin
 
-                    if (request_valid_o) begin
-                        if (request_data_o == AW) begin
-                            m_axis_req_o.data.TID = ROUTING_HEADER_WRITE;
-                            routing_header_req_XY_o.DESTINATION_X = (s_axi_i.data.aw.AWID - 1) % MAX_ROUTERS_X;
-                            routing_header_req_XY_o.DESTINATION_Y = (s_axi_i.data.aw.AWID - 1) / MAX_ROUTERS_X;
-                            routing_header_req_N_o.DESTINATION_N = s_axi_i.data.aw.AWID - 1;
+                if (request_valid_o) begin
+                    if (request_data_o == AW) begin
+                        m_axis_req_o.data.TID = ROUTING_HEADER_WRITE;
+                        routing_header_req_XY_o.DESTINATION_X = (s_axi_i.data.aw.AWID - 1) % MAX_ROUTERS_X;
+                        routing_header_req_XY_o.DESTINATION_Y = (s_axi_i.data.aw.AWID - 1) / MAX_ROUTERS_X;
+                        routing_header_req_N_o.DESTINATION_N = s_axi_i.data.aw.AWID - 1;
+                    end
+                    else if (request_data_o == AR) begin
+                        m_axis_req_o.data.TID = ROUTING_HEADER_READ;
+                        routing_header_req_XY_o.DESTINATION_X = (s_axi_i.data.ar.ARID - 1) % MAX_ROUTERS_X;
+                        routing_header_req_XY_o.DESTINATION_Y = (s_axi_i.data.ar.ARID - 1) / MAX_ROUTERS_X;
+                        routing_header_req_N_o.DESTINATION_N = s_axi_i.data.ar.ARID - 1;
+                    end
+
+                    routing_header_req_XY_o.SOURCE_X = ROUTER_X;
+                    routing_header_req_XY_o.SOURCE_Y = ROUTER_Y;
+                    routing_header_req_N_o.SOURCE_N = ROUTER_N;
+
+                    if (COORDINATES == "XY") begin
+                        m_axis_req_o.data.TDATA = routing_header_req_XY_o;
+                    end
+                    else if (COORDINATES == "N") begin
+                        m_axis_req_o.data.TDATA = routing_header_req_N_o;
+                    end
+                    
+                    m_axis_req_o.TVALID = '1;
+                    m_axis_req_o.data.TLAST = '0;
+                end
+            end
+            WRITE_SEND: begin
+                m_axis_req_o.data.TID = WRITE_REQUEST;
+
+                if (!w_send) begin
+                    if (aw_send_bits_count + AXIS_DATA_WIDTH >= AW_WIDTH) begin
+                        if(AW_REMAINDER > 0) begin
+                            m_axis_req_o.data.TDATA = {{AW_FILLER{1'b0}}, s_axi_i.data.aw[aw_send_bits_count +: AW_REMAINDER]};
                         end
-                        else if (request_data_o == AR) begin
-                            m_axis_req_o.data.TID = ROUTING_HEADER_READ;
-                            routing_header_req_XY_o.DESTINATION_X = (s_axi_i.data.ar.ARID - 1) % MAX_ROUTERS_X;
-                            routing_header_req_XY_o.DESTINATION_Y = (s_axi_i.data.ar.ARID - 1) / MAX_ROUTERS_X;
-                            routing_header_req_N_o.DESTINATION_N = s_axi_i.data.ar.ARID - 1;
-                        end
-
-                        routing_header_req_XY_o.SOURCE_X = ROUTER_X;
-                        routing_header_req_XY_o.SOURCE_Y = ROUTER_Y;
-                        routing_header_req_N_o.SOURCE_N = ROUTER_N;
-
-                        if (COORDINATES == "XY") begin
-                            m_axis_req_o.data.TDATA = routing_header_req_XY_o;
-                        end
-                        else if (COORDINATES == "N") begin
-                            m_axis_req_o.data.TDATA = routing_header_req_N_o;
-                        end
+                        m_axis_req_o.TVALID = s_axi_i.AWVALID;
+                        m_axis_req_o.data.TLAST = '0;
+                        w_send_next = m_axis_req_i.TREADY && m_axis_req_o.TVALID;
                         
-                        m_axis_req_o.TVALID = '1;
-                        m_axis_req_o.data.TLAST = '0;
-                    end
-                end
-                WRITE_SEND: begin
-                    m_axis_req_o.data.TID = WRITE_REQUEST;
+                        s_axi_o.AWREADY = m_axis_req_i.TREADY;
 
-                    if (!w_send) begin
-                        if (aw_send_bits_count + AXIS_DATA_WIDTH >= AW_WIDTH) begin
-                            if(AW_REMAINDER > 0) begin
-                                m_axis_req_o.data.TDATA = {{AW_FILLER{1'b0}}, s_axi_i.data.aw[aw_send_bits_count +: AW_REMAINDER]};
-                            end
-                            m_axis_req_o.TVALID = s_axi_i.AWVALID;
-                            m_axis_req_o.data.TLAST = '0;
-                            w_send_next = m_axis_req_i.TREADY && m_axis_req_o.TVALID;
-                            
-                            s_axi_o.AWREADY = m_axis_req_i.TREADY;
-
-                            aw_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? '0 : aw_send_bits_count;
-                        end
-                        else begin
-                            m_axis_req_o.data.TDATA = s_axi_i.data.aw[aw_send_bits_count +: AXIS_DATA_WIDTH];
-                            m_axis_req_o.TVALID = s_axi_i.AWVALID;
-                            m_axis_req_o.data.TLAST = '0;
-
-                            s_axi_o.AWREADY = '0;
-
-                            aw_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? aw_send_bits_count + AXIS_DATA_WIDTH : aw_send_bits_count;
-                        end
+                        aw_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? '0 : aw_send_bits_count;
                     end
                     else begin
-                        if (w_send_bits_count + AXIS_DATA_WIDTH >= W_WIDTH) begin
-                            if(W_REMAINDER > 0) begin
-                                m_axis_req_o.data.TDATA = {{W_FILLER{1'b0}}, s_axi_i.data.w[w_send_bits_count +: W_REMAINDER]};
-                            end
-                            m_axis_req_o.TVALID = s_axi_i.WVALID;
-                            m_axis_req_o.data.TLAST = s_axi_i.data.w.WLAST;
-                            w_send_next = ~(m_axis_req_o.TVALID & m_axis_req_i.TREADY & m_axis_req_o.data.TLAST);
-                            
-                            s_axi_o.WREADY = m_axis_req_i.TREADY;
-
-                            w_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? '0 : w_send_bits_count;
-                        end
-                        else begin
-                            m_axis_req_o.data.TDATA = s_axi_i.data.w[w_send_bits_count +: AXIS_DATA_WIDTH];
-                            m_axis_req_o.TVALID = s_axi_i.WVALID;
-                            m_axis_req_o.data.TLAST = '0;
-                            
-                            s_axi_o.WREADY = '0;
-
-                            w_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? w_send_bits_count + AXIS_DATA_WIDTH : w_send_bits_count;
-                        end
-                    end
-                end
-                READ_SEND: begin
-                    m_axis_req_o.data.TID = READ_REQUEST;
-
-                    if (ar_send_bits_count + AXIS_DATA_WIDTH >= AR_WIDTH) begin
-                        if(AR_REMAINDER > 0) begin
-                            m_axis_req_o.data.TDATA = {{AR_FILLER{1'b0}}, s_axi_i.data.ar[ar_send_bits_count +: AR_REMAINDER]};
-                        end
-                        m_axis_req_o.TVALID = s_axi_i.ARVALID;
-                        m_axis_req_o.data.TLAST = '1;
-
-                        s_axi_o.ARREADY = m_axis_req_i.TREADY;
-
-                        ar_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? '0 : ar_send_bits_count;
-                    end
-                    else begin
-                        m_axis_req_o.data.TDATA = s_axi_i.data.ar[ar_send_bits_count +: AXIS_DATA_WIDTH];
-                        m_axis_req_o.TVALID = s_axi_i.ARVALID;
+                        m_axis_req_o.data.TDATA = s_axi_i.data.aw[aw_send_bits_count +: AXIS_DATA_WIDTH];
+                        m_axis_req_o.TVALID = s_axi_i.AWVALID;
                         m_axis_req_o.data.TLAST = '0;
 
-                        s_axi_o.ARREADY = '0;
+                        s_axi_o.AWREADY = '0;
 
-                        ar_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? ar_send_bits_count + AXIS_DATA_WIDTH : ar_send_bits_count;
+                        aw_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? aw_send_bits_count + AXIS_DATA_WIDTH : aw_send_bits_count;
                     end
                 end
-            endcase
-        end
-    endgenerate
+                else begin
+                    if (w_send_bits_count + AXIS_DATA_WIDTH >= W_WIDTH) begin
+                        if(W_REMAINDER > 0) begin
+                            m_axis_req_o.data.TDATA = {{W_FILLER{1'b0}}, s_axi_i.data.w[w_send_bits_count +: W_REMAINDER]};
+                        end
+                        m_axis_req_o.TVALID = s_axi_i.WVALID;
+                        m_axis_req_o.data.TLAST = s_axi_i.data.w.WLAST;
+                        w_send_next = ~(m_axis_req_o.TVALID & m_axis_req_i.TREADY & m_axis_req_o.data.TLAST);
+                        
+                        s_axi_o.WREADY = m_axis_req_i.TREADY;
+
+                        w_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? '0 : w_send_bits_count;
+                    end
+                    else begin
+                        m_axis_req_o.data.TDATA = s_axi_i.data.w[w_send_bits_count +: AXIS_DATA_WIDTH];
+                        m_axis_req_o.TVALID = s_axi_i.WVALID;
+                        m_axis_req_o.data.TLAST = '0;
+                        
+                        s_axi_o.WREADY = '0;
+
+                        w_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? w_send_bits_count + AXIS_DATA_WIDTH : w_send_bits_count;
+                    end
+                end
+            end
+            READ_SEND: begin
+                m_axis_req_o.data.TID = READ_REQUEST;
+
+                if (ar_send_bits_count + AXIS_DATA_WIDTH >= AR_WIDTH) begin
+                    if(AR_REMAINDER > 0) begin
+                        m_axis_req_o.data.TDATA = {{AR_FILLER{1'b0}}, s_axi_i.data.ar[ar_send_bits_count +: AR_REMAINDER]};
+                    end
+                    m_axis_req_o.TVALID = s_axi_i.ARVALID;
+                    m_axis_req_o.data.TLAST = '1;
+
+                    s_axi_o.ARREADY = m_axis_req_i.TREADY;
+
+                    ar_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? '0 : ar_send_bits_count;
+                end
+                else begin
+                    m_axis_req_o.data.TDATA = s_axi_i.data.ar[ar_send_bits_count +: AXIS_DATA_WIDTH];
+                    m_axis_req_o.TVALID = s_axi_i.ARVALID;
+                    m_axis_req_o.data.TLAST = '0;
+
+                    s_axi_o.ARREADY = '0;
+
+                    ar_send_bits_count_next = m_axis_req_o.TVALID && m_axis_req_i.TREADY ? ar_send_bits_count + AXIS_DATA_WIDTH : ar_send_bits_count;
+                end
+            end
+        endcase
+    end
 
 
     // --- resp fsm ---

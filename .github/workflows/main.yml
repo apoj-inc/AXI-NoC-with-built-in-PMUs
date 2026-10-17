@@ -77,14 +77,14 @@ jobs:
       - name: Archive artifacts
         if: always()
         shell: bash
-        run: tar -cvf ${{ runner.temp }}/logs.tar ./.cache
+        run: tar -cvf ${{ runner.temp }}/test_image_logs.tar ./.cache
 
       - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build_system_logs
-          path: ${{ runner.temp }}/logs.tar
+          path: ${{ runner.temp }}/test_image_logs.tar
     
   run_tests:
     runs-on: ubuntu-latest
@@ -114,14 +114,14 @@ jobs:
       - name: Archive artifacts
         if: always()
         shell: bash
-        run: tar -cvf ${{ runner.temp }}/logs.tar ./.cache
+        run: tar -cvf ${{ runner.temp }}/pytest_logs.tar ./.cache
 
       - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build_system_logs
-          path: ${{ runner.temp }}/logs.tar
+          path: ${{ runner.temp }}/pytest_logs.tar
   
   check_releases:
     runs-on: ubuntu-latest
@@ -151,11 +151,11 @@ jobs:
       - name: Archive artifacts
         if: always()
         shell: bash
-        run: tar -cvf ${{ runner.temp }}/logs.tar ./.cache
+        run: tar -cvf ${{ runner.temp }}/release_logs.tar ./.cache
 
       - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build_system_logs
-          path: ${{ runner.temp }}/logs.tar
+          path: ${{ runner.temp }}/release_logs.tar
